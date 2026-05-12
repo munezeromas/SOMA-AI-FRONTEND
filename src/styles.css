@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warm: var(--warm);
+  --color-warm-foreground: var(--warm-foreground);
+  --color-primary-glow: var(--primary-glow);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-soft: none;
+  --shadow-glow: none;
+}
+
+:root {
+  /* Brand Colors (Constant) */
+  --primary: #00C36B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #6366F1;
+  --secondary-foreground: #FFFFFF;
+  --accent: #F97316;
+  --accent-foreground: #FFFFFF;
+  --radius: 0.75rem;
+  --success: oklch(0.72 0.17 155);
+  --success-foreground: oklch(0.99 0 0);
+  --warm: oklch(0.72 0.18 30);
+  --warm-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.60 0.24 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --primary-glow: rgba(0, 195, 107, 0.3);
+
+  /* Light Theme Defaults */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #00C36B;
+
+  /* Sidebar Light */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #00C36B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F1F5F9;
+  --sidebar-accent-foreground: #0F172A;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #00C36B;
+
+  /* Shadows Light */
+  --shadow-soft: 0 4px 20px rgba(0,0,0,0.05);
+  --shadow-glow: 0 0 40px rgba(0, 195, 107, 0.1);
+
+  /* Chart Colors (Light) */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+.dark {
+  /* Dark Surface System */
+  --background: #080C14;
+  --foreground: #F0F4FF;
+  --card: #0E1524;
+  --card-foreground: #F0F4FF;
+  --popover: #0E1524;
+  --popover-foreground: #F0F4FF;
+  --muted: #131D30;
+  --muted-foreground: #7B8DB0;
+  --border: rgba(255,255,255,0.07);
+  --input: rgba(255,255,255,0.08);
+  --ring: #00C36B;
+
+  /* Sidebar Dark */
+  --sidebar: #0A1020;
+  --sidebar-foreground: #F0F4FF;
+  --sidebar-primary: #00C36B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(255,255,255,0.06);
+  --sidebar-accent-foreground: #F0F4FF;
+  --sidebar-border: rgba(255,255,255,0.05);
+  --sidebar-ring: #00C36B;
+
+  /* Shadows Dark */
+  --shadow-soft: 0 4px 30px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 40px rgba(0, 195, 107, 0.15);
+
+  /* Chart Colors (Dark) */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--color-foreground);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Custom slim scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0,195,107,0.4); }
+}
+
+.font-dyslexic, .font-dyslexic * {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Inter', sans-serif !important;
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+}
+
+.high-contrast {
+  --background: oklch(0.05 0 0);
+  --foreground: oklch(0.99 0 0);
+  --card: oklch(0.10 0 0);
+  --card-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.85 0 0);
+  --border: oklch(0.40 0 0);
+}
+
+.overlay-cream { background-color: oklch(0.96 0.05 90) !important; }
+.overlay-mint { background-color: oklch(0.95 0.06 165) !important; }
+.overlay-rose { background-color: oklch(0.95 0.05 15) !important; }
+
+@utility glass {
+  @apply backdrop-blur-xl bg-white/40 border border-white/20;
+  @variant dark {
+    @apply bg-black/40 border-white/10;
+  }
+}
+
+@utility bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+@utility btn-soma {
+  @apply rounded-xl font-bold transition-all active:scale-[0.98];
+}
+
+@utility btn-soma-primary {
+  @apply btn-soma bg-[#00C36B] text-white hover:bg-[#00B060];
+}
+
+@utility text-huge {
+  @apply text-5xl md:text-6xl lg:text-[72px] font-bold tracking-tight leading-[0.95];
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes mouth-talk {
+  0%, 100% { transform: scaleY(0.6); }
+  50% { transform: scaleY(1.4); }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-blink { animation: blink 4s infinite; transform-origin: center; }
+.animate-talk { animation: mouth-talk 0.25s infinite; transform-origin: center; }
+.animate-wiggle { animation: wiggle 1s ease-in-out infinite; }
