@@ -1,34 +1,75 @@
 import { createServerFn } from "@tanstack/react-start";
 
-export const cohereSimplify = createServerFn({ method: "POST" })
+const SOMA_AI_SYSTEM = `You are Soma AI, a friendly AI tutor for primary school students in Rwanda (P1-P6). Your job is to explain words and sentences from books in simple language, create quizzes, and give encouraging feedback. Always be warm, simple, and concise.`;
+
+export const cohereSimplify: any = createServerFn({ method: "POST" })
   .handler(async ({ data }: any) => {
     const apiKey = process.env.VITE_COHERE_API_KEY || process.env.COHERE_API_KEY;
-    const apiUrl = process.env.COHERE_API_URL || "https://api.cohere.com/v1/chat";
+
     if (!apiKey) {
-      console.error("Cohere API Key missing in process.env");
       throw new Error("Missing Cohere API Key");
     }
 
-    const response = await fetch(apiUrl, {
+    // Build the user message
+    let userMessage = "";
+    if (data.promptType === "quiz-start") {
+      userMessage = `Create question 1 of a 3-question quiz about "${data.text}" for a Grade ${data.grade} student. Only ask the question, nothing else.`;
+    } else if (data.promptType === "quiz-answer") {
+      userMessage = data.text;
+    } else {
+      userMessage = `A Grade ${data.grade} student highlighted this from their ${data.subject} book: "${data.text}". Explain what it means simply.`;
+    }
+
+    // Use Cohere v2 chat API (more reliable)
+    const response = await fetch("https://api.cohere.com/v2/chat", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "X-Client-Name": "soma-ai",
       },
       body: JSON.stringify({
-        message: `Explain this text simply for a slow learner in Grade ${data.grade} (${data.subject}): "${data.text}"`,
-        model: "command",
-        preamble: "You are Soma AI, a patient and kind tutor for primary school students in Rwanda. Your goal is to explain things in the simplest possible way, using small words and clear examples. You prioritize the needs of slow learners, being very encouraging and gentle."
-      })
+        model: "command-r-plus-08-2024",
+        messages: [
+          { role: "system", content: SOMA_AI_SYSTEM },
+          { role: "user", content: userMessage },
+        ],
+      }),
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error("Cohere Server Error:", err);
-      throw new Error("Failed to reach Cohere");
+      const errText = await response.text();
+      console.error(`Cohere v2 error (${response.status}):`, errText);
+
+      // Fallback to v1 API with simpler model
+      const v1Response = await fetch("https://api.cohere.com/v1/chat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          model: "command",
+          preamble: SOMA_AI_SYSTEM,
+        }),
+      });
+
+      if (!v1Response.ok) {
+        const v1Err = await v1Response.text();
+        console.error(`Cohere v1 error (${v1Response.status}):`, v1Err);
+        throw new Error(`Cohere error: ${v1Response.status}`);
+      }
+
+      const v1Json = await v1Response.json();
+      return v1Json.text as string;
     }
 
     const json = await response.json();
-    console.log("Cohere Server Reply:", json.text?.substring(0, 50) + "...");
-    return json.text;
+    // v2 API returns content in a different structure
+    const content = json?.message?.content;
+    if (Array.isArray(content)) {
+      return content.map((c: any) => c.text ?? "").join("") as string;
+    }
+    return (json.text ?? json.message ?? "") as string;
   });

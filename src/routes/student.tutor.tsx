@@ -3,8 +3,11 @@ import { useState, useRef, useEffect } from "react";
 import { TalkingChatbot } from "@/components/soma/TalkingChatbot";
 import { TUTOR_REPLIES } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Send, Cpu, Sparkles, Network, Mic, MicOff } from "lucide-react";
+import { Send, Cpu, Sparkles, Network, Mic, MicOff, Volume2 } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { memo as reactMemo } from "react";
+
+const MemoizedTalkingChatbot = reactMemo(TalkingChatbot);
 
 export const Route = createFileRoute("/student/tutor")({
   head: () => ({ meta: [{ title: "Soma AI — Your Personal Tutor" }] }),
@@ -21,12 +24,23 @@ export const Route = createFileRoute("/student/tutor")({
 const SUGGESTIONS = ["Explain the water cycle", "What is an algorithm?", "Help me practice French", "How do Black Holes work?"];
 type Msg = { role: "user" | "ai"; text: string };
 
+// Persist chat history across navigations
+let globalChatHistory: Msg[] = [
+  { role: "ai", text: "Neural synchronization complete. I am Soma, designed to help you learn and improve your grammar! What shall we explore today?" }
+];
+
 function Tutor() {
-  const [messages, setMessages] = useState<Msg[]>([{ role: "ai", text: "Neural synchronization complete. I am Soma, designed to help you learn and improve your grammar! What shall we explore today?" }]);
+  const [messages, setMessages] = useState<Msg[]>(globalChatHistory);
+
+  // Sync to global history whenever messages update
+  useEffect(() => {
+    globalChatHistory = messages;
+  }, [messages]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [lastSpeech, setLastSpeech] = useState("Neural synchronization complete. I am Soma, designed to help you learn and improve your grammar. What shall we explore today?");
+  const [isMuted, setIsMuted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -101,11 +115,13 @@ function Tutor() {
       
       const systemPrompt = `You are Soma AI, an encouraging and patient school teacher. Your job is to answer student questions, provide clear helpful examples, and help kids have good grammar—especially those with dyslexia. Always positively and gently correct the student's grammar as your first sentence, then answer their question warmly with clear examples. Be supportive, empathetic, and keep your answers educational but concise.`;
 
-      // Build conversational memory map
-      const chatHistory = [{ role: "SYSTEM", message: systemPrompt }, ...messages.map(m => ({
-         role: m.role === "user" ? "USER" : "CHATBOT",
-         message: m.text
-      }))];
+      // Build conversational memory map, filtering out any empty states
+      const chatHistory = messages
+        .filter(m => m.text && m.text.trim().length > 0)
+        .map(m => ({
+          role: m.role === "user" ? "USER" : "CHATBOT",
+          message: m.text
+        }));
 
       const res = await fetch(apiUrl, {
         method: "POST",
@@ -117,6 +133,7 @@ function Tutor() {
         body: JSON.stringify({
           message: txt,
           chat_history: chatHistory,
+          preamble: systemPrompt,
           stream: true
         })
       });
@@ -126,31 +143,47 @@ function Tutor() {
       const decoder = new TextDecoder("utf-8");
       
       let replyTokenBuffer = "";
+      let spokenCursor = 0;
       
       // Inject placeholder
       setMessages((m) => [...m, { role: "ai", text: "" }]);
-      setLoading(false); // Stop the dots loading since we are actively receiving text
+      // Keep loading true while streaming to show the frying pan animation
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split('\n').filter(line => line.trim());
         
+        let chunkCount = 0;
         for (const line of lines) {
            try {
               const data = JSON.parse(line);
               if (data.event_type === "text-generation" && data.text) {
                  replyTokenBuffer += data.text;
-                 // Update the chat state live
-                 setMessages((m) => {
-                    const newM = [...m];
-                    newM[newM.length - 1] = { role: "ai", text: replyTokenBuffer };
-                    return newM;
-                 });
+                 chunkCount++;
+                 
+                 // Look for sentence boundaries to stream speech
+                 const match = replyTokenBuffer.substring(spokenCursor).match(/([.!?]+[\s\n]+)/);
+                 if (match) {
+                    const boundary = match.index! + match[0].length;
+                    const sentence = replyTokenBuffer.substring(spokenCursor, spokenCursor + boundary).trim();
+                    if (sentence) {
+                      window.dispatchEvent(new CustomEvent("soma-speak", { detail: { text: sentence, queue: true } }));
+                    }
+                    spokenCursor += boundary;
+                 }
+
+                 // Update the chat state periodically to prevent freezing (throttle)
+                 if (chunkCount % 4 === 0) {
+                   setMessages((m) => {
+                      const newM = [...m];
+                      newM[newM.length - 1] = { role: "ai", text: replyTokenBuffer };
+                      return newM;
+                   });
+                 }
               } else if (data.message && data.event_type === undefined) {
-                 // Non-streamed fallback error
                  replyTokenBuffer = data.message;
                  setMessages((m) => {
                     const newM = [...m];
@@ -158,17 +191,31 @@ function Tutor() {
                     return newM;
                  });
               }
-           } catch(e) {
-              // JSON partial line fragment, ignore
-           }
+           } catch(e) {}
         }
       }
 
+      // Final update
+      setMessages((m) => {
+         const newM = [...m];
+         newM[newM.length - 1] = { role: "ai", text: replyTokenBuffer };
+         return newM;
+      });
+
+      // Speak any remaining text that didn't end with a punctuation mark
+      const remaining = replyTokenBuffer.substring(spokenCursor).trim();
+      if (remaining) {
+        window.dispatchEvent(new CustomEvent("soma-speak", { detail: { text: remaining, queue: true } }));
+      }
+
       console.log("Final Reply Buffer:", replyTokenBuffer);
-      setLastSpeech(replyTokenBuffer || "Diagnostic failed. Neural path not found.");
+      if (!replyTokenBuffer) {
+        setLastSpeech("Diagnostic failed. Neural path not found.");
+      }
+      setLoading(false);
     } catch (err: any) {
-      console.error(err);
-      const reply = "I am currently forced into offline diagnostic mode. Please configure your VITE_COHERE_API_KEY in the `.env` file to fully initialize my neural matrix and allow me to query the global knowledge base!";
+      console.error("Chat Error:", err);
+      const reply = `I am currently forced into offline diagnostic mode. Error: [${err.message}]. Please ensure your VITE_COHERE_API_KEY is active and restart your terminal.`;
       setMessages((m) => [...m, { role: "ai", text: reply }]);
       setLastSpeech(reply);
       setLoading(false);
@@ -176,25 +223,28 @@ function Tutor() {
   };
 
   return (
-    <div className="grid lg:grid-cols-[450px_1fr] gap-10 max-w-7xl animate-in fade-in zoom-in-95 duration-700 h-[calc(100vh-10rem)] pb-10">
+    <div className="grid xl:grid-cols-[500px_1fr] gap-8 max-w-[1600px] w-full mx-auto animate-in fade-in zoom-in-95 duration-700 h-[calc(100vh-7rem)] pb-6 px-4">
       
       {/* 3D AVATAR MODULE */}
       <div className="relative rounded-[40px] bg-gradient-to-b from-card/80 to-background/50 border border-white/10 shadow-[0_0_80px_rgba(var(--primary),0.05)] overflow-hidden flex flex-col items-center">
         
         {/* Dynamic backdrop glow */}
         <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-        
-        <div className="absolute inset-x-0 top-0 h-40 opacity-20 pointer-events-none z-0">
-          <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full" />
-        </div>
 
         <div className="w-full shrink-0 relative mt-8 px-8">
            <div className="rounded-[32px] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative bg-black/10 border border-white/5 ring-1 ring-black/20">
-             <TalkingChatbot textToSpeak={lastSpeech} />
+             <MemoizedTalkingChatbot textToSpeak={lastSpeech} isMuted={isMuted} />
              <div className="absolute top-4 left-4 glass bg-black/40 rounded-full px-4 py-1.5 flex items-center gap-2 border border-white/10 shadow-sm backdrop-blur-md">
                 <div className="h-2 w-2 rounded-full bg-success animate-pulse shadow-[0_0_10px_rgba(var(--success),0.8)]" />
                 <span className="text-[9px] font-black tracking-widest text-white/90 uppercase mt-0.5">Core Active</span>
              </div>
+             <button 
+               onClick={() => setIsMuted(!isMuted)}
+               className="absolute top-4 right-4 glass bg-black/40 hover:bg-black/60 rounded-full p-2 border border-white/10 shadow-sm backdrop-blur-md text-white transition-colors"
+               title={isMuted ? "Unmute Avatar" : "Mute Avatar"}
+             >
+               {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+             </button>
            </div>
         </div>
 
@@ -219,8 +269,8 @@ function Tutor() {
         
         {/* Header */}
         <div className="p-8 pb-5 flex items-center gap-4 relative z-10 border-b border-white/5 bg-background/20 backdrop-blur-sm">
-          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-            <Cpu className="h-6 w-6" />
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+            <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-10 h-10" />
           </div>
           <div>
             <h3 className="text-xl font-bold tracking-tight">Soma AI Portal</h3>
@@ -232,17 +282,27 @@ function Tutor() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 relative z-10 scroll-smooth">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
-              <div className={`max-w-[85%] rounded-[28px] px-8 py-5 text-[15px] font-medium leading-relaxed shadow-md backdrop-blur-md whitespace-pre-wrap ${m.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm bg-gradient-to-br from-primary to-primary/80" : "glass bg-card/80 border border-white/10 rounded-bl-sm"}`}>
+              <div className={`max-w-[85%] rounded-[28px] px-8 py-5 text-[15px] font-medium leading-relaxed shadow-md backdrop-blur-md whitespace-pre-wrap relative group ${m.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm bg-gradient-to-br from-primary to-primary/80" : "glass bg-card/80 border border-white/10 rounded-bl-sm text-foreground"}`}>
                  {m.text}
+                 {m.role === "ai" && m.text && (
+                   <button 
+                     onClick={() => setLastSpeech(m.text + " ")} 
+                     className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 rounded-full glass bg-white/10 hover:bg-primary/20 text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                     title="Read Aloud"
+                   >
+                     <Volume2 className="h-4 w-4" />
+                   </button>
+                 )}
               </div>
             </div>
           ))}
           {loading && (
              <div className="flex justify-start animate-in fade-in">
-               <div className="glass bg-card/80 border border-white/10 rounded-[28px] rounded-bl-sm px-6 py-6 flex items-center gap-2 shadow-sm">
-                 <div className="h-2 w-2 bg-primary/80 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                 <div className="h-2 w-2 bg-primary/80 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                 <div className="h-2 w-2 bg-primary/80 rounded-full animate-bounce" />
+               <div className="rounded-[28px] rounded-bl-sm px-4 py-3 flex flex-col items-start gap-1 shadow-sm" style={{ background: "rgba(74,144,217,0.15)", border: "1px solid rgba(74,144,217,0.2)" }}>
+                 <div className="w-32 h-24 bg-white rounded-2xl shadow-sm mb-2 overflow-hidden flex items-center justify-center">
+                   <RiveAnimation src="/riv-animations/1137-2229-cooking-animation.riv" className="w-[120%] h-[120%]" stateMachines="State Machine 1" />
+                 </div>
+                 <p className="text-xs font-black text-[#4A90D9] italic">Soma is cooking... 🍳</p>
                </div>
              </div>
           )}

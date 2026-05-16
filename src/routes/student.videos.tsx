@@ -25,25 +25,28 @@ function Videos() {
   });
 
   return (
-    <div className="space-y-8 max-w-7xl animate-fade-in pb-20 relative">
-      <div className="absolute right-0 -top-20 h-80 w-80 hidden lg:block opacity-30 pointer-events-none z-0">
-          <RiveAnimation src="/riv-animations/24331-45439-solar-system.riv" className="w-full h-full" />
-      </div>
-
-      <div className="space-y-1 relative z-10">
-        <h1 className="text-5xl font-black tracking-tight text-white">Global <span style={{ color: "#00C36B" }}>Library</span></h1>
-        <p className="text-xs font-black uppercase tracking-widest opacity-60 text-white">Curated Educational Video Modules</p>
+    <div className="space-y-6 max-w-7xl pb-20">
+      <div className="card-cloud p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-pop-in">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 shrink-0">
+            <RiveAnimation src="/riv-animations/24657-46067-medura-an-interactive-anatomy-experience.riv" className="w-full h-full" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-[#1A3A5C]">Video Library</h1>
+            <p className="text-sm font-bold text-[#4A6A8A]">Curated educational video lessons</p>
+          </div>
+        </div>
       </div>
 
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#7B8DB0" }} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4A6A8A]" />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search videos, subjects..."
-          className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#00C36B] transition-all"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+          className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+          style={{ background: "rgba(255,255,255,0.9)", color: "#1A3A5C" }}
         />
       </div>
 
@@ -51,11 +54,12 @@ function Videos() {
       <div className="flex flex-wrap gap-2">
         {["All", ...SUBJECTS].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
-            className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300"
+            className="px-4 py-2 rounded-2xl text-xs font-black transition-all duration-200"
             style={{
-              background: filter === s ? "#00C36B" : "rgba(255,255,255,0.05)",
-              color: filter === s ? "#fff" : "rgba(255,255,255,0.5)",
-              border: `1px solid ${filter === s ? "#00C36B" : "rgba(255,255,255,0.08)"}`
+              background: filter === s ? "#4A90D9" : "rgba(255,255,255,0.85)",
+              color: filter === s ? "#fff" : "#4A6A8A",
+              boxShadow: filter === s ? "0 4px 12px rgba(74,144,217,0.4)" : "none",
+              border: "2px solid " + (filter === s ? "#4A90D9" : "rgba(255,255,255,0.8)"),
             }}>
             {s}
           </button>
@@ -64,14 +68,14 @@ function Videos() {
 
       {/* Level filter */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-[10px] font-black uppercase tracking-widest mr-1" style={{ color: "#7B8DB0" }}>Grade:</span>
+        <span className="text-xs font-black text-[#4A6A8A]">Grade:</span>
         {LEVELS.map((l) => (
           <button key={l} onClick={() => setLevel(l)}
-            className="px-3 py-1.5 rounded-lg text-xs font-black tracking-wider transition-all duration-300"
+            className="px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200"
             style={{
-              background: level === l ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.04)",
-              color: level === l ? "#fff" : "rgba(255,255,255,0.4)",
-              border: `1px solid ${level === l ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"}`
+              background: level === l ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.7)",
+              color: level === l ? "#4A90D9" : "#4A6A8A",
+              border: "2px solid " + (level === l ? "rgba(74,144,217,0.4)" : "rgba(255,255,255,0.6)"),
             }}>
             {l}
           </button>
@@ -117,10 +121,12 @@ function Videos() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setOpen(null)}>
-          <button className="absolute top-4 right-4 text-white" aria-label="Close"><X className="h-8 w-8" /></button>
-          <div className="w-full max-w-4xl aspect-video" onClick={(e) => e.stopPropagation()}>
-            <iframe src={`https://www.youtube.com/embed/${open}?autoplay=1`} className="w-full h-full rounded-2xl" allow="autoplay; encrypted-media" allowFullScreen />
+        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4" onClick={() => setOpen(null)}>
+          <button className="absolute top-6 right-6 z-[110] glass bg-white/10 hover:bg-red-500/80 p-3 rounded-full text-white shadow-2xl transition-all flex items-center gap-2 border border-white/20" aria-label="Close">
+            <span className="font-black px-2 uppercase tracking-wider text-xs hidden sm:block">Close Video</span> <X className="h-6 w-6" />
+          </button>
+          <div className="w-full max-w-5xl aspect-video relative z-[105]" onClick={(e) => e.stopPropagation()}>
+            <iframe src={`https://www.youtube.com/embed/${open}?autoplay=1`} className="w-full h-full rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" allow="autoplay; encrypted-media" allowFullScreen />
           </div>
         </div>
       )}

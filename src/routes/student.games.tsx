@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, RefreshCw, Sparkles, Brain, Calculator, Type, Layers } from "lucide-react";
+import { Star, RefreshCw, Sparkles, Brain, Calculator, Type, Layers, X } from "lucide-react";
 import { VIDEOS, GAMES as MOCK_GAMES } from "@/lib/mock-data";
 import { useRive } from "@rive-app/react-canvas";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
@@ -13,71 +13,117 @@ export const Route = createFileRoute("/student/games")({
 
 
 const ALL_RIVE_FILES = [
-  { id: "ui", title: "Game UI Sandbox", desc: "Interactive conceptual interface.", file: "10970-21511-aaa-game-ui.riv", icon: Sparkles },
-  { id: "designer", title: "Designer Logic", desc: "Interactive design matrices.", file: "11058-21184-designer-in-space.riv", icon: Layers },
-  { id: "memory", title: "Memory Simulation", desc: "Card matching paradigms.", file: "11229-21493-memory-game.riv", icon: Brain },
-  { id: "cooking", title: "Culinary Physics", desc: "Simulated cooking dynamics.", file: "1137-2229-cooking-animation.riv", icon: Layers },
-  { id: "rockstar", title: "Rhythm Mechanics", desc: "Musical interaction model.", file: "12132-34408-introvert-rock-star.riv", icon: Star },
-  { id: "math", title: "Mathematical Array", desc: "Calculation exercises.", file: "13250-25048-math.riv", icon: Calculator },
-  { id: "pizza", title: "Geometry of Pi", desc: "Fractional unlocking scenarios.", file: "17500-32805-slice-of-pi-unlocking-the-mysteries-of-pizza-geometry.riv", icon: Calculator },
-  { id: "mascot", title: "Avatar Synchronization", desc: "Mascot state machine test.", file: "17629-33045-strawberry-studying-mascot.riv", icon: Brain },
-  { id: "alphabet", title: "Phonological Puzzle", desc: "Alphabet synthesis challenge.", file: "18336-34406-monster-alphabet-puzzle.riv", icon: Type },
-  { id: "bubbles", title: "Cognitive Reflex", desc: "Tap the emoji bubbles.", file: "21312-40032-tap-the-emoji-bubbles-interactive-game.riv", icon: Sparkles },
-  { id: "shakespeare", title: "Literary Narrative", desc: "Shakespeare interactive book.", file: "21797-40906-my-first-shakespeare.riv", icon: Type },
-  { id: "gem", title: "Data Binding Gem", desc: "Variable tracking logic.", file: "22515-42142-twin-gem-picker-built-with-rive-and-the-power-of-data-binding.riv", icon: Layers },
-  { id: "education", title: "Learning Node", desc: "Educational UI demo.", file: "22673-42423-for-education-purpose.riv", icon: Brain },
-  { id: "cup", title: "Probability Cup", desc: "Tracking randomized shuffling.", file: "23303-43633-guess-the-cup.riv", icon: Sparkles },
-  { id: "solar", title: "Astrophysics Model", desc: "Solar system orchestration.", file: "24331-45439-solar-system.riv", icon: Star },
-  { id: "anatomy", title: "Biological Scaffold", desc: "Anatomy investigation.", file: "24657-46067-medura-an-interactive-anatomy-experience.riv", icon: Brain },
-  { id: "runner", title: "Velocity Test", desc: "Infinite procedural runner.", file: "26133-49002-studiorun-a-cosmic-game-by-thelittlelabs.riv", icon: Sparkles },
-  { id: "title", title: "Typographics Engine", desc: "Text manipulation and easing.", file: "26380-49366-title-animation.riv", icon: Type },
-  { id: "monster", title: "Creature Empathy", desc: "Entity interaction parameters.", file: "2742-5796-monster-game.riv", icon: Layers },
-  { id: "bluey", title: "Character Rigging", desc: "Idling algorithms demonstrated.", file: "3352-7042-bluey-idle-animation.riv", icon: Star },
-  { id: "potion", title: "Chemical Reactions", desc: "Mixing virtual elements.", file: "4062-8437-magic-potion-to-grant-a-wish-s.riv", icon: Sparkles },
-  { id: "chill", title: "Lofi Focus", desc: "Ambient environmental immersion.", file: "413-3213-chill-study-time.riv", icon: Layers },
-  { id: "lifespan", title: "Chronology Timeline", desc: "Historical interaction.", file: "4192-8705-lifespan-timeline.riv", icon: Type },
-  { id: "ship", title: "Naval Kinematics", desc: "Gamekit ship physics.", file: "4894-9900-ship-gamekit-demo.riv", icon: Sparkles },
-  { id: "fish", title: "Emotional Equilibrium", desc: "Coping mechanisms via fish.", file: "8336-16007-emotional-support-fish.riv", icon: Layers }
+  { id: "ui", title: "Game UI Sandbox", desc: "Interactive conceptual interface.", file: "10970-21511-aaa-game-ui.riv", icon: Sparkles, type: "toy" },
+  { id: "designer", title: "Designer Logic", desc: "Interactive design matrices.", file: "11058-21184-designer-in-space.riv", icon: Layers, type: "toy" },
+  { id: "memory", title: "Memory Match", desc: "Card matching game to test your memory.", file: "11229-21493-memory-game.riv", icon: Brain, type: "game" },
+  { id: "cooking", title: "Cooking Fun", desc: "Simulated cooking dynamics.", file: "1137-2229-cooking-animation.riv", icon: Layers, type: "toy" },
+  { id: "rockstar", title: "Rhythm Mechanics", desc: "Musical interaction model.", file: "12132-34408-introvert-rock-star.riv", icon: Star, type: "toy" },
+  { id: "math", title: "Math Ninja", desc: "Solve math problems quickly.", file: "13250-25048-math.riv", icon: Calculator, type: "game" },
+  { id: "pizza", title: "Pizza Fractions", desc: "Learn fractions with pizza slices.", file: "17500-32805-slice-of-pi-unlocking-the-mysteries-of-pizza-geometry.riv", icon: Calculator, type: "game" },
+  { id: "alphabet", title: "Alphabet Puzzle", desc: "Match the letters.", file: "18336-34406-monster-alphabet-puzzle.riv", icon: Type, type: "game" },
+  { id: "bubbles", title: "Pop the Bubbles", desc: "Tap the emoji bubbles before they float away.", file: "21312-40032-tap-the-emoji-bubbles-interactive-game.riv", icon: Sparkles, type: "game" },
+  { id: "shakespeare", title: "Story Time", desc: "Interactive reading book.", file: "21797-40906-my-first-shakespeare.riv", icon: Type, type: "toy" },
+  { id: "cup", title: "Guess the Cup", desc: "Follow the cup with the ball.", file: "23303-43633-guess-the-cup.riv", icon: Sparkles, type: "game" },
+  { id: "solar", title: "Solar System", desc: "Explore the planets.", file: "24331-45439-solar-system.riv", icon: Star, type: "toy" },
+  { id: "anatomy", title: "Human Body", desc: "Learn about the human body.", file: "24657-46067-medura-an-interactive-anatomy-experience.riv", icon: Brain, type: "toy" },
+  { id: "runner", title: "Space Runner", desc: "Infinite procedural runner game.", file: "26133-49002-studiorun-a-cosmic-game-by-thelittlelabs.riv", icon: Sparkles, type: "game" },
+  { id: "monster", title: "Monster Pet", desc: "Take care of your virtual monster.", file: "2742-5796-monster-game.riv", icon: Layers, type: "toy" },
+  { id: "potion", title: "Magic Potions", desc: "Mix colorful potions.", file: "4062-8437-magic-potion-to-grant-a-wish-s.riv", icon: Sparkles, type: "toy" },
+  { id: "ship", title: "Ship Captain", desc: "Steer the ship safely.", file: "4894-9900-ship-gamekit-demo.riv", icon: Sparkles, type: "game" },
 ];
 
-const GAMES = ALL_RIVE_FILES.map(g => ({
+const GAMES = ALL_RIVE_FILES.filter(g => g.type === "game").map(g => ({
+    ...g,
+    riv: `/riv-animations/${g.file}`
+}));
+
+const TOYS = ALL_RIVE_FILES.filter(g => g.type === "toy").map(g => ({
     ...g,
     riv: `/riv-animations/${g.file}`
 }));
 
 function Games() {
   const [active, setActive] = useState<string | null>(null);
+  const CARD_COLORS = ["#4A90D9","#2ECC71","#FF9500","#9B59B6","#FF6B6B","#1ABC9C","#E74C3C","#3498DB"];
   return (
-    <div className="space-y-10 max-w-7xl animate-fade-in pb-20 relative">
+    <div className="space-y-6 max-w-7xl pb-20 relative">
 
-      <div className="space-y-2 relative z-10">
-        <h1 className="text-5xl font-black tracking-tight">Soma <span className="text-primary">Play Zone</span></h1>
-        <p className="text-lg text-muted-foreground font-medium uppercase tracking-widest text-xs">Fun games to help you learn and grow!</p>
+      <div className="card-cloud p-5 flex items-center gap-4 animate-pop-in">
+        <div className="w-12 h-12 shrink-0">
+          <RiveAnimation src="/riv-animations/21312-40032-tap-the-emoji-bubbles-interactive-game.riv" className="w-full h-full" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-[#1A3A5C]">Play Zone</h1>
+          <p className="text-sm font-bold text-[#4A6A8A]">Fun games and interactive toys!</p>
+        </div>
       </div>
+
       {!active ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-          {GAMES.map((g) => (
-            <button key={g.id} onClick={() => setActive(g.id)} className="rounded-3xl glass p-8 text-left hover:shadow-glow transition-all hover:-translate-y-2 group bg-gradient-to-br from-card to-white/5 border-none">
-              <div className="h-32 w-full rounded-2xl bg-gradient-to-br from-primary/10 to-transparent flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-all shadow-sm overflow-hidden">
-                 <RiveAnimation src={g.riv} className="w-full h-full group-hover:scale-125 transition-transform duration-500 opacity-80 group-hover:opacity-100 pointer-events-none" />
-              </div>
-              <h3 className="text-2xl font-black mb-3">{g.title}</h3>
-              <p className="font-medium text-muted-foreground leading-relaxed">{g.desc}</p>
-              <div className="mt-8 text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">Initiate Module <Sparkles className="h-4 w-4" /></div>
-            </button>
-          ))}
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-black text-[#1A3A5C] mb-4">Games</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+              {GAMES.map((g, idx) => {
+                const color = CARD_COLORS[idx % CARD_COLORS.length];
+                return (
+                  <button key={g.id} onClick={() => setActive(g.id)}
+                    className="card-island text-left p-0 overflow-hidden animate-pop-in"
+                    style={{ animationDelay: `${idx * 0.04}s` }}>
+                    <div className="h-28 w-full flex items-center justify-center overflow-hidden relative"
+                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}38)` }}>
+                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-black text-sm text-[#1A3A5C] mb-1 leading-tight">{g.title}</h3>
+                      <p className="text-xs font-semibold text-[#4A6A8A] leading-relaxed">{g.desc}</p>
+                      <div className="mt-3 text-xs font-black flex items-center gap-1" style={{ color }}>
+                        Play game <Sparkles className="h-3 w-3" />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-black text-[#1A3A5C] mb-4">Interactive Toys</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+              {TOYS.map((g, idx) => {
+                const color = CARD_COLORS[(idx + GAMES.length) % CARD_COLORS.length];
+                return (
+                  <button key={g.id} onClick={() => setActive(g.id)}
+                    className="card-island text-left p-0 overflow-hidden animate-pop-in"
+                    style={{ animationDelay: `${idx * 0.04}s` }}>
+                    <div className="h-28 w-full flex items-center justify-center overflow-hidden relative"
+                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}38)` }}>
+                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-black text-sm text-[#1A3A5C] mb-1 leading-tight">{g.title}</h3>
+                      <p className="text-xs font-semibold text-[#4A6A8A] leading-relaxed">{g.desc}</p>
+                      <div className="mt-3 text-xs font-black flex items-center gap-1" style={{ color }}>
+                        Play with toy <Sparkles className="h-3 w-3" />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300 zoom-in-95">
-          <div className="absolute top-6 left-6 z-[110]">
-             <Button variant="outline" size="lg" onClick={() => setActive(null)} className="glass bg-white/10 text-white border-none hover:bg-white/20 shadow-xl rounded-2xl h-14 px-8 font-black">
-               ← Terminate Module
-             </Button>
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center">
+          <div className="absolute top-6 right-6 z-[110]">
+             <button onClick={() => setActive(null)}
+               className="glass bg-white/10 hover:bg-red-500/80 p-3 rounded-full text-white shadow-2xl transition-all flex items-center gap-2 border border-white/20">
+               <span className="font-black px-2 uppercase tracking-wider text-xs hidden sm:block">Close Game</span> <X className="h-6 w-6" />
+             </button>
           </div>
           <div className="w-full h-full p-4 md:p-12 relative flex items-center justify-center">
-            {GAMES.find(g => g.id === active)?.riv ? (
+            {ALL_RIVE_FILES.find(g => g.id === active) ? (
                <div className="w-full h-full max-w-7xl max-h-full bg-black/50 rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(255,255,255,0.1)] relative border border-white/5">
-                 <RiveAnimation src={GAMES.find(g => g.id === active)!.riv} className="w-full h-full" withSound />
+                 <RiveAnimation src={`/riv-animations/${ALL_RIVE_FILES.find(g => g.id === active)!.file}`} className="w-full h-full" withSound />
                </div>
             ) : (
                <div className="w-full max-w-4xl max-h-full overflow-y-auto rounded-[40px] bg-background/5 p-10 shadow-2xl relative border border-white/10 text-white">

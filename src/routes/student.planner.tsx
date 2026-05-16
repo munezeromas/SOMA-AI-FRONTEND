@@ -153,7 +153,7 @@ function EventModal({ initial, onSave, onClose }: {
         <div>
           <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-1.5">Type</label>
           <div className="flex gap-2 flex-wrap">
-            {["task","assignment","exam","reminder"].map(t => (
+            {(["task","assignment","exam","reminder"] as const).map(t => (
               <button key={t} onClick={() => setType(t)}
                 className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all"
                 style={{

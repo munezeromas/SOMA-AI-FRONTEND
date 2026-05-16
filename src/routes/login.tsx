@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/soma/Logo";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import authBg from "../kps.jpg";
+import { RiveAnimation } from "@/components/soma/RiveAnimation";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Account Portal — Soma AI" }] }),
+  head: () => ({ meta: [{ title: "Sign In — Soma AI" }] }),
   component: Login,
 });
 
@@ -39,151 +38,207 @@ function Login() {
   const [showSchools, setShowSchools] = useState(false);
   const [role, setRole] = useState<"student" | "teacher">("student");
 
-  const filteredSchools = RWANDAN_SCHOOLS.filter(s => s.toLowerCase().includes(school.toLowerCase()));
+  const filteredSchools = RWANDAN_SCHOOLS.filter(s =>
+    s.toLowerCase().includes(school.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-[#00C36B]/30">
-      {/* Navigation */}
-      <header className="py-6 px-8 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#64748B] hover:text-[#0F172A] transition-colors">
-          <span className="text-sm">←</span> Home
+    <div className="sky-bg min-h-screen flex flex-col font-['Nunito'] relative overflow-hidden">
+      {/* Animated background clouds */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[5%] left-[3%] animate-cloud-drift" style={{ animationDuration: "7s" }}>
+          <CloudShape width={120} opacity={0.8} />
+        </div>
+        <div className="absolute top-[10%] right-[6%] animate-cloud-drift delay-500" style={{ animationDuration: "9s" }}>
+          <CloudShape width={95} opacity={0.75} />
+        </div>
+        <div className="absolute bottom-[15%] left-[8%] animate-cloud-drift delay-1000" style={{ animationDuration: "8s" }}>
+          <CloudShape width={110} opacity={0.7} />
+        </div>
+        <div className="absolute bottom-[20%] right-[4%] animate-cloud-drift delay-200" style={{ animationDuration: "6s" }}>
+          <CloudShape width={130} opacity={0.8} />
+        </div>
+        {/* Stars */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="absolute text-yellow-300 animate-star-twinkle" style={{
+            left: `${8 + i * 15}%`, top: `${3 + (i % 2) * 6}%`,
+            fontSize: `${10 + (i % 3) * 5}px`, animationDelay: `${i * 0.5}s`
+          }}>✦</div>
+        ))}
+      </div>
+
+
+
+      {/* Header */}
+      <header className="relative z-20 flex items-center justify-between px-6 py-4">
+        <Link to="/" className="text-[#1A3A5C] font-black text-sm flex items-center gap-1 hover:opacity-70 transition-opacity">
+          ← Back
         </Link>
-        <Logo size={80} />
-        <div className="w-16" /> {/* Spacer */}
+        <Logo size={40} />
+        <div className="w-16" />
       </header>
 
-      {/* Main Content Area - Compact and Centered */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="max-w-[720px] w-full bg-[#F8FAFC] rounded-[40px] overflow-hidden flex flex-col md:flex-row border border-gray-100 group shadow-none">
-          
-          {/* Left Side Visual - Integrated Asset */}
-          <div className="md:w-5/12 bg-[#F1F5F9] relative overflow-hidden hidden md:block">
-            <img 
-               src={authBg} 
-               alt="Soma Learning" 
-               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 brightness-[0.85]"
-            />
-            {/* User-requested Integrated Fade */}
-            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#F8FAFC] to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#F8FAFC]/20" />
-            
-            <div className="absolute bottom-8 left-8 right-8 z-10">
-              <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1">Account Portal</p>
-              <h2 className="text-xl font-black text-white leading-tight">Welcome home, <br/> Scholar.</h2>
-            </div>
+      {/* Main login card */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8">
+        
+        {/* Floating Mascot in the middle, upward */}
+        <div className="flex items-end justify-center mb-[-2rem] relative z-20 pointer-events-none">
+          <div className="h-40 w-40 animate-float-slow" style={{ animationDuration: "5s" }}>
+            <RiveAnimation src="/riv-animations/5573-10970-login2.riv" className="w-full h-full drop-shadow-2xl" />
+          </div>
+        </div>
+
+        <div className="card-cloud w-full max-w-sm p-8 animate-slide-up relative z-10">
+          {/* Title */}
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-2">👋</div>
+            <h1 className="text-2xl font-black text-[#1A3A5C]">Welcome back!</h1>
+            <p className="text-sm font-semibold text-[#4A6A8A] mt-1">Sign in to continue your adventure</p>
           </div>
 
-          {/* Right Side: Form */}
-          <div className="w-full md:w-7/12 p-8 lg:p-12 space-y-8 relative z-10 bg-[#F8FAFC]">
-            <div className="space-y-1 text-center md:text-left">
-              <h1 className="text-2xl font-black tracking-tighter text-[#0F172A]">Identify Yourselves</h1>
-              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Connect to your personal study hub</p>
+          {/* Role Toggle */}
+          <div className="flex p-1 rounded-2xl mb-6" style={{ background: "rgba(74,144,217,0.1)" }}>
+            <button
+              id="role-student"
+              onClick={() => setRole("student")}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-black transition-all ${
+                role === "student"
+                  ? "bg-white text-[#4A90D9] shadow-md"
+                  : "text-[#4A6A8A]"
+              }`}
+            >
+              🎒 Student
+            </button>
+            <button
+              id="role-teacher"
+              onClick={() => setRole("teacher")}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-black transition-all ${
+                role === "teacher"
+                  ? "bg-white text-[#4A90D9] shadow-md"
+                  : "text-[#4A6A8A]"
+              }`}
+            >
+              👩‍🏫 Teacher
+            </button>
+          </div>
+
+          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            {/* Student ID */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                Student ID
+              </label>
+              <input
+                id="input-student-id"
+                type="text"
+                placeholder="SOMA-XXXX-XXXX"
+                className="w-full h-12 rounded-2xl px-5 text-sm font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+              />
             </div>
 
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B] ml-2">Student ID</label>
-                <input 
-                  type="text" 
-                  placeholder="SOMA-XXXX-XXXX"
-                  className="w-full h-12 bg-white rounded-2xl px-6 border border-transparent focus:border-[#2563EB] text-sm font-bold placeholder:text-[#94A3B8] transition-all outline-none"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-1.5 relative">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B] ml-2">Your School</label>
-                <input 
-                  type="text" 
-                  placeholder="Search your school..."
-                  className="w-full h-12 bg-white rounded-2xl px-6 border border-transparent focus:border-[#2563EB] text-sm font-bold placeholder:text-[#94A3B8] transition-all outline-none"
-                  value={school}
-                  onFocus={() => setShowSchools(true)}
-                  onChange={(e) => {
-                    setSchool(e.target.value);
-                    setShowSchools(true);
-                  }}
-                />
-                
-                {showSchools && filteredSchools.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 overflow-hidden z-50 shadow-none">
-                    <div className="max-h-40 overflow-y-auto">
-                      {filteredSchools.map(s => (
-                        <button 
-                          key={s}
-                          className="w-full px-6 py-3 text-left text-xs font-bold hover:bg-[#F1F5F9] transition-colors text-[#64748B] hover:text-[#2563EB]"
-                          onClick={() => {
-                            setSchool(s);
-                            setShowSchools(false);
-                          }}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
+            {/* School */}
+            <div className="space-y-1.5 relative">
+              <label className="text-xs font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                Your School
+              </label>
+              <input
+                id="input-school"
+                type="text"
+                placeholder="Search your school..."
+                className="w-full h-12 rounded-2xl px-5 text-sm font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                value={school}
+                onFocus={() => setShowSchools(true)}
+                onChange={(e) => { setSchool(e.target.value); setShowSchools(true); }}
+              />
+              {showSchools && filteredSchools.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border-2 border-[#E8F0FF] overflow-hidden z-50 shadow-lg">
+                  <div className="max-h-36 overflow-y-auto">
+                    {filteredSchools.map(s => (
+                      <button
+                        key={s}
+                        className="w-full px-5 py-2.5 text-left text-xs font-bold hover:bg-[#F0F8FF] transition-colors text-[#4A6A8A] hover:text-[#4A90D9]"
+                        onClick={() => { setSchool(s); setShowSchools(false); }}
+                      >
+                        🏫 {s}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B] ml-2">Password</label>
-                <input 
-                  type="password" 
-                  placeholder="••••••••"
-                  className="w-full h-12 bg-white rounded-2xl px-6 border border-transparent focus:border-[#2563EB] text-sm font-bold placeholder:text-[#94A3B8] transition-all outline-none"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <div className="pt-2">
-                <div className="flex p-1 bg-white rounded-xl w-full border border-gray-100">
-                  <button 
-                    onClick={() => setRole("student")}
-                    className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${role === "student" ? "bg-[#2563EB] text-white" : "text-[#64748B] hover:text-[#0F172A]"}`}
-                  >
-                    Student
-                  </button>
-                  <button 
-                    onClick={() => setRole("teacher")}
-                    className={`flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${role === "teacher" ? "bg-[#2563EB] text-white" : "text-[#64748B] hover:text-[#0F172A]"}`}
-                  >
-                    Teacher
-                  </button>
                 </div>
-              </div>
+              )}
+            </div>
 
-              <Button className="w-full h-14 rounded-2xl bg-[#00C36B] hover:bg-[#00B060] text-white font-black text-xs uppercase tracking-widest transition-transform hover:scale-[1.02] active:scale-95" asChild>
-                <Link to={role === "student" ? "/student" : "/teacher"}>Initiate Access</Link>
-              </Button>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                Password
+              </label>
+              <input
+                id="input-password"
+                type="password"
+                placeholder="••••••••"
+                className="w-full h-12 rounded-2xl px-5 text-sm font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase text-[#94A3B8] font-bold bg-[#F8FAFC] px-2 tracking-widest">
-                  Or Quick Demo
-                </div>
-              </div>
+            {/* Sign In Button */}
+            <Link
+              to={role === "student" ? "/student" : "/teacher"}
+              id="btn-login-submit"
+              className="btn-play btn-play-primary w-full py-4 text-base font-black block text-center mt-2"
+            >
+              Let's Go! 🚀
+            </Link>
+          </form>
 
-              <div className="flex gap-4">
-                 <Button variant="outline" className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#2563EB] border-[#2563EB]/30 hover:bg-[#2563EB]/5 bg-white" asChild>
-                    <Link to="/student">Demo Student</Link>
-                 </Button>
-                 <Button variant="outline" className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#0F172A] border-[#0F172A]/30 hover:bg-gray-100 bg-white" asChild>
-                    <Link to="/teacher">Demo Teacher</Link>
-                 </Button>
-              </div>
-            </form>
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-0.5 rounded-full" style={{ background: "rgba(74,144,217,0.15)" }} />
+            <span className="text-xs font-bold text-[#4A6A8A]">or try a demo</span>
+            <div className="flex-1 h-0.5 rounded-full" style={{ background: "rgba(74,144,217,0.15)" }} />
+          </div>
+
+          {/* Demo Buttons */}
+          <div className="flex gap-3">
+            <Link
+              to="/student"
+              id="btn-demo-student"
+              className="btn-play btn-play-secondary flex-1 py-3 text-xs font-black"
+            >
+              🎒 Demo Student
+            </Link>
+            <Link
+              to="/teacher"
+              id="btn-demo-teacher"
+              className="btn-play btn-play-secondary flex-1 py-3 text-xs font-black"
+            >
+              👩‍🏫 Demo Teacher
+            </Link>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-12 px-8">
-        <p className="text-[10px] font-bold text-center text-[#94A3B8] uppercase tracking-widest transition-all hover:text-[#64748B]">© 2026 Soma AI · Authentic African Education</p>
+      <footer className="relative z-10 py-4 text-center">
+        <p className="text-xs font-bold text-[#1A3A5C] opacity-60">© 2026 Soma AI · Authentic African Education 🌍</p>
       </footer>
     </div>
+  );
+}
+
+function CloudShape({ width = 120, opacity = 0.9 }: { width?: number; opacity?: number }) {
+  const h = width * 0.55;
+  return (
+    <svg width={width} height={h} viewBox="0 0 120 66" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity }}>
+      <ellipse cx="60" cy="46" rx="55" ry="20" fill="white" />
+      <circle cx="38" cy="38" r="20" fill="white" />
+      <circle cx="62" cy="28" r="26" fill="white" />
+      <circle cx="85" cy="38" r="18" fill="white" />
+    </svg>
   );
 }

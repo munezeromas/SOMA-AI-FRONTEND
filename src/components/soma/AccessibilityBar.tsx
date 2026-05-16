@@ -1,14 +1,67 @@
-import { useEffect, useState } from "react";
+/**
+ * AccessibilityBar.tsx
+ *
+ * Updated version — the "AI Voice" toggle now controls whether the avatar
+ * speaks (via the isMuted prop on TalkingChatbot), rather than running a
+ * parallel browser speechSynthesis that would clash with TalkingHead audio.
+ *
+ * The page-announcement TTS (reads out the route name on navigation) still
+ * uses the browser's speechSynthesis, but it cancels before speaking so it
+ * never overlaps with the avatar.
+ *
+ * Place this file at:  src/components/AccessibilityBar.tsx
+ *
+ * IMPORTANT: The AccessibilityBar no longer controls avatar speech directly.
+ * Instead it exposes a boolean via the AvatarMuteContext so TalkingChatbot
+ * can read it. Wrap your StudentLayout (or App root) with
+ * <AvatarMuteProvider> and pass isMuted={useAvatarMuted()} to TalkingChatbot.
+ */
+
+import { useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { Type, Eye, Volume2, Contrast, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Eye, Volume2, Moon, Sun } from "lucide-react";
+
+// ── Avatar mute context ────────────────────────────────────────────────────
+// This lets the AccessibilityBar's "AI Voice" toggle propagate to
+// TalkingChatbot without prop-drilling through every layout level.
+
+interface AvatarMuteContextValue {
+  avatarMuted: boolean;
+  setAvatarMuted: (v: boolean) => void;
+}
+
+const AvatarMuteContext = createContext<AvatarMuteContextValue>({
+  avatarMuted: false,
+  setAvatarMuted: () => {},
+});
+
+export function AvatarMuteProvider({ children }: { children: ReactNode }) {
+  const [avatarMuted, setAvatarMuted] = useState(false);
+  return (
+    <AvatarMuteContext.Provider value={{ avatarMuted, setAvatarMuted }}>
+      {children}
+    </AvatarMuteContext.Provider>
+  );
+}
+
+/** Use this hook in TalkingChatbot: const { avatarMuted } = useAvatarMuted() */
+export function useAvatarMuted() {
+  return useContext(AvatarMuteContext);
+}
+
+// ── AccessibilityBar component ─────────────────────────────────────────────
 
 export function AccessibilityBar() {
   const [open, setOpen] = useState(false);
   const [dyslexic, setDyslexic] = useState(false);
   const [contrast, setContrast] = useState(false);
-  const [speechEnabled, setSpeechEnabled] = useState(false);
   const [fontScale, setFontScale] = useState(1);
+
+  // "AI Voice" now means: should the avatar speak?
+  // We read/write from the shared context so TalkingChatbot can observe it.
+  const { avatarMuted, setAvatarMuted } = useAvatarMuted();
+  const aiVoiceEnabled = !avatarMuted;
+
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("soma-theme") as "light" | "dark") || "dark";
@@ -18,6 +71,7 @@ export function AccessibilityBar() {
 
   const path = useRouterState({ select: (s) => s.location.pathname });
 
+  // Apply DOM-level accessibility settings
   useEffect(() => {
     document.documentElement.classList.toggle("font-dyslexic", dyslexic);
     document.documentElement.classList.toggle("high-contrast", contrast);
@@ -26,22 +80,33 @@ export function AccessibilityBar() {
     localStorage.setItem("soma-theme", theme);
   }, [dyslexic, contrast, fontScale, theme]);
 
+  // Route-change page announcements via browser TTS
+  // (separate from avatar speech — this just names the current page)
   useEffect(() => {
-    if (!speechEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
-    
+    // Only announce if AI voice is enabled and the browser supports it
+    if (!aiVoiceEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
+
+    // Cancel whatever TalkingHead or a previous announcement was saying
     window.speechSynthesis.cancel();
-    
+
     let text = "You are currently on " + path;
-    if (path.includes("planner")) text = "You are now on the study planner. You can algorithmically synthesize your schedule.";
-    else if (path.includes("library")) text = "You are now on the library page. This is the ability program curated selection of books. Press any key to interact with the books.";
-    else if (path.includes("games")) text = "You are now in the Interactive Hub. Engage in cognitive training with your Rive animations.";
-    else if (path.includes("videos")) text = "You are now on the Youtube viewing page. Press any key different from the space bar key to interact.";
-    else if (path.includes("tutor")) text = "You are now with the central AI Tutor. Feel free to formulate any question.";
-    else if (path === "/student") text = "You are now on the home page. Would you wish to ask your AI anything, I recommend you to press any key and feel free to ask. Do you wanna go to another page, press the space bar key.";
+    if (path.includes("planner"))
+      text = "You are now on the study planner. You can algorithmically synthesize your schedule.";
+    else if (path.includes("library"))
+      text = "You are now on the library page. This is the Soma AI curated selection of books. Press any key to interact with the books.";
+    else if (path.includes("games"))
+      text = "You are now in the Interactive Hub. Engage in cognitive training with your Rive animations.";
+    else if (path.includes("videos"))
+      text = "You are now on the YouTube viewing page. Press any key different from the space bar to interact.";
+    else if (path.includes("tutor"))
+      text = "You are now with Soma AI. Feel free to ask me anything — I will speak my answers out loud.";
+    else if (path === "/student")
+      text = "You are now on the home page. Press any key to interact, or press space to navigate to another page.";
 
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
     window.speechSynthesis.speak(utterance);
-    
+
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === " " || e.key === "Enter") {
         window.speechSynthesis.cancel();
@@ -49,51 +114,114 @@ export function AccessibilityBar() {
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [path, speechEnabled]);
+  }, [path, aiVoiceEnabled]);
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {open && (
-        <div className="mb-2 rounded-2xl border border-white/10 bg-card p-4 space-y-3 w-64 animate-fade-in shadow-soft">
-          <h3 className="font-bold text-sm flex items-center gap-2"><Eye className="h-4 w-4" /> Accessibility</h3>
-          <label className="flex items-center justify-between text-sm">
+        <div
+          className="mb-3 rounded-3xl p-5 space-y-3 w-64 animate-pop-in"
+          style={{
+            background: "rgba(255,255,255,0.95)",
+            border: "3px solid rgba(255,255,255,0.9)",
+            boxShadow: "0 12px 40px rgba(74,144,217,0.25)",
+            fontFamily: "'Nunito', sans-serif",
+          }}
+        >
+          <h3 className="font-black text-sm flex items-center gap-2 text-[#1A3A5C]">
+            <Eye className="h-4 w-4 text-[#4A90D9]" /> Accessibility
+          </h3>
+
+          {/* Dyslexic font */}
+          <label className="flex items-center justify-between text-sm font-bold text-[#1A3A5C]">
             <span>Dyslexic font</span>
-            <input type="checkbox" checked={dyslexic} onChange={(e) => setDyslexic(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={dyslexic}
+              onChange={(e) => setDyslexic(e.target.checked)}
+            />
           </label>
-          <label className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-2"><Volume2 className="h-4 w-4 text-primary" /> AI Auto-Speaker</span>
-            <input type="checkbox" checked={speechEnabled} onChange={(e) => setSpeechEnabled(e.target.checked)} />
+
+          {/* AI Voice — now controls avatar mute, not browser TTS for answers */}
+          <label className="flex items-center justify-between text-sm font-bold text-[#1A3A5C]">
+            <span className="flex items-center gap-2">
+              <Volume2 className="h-4 w-4 text-[#4A90D9]" /> AI Voice
+            </span>
+            <input
+              type="checkbox"
+              checked={aiVoiceEnabled}
+              onChange={(e) => setAvatarMuted(!e.target.checked)}
+            />
           </label>
-          <label className="flex items-center justify-between text-sm">
+
+          {/* High contrast */}
+          <label className="flex items-center justify-between text-sm font-bold text-[#1A3A5C]">
             <span>High contrast</span>
-            <input type="checkbox" checked={contrast} onChange={(e) => setContrast(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={contrast}
+              onChange={(e) => setContrast(e.target.checked)}
+            />
           </label>
-          <div className="flex items-center justify-between text-sm pt-1">
-             <span>Display Mode</span>
-             <div className="flex bg-muted rounded-lg p-1">
-                <button 
-                  onClick={() => setTheme("light")}
-                  className={`p-2 rounded-md transition-all ${theme === 'light' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <Sun className="h-4 w-4" />
-                </button>
-                <button 
-                  onClick={() => setTheme("dark")}
-                  className={`p-2 rounded-md transition-all ${theme === 'dark' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <Moon className="h-4 w-4" />
-                </button>
-             </div>
+
+          {/* Theme toggle */}
+          <div className="flex items-center justify-between text-sm font-bold text-[#1A3A5C] pt-1">
+            <span>Theme</span>
+            <div className="flex rounded-xl p-1" style={{ background: "rgba(74,144,217,0.1)" }}>
+              <button
+                onClick={() => setTheme("light")}
+                aria-label="Light mode"
+                className={`p-1.5 rounded-lg transition-all ${
+                  theme === "light" ? "bg-white shadow text-[#4A90D9]" : "text-[#4A6A8A]"
+                }`}
+              >
+                <Sun className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setTheme("dark")}
+                aria-label="Dark mode"
+                className={`p-1.5 rounded-lg transition-all ${
+                  theme === "dark" ? "bg-white shadow text-[#4A90D9]" : "text-[#4A6A8A]"
+                }`}
+              >
+                <Moon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+
+          {/* Font size */}
           <div>
-            <div className="flex justify-between text-sm mb-1"><span>Font size</span><span>{Math.round(fontScale*100)}%</span></div>
-            <input type="range" min="0.85" max="1.4" step="0.05" value={fontScale} onChange={(e) => setFontScale(Number(e.target.value))} className="w-full" />
+            <div className="flex justify-between text-sm font-bold text-[#1A3A5C] mb-1">
+              <span>Font size</span>
+              <span className="text-[#4A90D9]">{Math.round(fontScale * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.85"
+              max="1.4"
+              step="0.05"
+              value={fontScale}
+              onChange={(e) => setFontScale(Number(e.target.value))}
+              className="w-full accent-[#4A90D9]"
+            />
           </div>
         </div>
       )}
-      <Button size="icon" onClick={() => setOpen(!open)} className="rounded-full h-12 w-12 border-none bg-[#0F172A] hover:bg-[#1E293B] text-white shadow-none" aria-label="Accessibility">
+
+      {/* FAB trigger */}
+      <button
+        onClick={() => setOpen(!open)}
+        id="btn-accessibility"
+        aria-label="Accessibility settings"
+        className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, #4A90D9, #2D6DB5)",
+          boxShadow: "0 6px 0 #1A4E8A, 0 8px 20px rgba(74,144,217,0.4)",
+          color: "white",
+        }}
+      >
         <Eye className="h-5 w-5" />
-      </Button>
+      </button>
     </div>
   );
 }

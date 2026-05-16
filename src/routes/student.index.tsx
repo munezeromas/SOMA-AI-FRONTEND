@@ -1,194 +1,252 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { STUDENT, QUOTES, MASTERY } from "@/lib/mock-data";
-import {
-  Zap, TrendingUp, Brain, BookOpen, ArrowRight,
-  MessageCircle, Youtube, Gamepad2, Calendar, Sparkles, Star
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
-import girlsLearning from "../37 Powerful Images of Girls Learning Around the World.jpg";
-import kpsImage from "../kps.jpg";
 
-export const Route = createFileRoute("/student/")(  {
-  head: () => ({ meta: [{ title: "Dashboard — Soma AI" }] }),
+export const Route = createFileRoute("/student/")({
+  head: () => ({ meta: [{ title: "My World — Soma AI" }] }),
   component: Dashboard,
 });
 
-const QUICK_LINKS = [
-  { to: "/student/tutor",   label: "AI Tutor",    icon: MessageCircle, color: "#00C36B", glow: "rgba(0,195,107,0.3)" },
-  { to: "/student/videos",  label: "Videos",      icon: Youtube,       color: "#6366F1", glow: "rgba(99,102,241,0.3)" },
-  { to: "/student/games",   label: "Games",       icon: Gamepad2,      color: "#F97316", glow: "rgba(249,115,22,0.3)" },
-  { to: "/student/planner", label: "Planner",     icon: Calendar,      color: "#FACC15", glow: "rgba(234,179,8,0.3)" },
+const ISLANDS = [
+  {
+    id: "math",
+    to: "/student/videos?filter=Math",
+    label: "Math",
+    img: "/island-math.png",
+    color: "#4A90D9",
+    shadow: "rgba(74,144,217,0.4)",
+    badge: "P1–P6",
+    badgeColor: "#4A90D9",
+    emoji: "🧮",
+  },
+  {
+    id: "reading",
+    to: "/student/library",
+    label: "Reading & Writing",
+    img: "/island-reading.png",
+    color: "#2ECC71",
+    shadow: "rgba(46,204,113,0.4)",
+    badge: "P1–P6",
+    badgeColor: "#2ECC71",
+    emoji: "📚",
+  },
+  {
+    id: "ai",
+    to: "/student/tutor",
+    label: "AI Tutor",
+    img: "/island-ai.png",
+    color: "#FF9500",
+    shadow: "rgba(255,149,0,0.4)",
+    badge: "All Grades",
+    badgeColor: "#FF9500",
+    emoji: "🤖",
+  },
+];
+
+const QUICK_ACTIONS = [
+  { to: "/student/ai-quizzes", label: "AI Quiz", emoji: "✨", color: "#9B59B6", bg: "rgba(155,89,182,0.12)" },
+  { to: "/student/games", label: "Games", emoji: "🎮", color: "#FF6B6B", bg: "rgba(255,107,107,0.12)" },
+  { to: "/student/simplify", label: "Simplify", emoji: "📝", color: "#4A90D9", bg: "rgba(74,144,217,0.12)" },
+  { to: "/student/planner", label: "Planner", emoji: "📅", color: "#2ECC71", bg: "rgba(46,204,113,0.12)" },
+  { to: "/student/videos", label: "Videos", emoji: "📺", color: "#E74C3C", bg: "rgba(231,76,60,0.12)" },
+  { to: "/student/progress", label: "Progress", emoji: "📈", color: "#FF9500", bg: "rgba(255,149,0,0.12)" },
 ];
 
 function Dashboard() {
   const quote = QUOTES[new Date().getDay() % QUOTES.length];
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-7xl">
+    <div className="space-y-8 max-w-screen-2xl mx-auto px-2">
 
-      {/* ── HERO GREETING ──────────────────────────────────── */}
-      <div className="relative rounded-[40px] overflow-hidden p-10 min-h-[280px] flex flex-col justify-center group"
-           style={{ background: "linear-gradient(135deg, #0D1424 0%, #080C14 100%)", border: "1px solid rgba(255,255,255,0.05)" }}>
-        
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-          <RiveAnimation src="/riv-animations/413-3213-chill-study-time.riv" className="w-full h-full object-cover" />
+      {/* ── GREETING BANNER ── */}
+      <div
+        className="card-cloud p-6 flex items-center justify-between gap-4 animate-pop-in"
+      >
+        <div>
+          <p className="text-sm font-bold text-[#4A6A8A] mb-0.5">Welcome back! 👋</p>
+          <h1 className="text-2xl font-black text-[#1A3A5C]">
+            Hey, <span style={{ color: "#4A90D9" }}>{STUDENT.name.split(" ")[0]}!</span>
+          </h1>
+          <p className="text-sm font-semibold text-[#4A6A8A] mt-1 italic max-w-xs leading-relaxed">
+            "{quote}"
+          </p>
         </div>
-        
-        <div className="absolute top-0 right-0 h-96 w-96 rounded-full pointer-events-none opacity-20 blur-[100px] animate-pulse"
-             style={{ background: "radial-gradient(circle, #00C36B 0%, transparent 70%)" }} />
-        <div className="absolute -bottom-20 -left-20 h-96 w-96 rounded-full pointer-events-none opacity-10 blur-[80px]"
-             style={{ background: "radial-gradient(circle, #6366F1 0%, transparent 70%)" }} />
-
-        <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-               <Sparkles className="h-3 w-3 text-primary" />
-               <span className="text-[10px] font-black text-primary uppercase tracking-widest">Personalized Mentor Active</span>
-            </div>
-            <h1 className="text-6xl font-black text-white tracking-tighter leading-none">
-               Good day, <br />
-               <span className="text-primary italic">{STUDENT.name}</span>
-            </h1>
-            <p className="text-lg text-white/50 font-medium leading-relaxed max-w-sm italic">
-               "{quote}"
-            </p>
-          </div>
-
-          <div className="relative flex justify-center items-center">
-             <div className="grid grid-cols-2 gap-4 w-full relative z-10">
-                {[
-                  { label: "Day Streak", value: STUDENT.streak, unit: "Days", icon: Zap, color: "#FACC15" },
-                  { label: "Mastery", value: "92%", unit: "Avg", icon: Star, color: "#00C36B" },
-                ].map((stat, i) => (
-                  <div key={i} className="p-6 rounded-[32px] glass space-y-4 hover:scale-105 transition-all duration-500 border-white/5 bg-[#0A1020]/40 backdrop-blur-md">
-                    <div className="h-10 w-10 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10 text-white/40">
-                      <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
-                    </div>
-                    <div>
-                      <div className="text-3xl font-black text-white leading-none">{stat.value}</div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">{stat.label}</div>
-                    </div>
-                  </div>
-                ))}
-             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── QUICK LAUNCH ───────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-        {QUICK_LINKS.map(l => (
-          <Link key={l.to} to={l.to}
-            className="group flex flex-col items-center gap-4 p-6 rounded-[32px] transition-all hover:-translate-y-2 relative overflow-hidden bg-[#0A1020] border border-white/5"
+        <div className="flex flex-col gap-2 shrink-0">
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm"
+            style={{ background: "rgba(255,200,0,0.15)", color: "#CC8800", border: "2px solid rgba(255,200,0,0.3)" }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center relative transition-transform group-hover:scale-110"
-                 style={{ background: `${l.glow}20`, border: `1px solid ${l.glow}40` }}>
-              <l.icon className="h-7 w-7" style={{ color: l.color }} />
-              <div className="absolute inset-0 blur-xl opacity-50 transition-opacity group-hover:opacity-100" style={{ background: l.color }} />
-            </div>
-            <span className="text-sm font-black text-white/80 group-hover:text-white transition-colors uppercase tracking-widest">{l.label}</span>
-          </Link>
-        ))}
+            🔥 {STUDENT.streak} day streak
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-sm"
+            style={{ background: "rgba(74,144,217,0.12)", color: "#4A90D9", border: "2px solid rgba(74,144,217,0.2)" }}
+          >
+            ⭐ Level {STUDENT.level}
+          </div>
+        </div>
       </div>
 
+      {/* ── SUBJECT ISLANDS ── */}
+      <div>
+        <h2 className="text-lg font-black text-[#1A3A5C] mb-4 flex items-center gap-2">
+          🏝️ Choose Your World
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {ISLANDS.map((island, i) => (
+            <Link
+              key={island.id}
+              to={island.to}
+              id={`island-${island.id}`}
+              className="card-island flex flex-col items-center text-center p-8 transition-transform hover:-translate-y-2 hover:shadow-2xl animate-pop-in"
+              style={{ animationDelay: `${i * 0.12}s` }}
+            >
+              {/* Island Image */}
+              <div className="relative w-full mb-5">
+                <div
+                  className="w-full h-56 rounded-[2rem] overflow-hidden flex items-center justify-center animate-float-island"
+                  style={{
+                    animationDelay: `${i * 0.8}s`,
+                    background: `linear-gradient(135deg, ${island.color}18, ${island.color}32)`,
+                  }}
+                >
+                  <img
+                    src={island.img}
+                    alt={island.label}
+                    className="w-full h-full object-cover drop-shadow-lg"
+                    onError={(e) => {
+                      // Fallback to emoji if image fails
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.parentElement!.innerHTML = `<span style="font-size:80px;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.15))">${island.emoji}</span>`;
+                    }}
+                  />
+                </div>
+              </div>
 
-      {/* ── MAIN GRID ──────────────────────────────────────── */}
+              {/* Island label */}
+              <h3
+                className="text-2xl font-black tracking-wide mb-2"
+                style={{
+                  color: island.color,
+                  textShadow: `0 2px 8px ${island.shadow}`,
+                }}
+              >
+                {island.label}
+              </h3>
+              {/* Grade badge */}
+              <span
+                className="pill-badge text-white text-sm mt-1 px-4 py-1.5"
+                style={{ background: island.color, boxShadow: `0 4px 10px ${island.shadow}` }}
+              >
+                {island.badge}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── QUICK ACTIONS ── */}
+      <div>
+        <h2 className="text-lg font-black text-[#1A3A5C] mb-3 flex items-center gap-2">
+          ⚡ Quick Actions
+        </h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {QUICK_ACTIONS.map((a, i) => (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="card-cloud flex flex-col items-center gap-3 p-6 text-center group animate-pop-in hover:scale-105 transition-transform"
+              style={{ animationDelay: `${0.3 + i * 0.07}s` }}
+            >
+              <div
+                className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center text-4xl transition-transform group-hover:-translate-y-1"
+                style={{ background: a.bg, border: `2px solid ${a.color}30` }}
+              >
+                {a.emoji}
+              </div>
+              <span className="text-sm font-black tracking-wide" style={{ color: a.color }}>{a.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── MAIN GRID: Mastery + AI Tutor ── */}
       <div className="grid lg:grid-cols-3 gap-6">
 
-        {/* Left: Course cards + Mastery */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Course cards */}
+        {/* Mastery bars */}
+        <div className="lg:col-span-2 card-cloud p-8 space-y-6">
+          <h2 className="font-black text-[#1A3A5C] flex items-center gap-2 text-xl">
+            📊 Subject Mastery
+          </h2>
           <div className="grid sm:grid-cols-2 gap-6">
-            {[
-              { img: kpsImage,       icon: Brain,     title: "Mathematical Patterns",  desc: "Algebraic fractions and geometric logic", link: "/student/videos?filter=Math" },
-              { img: girlsLearning,  icon: BookOpen,  title: "Linguistic Logic",        desc: "Advanced narrative structures and syntax", link: "/student/videos?filter=English" },
-            ].map(card => (
-              <Link to={card.link} key={card.title}
-                className="relative rounded-3xl overflow-hidden h-64 flex flex-col hover:-translate-y-1 transition-all duration-500 group"
-                style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                <img src={card.img} className="absolute inset-0 h-full w-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-60 transition-all duration-1000 group-hover:scale-105" />
-                <div className="absolute inset-x-0 bottom-0 h-3/4" style={{ background: "linear-gradient(to top, rgba(8,12,20,0.95) 0%, transparent 100%)" }} />
-                <div className="relative z-10 flex-1 flex flex-col justify-end p-6 space-y-2">
-                  <div className="h-9 w-9 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                    <card.icon className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-xl font-black text-white tracking-tight">{card.title}</h3>
-                  <p className="text-xs text-white/60 font-medium">{card.desc}</p>
-                  <div className="flex items-center gap-1 text-xs font-black uppercase tracking-widest" style={{ color: "#00C36B" }}>
-                    Start <ArrowRight className="h-3 w-3" />
-                  </div>
+            {MASTERY.map((m) => (
+              <div key={m.subject} className="space-y-2">
+                <div className="flex justify-between text-sm font-black">
+                  <span className="text-[#1A3A5C]">{m.subject}</span>
+                  <span style={{ color: m.value > 80 ? "#2ECC71" : "#4A90D9" }}>{m.value}%</span>
                 </div>
-              </Link>
+                <div className="progress-bar-track h-5 relative">
+                  <div
+                    className="progress-bar-fill"
+                    style={{
+                      width: `${m.value}%`,
+                      background: m.value > 80
+                        ? "linear-gradient(90deg, #2ECC71, #27AE60)"
+                        : "linear-gradient(90deg, #4A90D9, #2D6DB5)",
+                      boxShadow: m.value > 80
+                        ? "0 0 8px rgba(46,204,113,0.5)"
+                        : "0 0 8px rgba(74,144,217,0.5)",
+                    }}
+                  />
+                </div>
+              </div>
             ))}
-          </div>
-
-          {/* Mastery bars */}
-          <div className="rounded-3xl p-6 space-y-5" style={{ background: "#0E1524", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: "#7B8DB0" }}>Subject Mastery</h2>
-            <div className="grid sm:grid-cols-2 gap-x-10 gap-y-5">
-              {MASTERY.map(m => (
-                <div key={m.subject} className="space-y-2">
-                  <div className="flex justify-between text-xs font-black uppercase tracking-widest">
-                    <span className="text-white">{m.subject}</span>
-                    <span style={{ color: m.value > 80 ? "#00C36B" : "#818CF8" }}>{m.value}%</span>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-1000"
-                      style={{
-                        width: `${m.value}%`,
-                        background: m.value > 80
-                          ? "linear-gradient(90deg, #00C36B, #00FF94)"
-                          : "linear-gradient(90deg, #6366F1, #818CF8)",
-                        boxShadow: m.value > 80 ? "0 0 8px rgba(0,195,107,0.5)" : "0 0 8px rgba(99,102,241,0.5)"
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Right: AI Tutor CTA + Badges */}
+        {/* AI Tutor CTA */}
         <div className="space-y-6">
-          {/* Tutor CTA */}
-          <div className="rounded-3xl p-6 relative overflow-hidden"
-               style={{ background: "linear-gradient(135deg, #00C36B15 0%, #00956E08 100%)", border: "1px solid rgba(0,195,107,0.2)" }}>
-            <div className="absolute -top-6 -right-6 h-32 w-32 rounded-full"
-                 style={{ background: "radial-gradient(circle, rgba(0,195,107,0.12) 0%, transparent 70%)" }} />
-            <div className="relative z-10 space-y-3">
-              <div className="h-12 w-12 rounded-2xl flex items-center justify-center"
-                   style={{ background: "rgba(0,195,107,0.15)", border: "1px solid rgba(0,195,107,0.3)" }}>
-                <MessageCircle className="h-6 w-6" style={{ color: "#00C36B" }} />
-              </div>
-              <h3 className="text-2xl font-black text-white tracking-tight">Chat with <br />Soma AI</h3>
-              <p className="text-xs font-medium leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Get instant help with any subject, grammar tips, and personalized explanations.
-              </p>
-              <Link to="/student/tutor"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-black text-white transition-all hover:scale-[1.02] active:scale-95 mt-2"
-                style={{ background: "linear-gradient(135deg, #00C36B, #00956E)", boxShadow: "0 0 20px rgba(0,195,107,0.25)" }}>
-                Start Session <ArrowRight className="h-4 w-4" />
-              </Link>
+          <div
+            className="card-cloud p-8 text-center relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, rgba(74,144,217,0.12), rgba(46,204,113,0.08))" }}
+          >
+            {/* designer-in-space ambient background */}
+            <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.1 }}>
+              <RiveAnimation src="/riv-animations/11058-21184-designer-in-space.riv" className="w-full h-full" />
             </div>
+            {/* Bot mascot for AI Tutor */}
+            <div className="relative z-10 h-32 w-32 mx-auto mb-3">
+              <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full" />
+            </div>
+            <h3 className="relative z-10 text-2xl font-black text-[#1A3A5C] mb-2">Chat with Soma AI</h3>
+            <p className="relative z-10 text-sm font-semibold text-[#4A6A8A] mb-5 leading-relaxed">
+              Ask anything! Get instant help with any subject.
+            </p>
+            <Link
+              to="/student/tutor"
+              id="btn-start-tutor"
+              className="btn-play btn-play-primary w-full py-4 text-base font-black flex items-center justify-center gap-2 relative z-10"
+            >
+              Start Chat <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
           {/* Badges */}
-          <div className="rounded-3xl p-6 space-y-4" style={{ background: "#0E1524", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: "#7B8DB0" }}>Your Badges</h3>
+          <div className="card-cloud p-6 space-y-4">
+            <h3 className="text-base font-black text-[#1A3A5C]">🏆 Your Badges</h3>
             <div className="grid grid-cols-2 gap-3">
               {STUDENT.badges.map((b, i) => {
-                const colors = ["#00C36B","#6366F1","#F97316","#FACC15"];
+                const colors = ["#4A90D9", "#2ECC71", "#FF9500", "#FF6B6B", "#9B59B6"];
                 const c = colors[i % colors.length];
                 return (
-                  <div key={b} className="rounded-2xl p-3 text-center space-y-1"
-                       style={{ background: `${c}10`, border: `1px solid ${c}25` }}>
-                    <div className="text-xl">⭐</div>
-                    <p className="text-[10px] font-black text-white leading-tight">{b}</p>
+                  <div
+                    key={b}
+                    className="rounded-2xl p-4 text-center space-y-2"
+                    style={{ background: `${c}15`, border: `2px solid ${c}30` }}
+                  >
+                    <div className="text-3xl">⭐</div>
+                    <p className="text-xs font-black text-[#1A3A5C] leading-tight">{b}</p>
                   </div>
                 );
               })}

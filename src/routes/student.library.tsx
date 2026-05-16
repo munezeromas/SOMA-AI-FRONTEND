@@ -14,7 +14,7 @@ function Library() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
-  const books = LIBRARY_BOOKS.filter(b => b.type === "PB" && 
+  const books = LIBRARY_BOOKS.filter(b => 
     (filter === "All" || b.grade === filter) &&
     (b.title.toLowerCase().includes(search.toLowerCase()) || b.subject.toLowerCase().includes(search.toLowerCase()))
   );

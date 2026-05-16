@@ -1,270 +1,264 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Logo } from "@/components/soma/Logo";
-import { Button } from "@/components/ui/button";
-import africaTeaching from "../Outdoor teaching in africa_ browse and download images — Yandex Images.jpg";
-import girlsLearning from "../37 Powerful Images of Girls Learning Around the World.jpg";
-import { 
-  ChevronDown, 
-  Brain, 
-  BookOpen, 
-  Star, 
-  TrendingUp, 
-  ArrowRight,
-  User
-} from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
+import { RiveAnimation } from "@/components/soma/RiveAnimation";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Soma AI — Learn Smarter with your AI study mentor" },
-      { name: "description", content: "AI-powered, inclusive learning platform for African students." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Soma AI Island" }] }),
   component: Index,
 });
 
-const FEATURES = [
-  { 
-    title: "Made for every learner", 
-    desc: "Dyslexia-friendly mode, large text, and read-aloud support.", 
-    icon: Brain, 
-    color: "bg-[#2563EB]",
-    img: girlsLearning
-  },
-  { 
-    title: "Simplify any note", 
-    desc: "Upload PDFs, photos or text and get an easier version with a glossary.", 
-    icon: BookOpen, 
-    color: "bg-[#00C36B]",
-    img: africaTeaching
-  },
-  { 
-    title: "AI quizzes from your notes", 
-    desc: "Practice with smart questions and get instant feedback.", 
-    icon: Star, 
-    color: "bg-[#F59E0B]",
-    img: girlsLearning
-  }
+// ── All student app features spread across ALL 5 islands ──
+const STOPS = [
+  // 🏜️ Desert island (LEFT) — 2 stops, sitting on the sandy island
+  { id:"home",      icon:"🏠", label:"Dashboard",  desc:"Your streaks, badges, XP & daily goals!",            left:"28%",  top:"37%" },
+  { id:"progress",  icon:"📊", label:"Progress",   desc:"Live charts tracking your subject mastery!",          left:"33%",  top:"50%" },
+
+  // 🌿 Pyramid / Jungle island (TOP CENTER) — 3 stops
+  { id:"tutor",     icon:"🤖", label:"Soma AI",    desc:"24/7 AI tutor — any subject, any time!",              left:"41%",  top:"25%" },
+  { id:"aiquiz",    icon:"✨", label:"AI Quiz",    desc:"Auto-generated quizzes tailored just for you!",       left:"54%",  top:"20%" },
+  { id:"simplify",  icon:"📝", label:"Simplify",   desc:"Paste anything hard — get it explained simply!",      left:"47%",  top:"33%" },
+
+  // 🧊 Ice / Volcano island (RIGHT) — 3 stops
+  { id:"quizzes",   icon:"⚡", label:"Quizzes",    desc:"Thousands of curriculum-aligned practice quizzes!",   left:"74%",  top:"24%" },
+  { id:"homework",  icon:"📚", label:"Homework",   desc:"Step-by-step AI homework help for every subject!",    left:"83%",  top:"35%" },
+  { id:"community", icon:"🌍", label:"Community",  desc:"Connect, share & learn with students island-wide!",   left:"78%",  top:"45%" },
+
+  // 🟢 Main center island — 4 stops
+  { id:"games",     icon:"🎮", label:"Games",      desc:"Learn while playing awesome educational games!",       left:"56%",  top:"57%" },
+  { id:"planner",   icon:"📅", label:"Planner",    desc:"Smart daily study planner to keep you on track!",     left:"42%",  top:"64%" },
+  { id:"read",      icon:"📖", label:"Reading",    desc:"Interactive reading & writing practice island!",       left:"63%",  top:"66%" },
+  { id:"videos",    icon:"📺", label:"Videos",     desc:"Fun explainer videos for every subject & topic!",     left:"50%",  top:"74%" },
+
+  // 🪨 Small bottom-left island — 2 stops (Library + Career)
+  { id:"library",   icon:"🏛️", label:"Library",    desc:"Unlock a huge book & notes library!",                 left:"21%",  top:"71%" },
+  { id:"career",    icon:"🚀", label:"Career",     desc:"Explore future career paths powered by AI!",          left:"30%",  top:"77%" },
 ];
 
+const CHR_MSGS = ["Let's learn something new! ✨","I love this island! 🏝️","Tap a stop to explore! 🎯","SOMA AI is my best friend! 🤖","Choose your world! 🌍"];
+
 function Index() {
+  const navigate = useNavigate();
+  const [modal, setModal]   = useState(false);
+  const [tab, setTab]       = useState<"login"|"signup">("signup");
+  const [speech, setSpeech] = useState("Tap any stop to explore! 🗺️");
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [muted, setMuted]   = useState(false);
+  const [sunAngle, setSunAngle] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Autoplay music on mount
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.volume = 0.45;
+    a.play().catch(() => {
+      // Browser blocked autoplay — play on first click
+      const unlock = () => { a.play().catch(()=>{}); document.removeEventListener("click", unlock); };
+      document.addEventListener("click", unlock);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.muted = muted;
+  }, [muted]);
+
+  useEffect(() => {
+    const t = setInterval(() => setSunAngle(a => a + 0.4), 40);
+    return () => clearInterval(t);
+  }, []);
+
+  const chrTap  = () => { setSpeech(CHR_MSGS[msgIdx % CHR_MSGS.length]); setMsgIdx(i=>i+1); };
+  const stopTap = (desc: string) => setSpeech("🏝️ " + desc.slice(0, 58));
+
   return (
-    <div className="min-h-screen bg-white text-[#0F172A] font-sans selection:bg-[#00C36B]/30">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 bg-white/95 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-          <Logo size={100} />
-          <div className="flex items-center gap-8">
-            <button className="flex items-center gap-2 text-sm font-bold text-[#64748B] hover:text-[#0F172A] transition-colors">
-              English <ChevronDown className="h-4 w-4" />
-            </button>
-            <Link to="/login" className="text-sm font-bold text-[#00C36B] hover:text-[#00B060] transition-colors">
-              Login
-            </Link>
-            <Button className="btn-soma-primary h-11 px-6 text-sm" asChild>
-              <Link to="/login">Get started</Link>
-            </Button>
-          </div>
+    <div style={{width:"100vw",height:"100vh",overflow:"hidden",position:"relative"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
+        *{box-sizing:border-box;}
+        .f1{font-family:'Fredoka One',cursive;}
+        .f2{font-family:'Nunito',sans-serif;font-weight:800;}
+        @keyframes drift  {from{transform:translateX(-260px)}to{transform:translateX(110vw)}}
+        @keyframes bob    {0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes sway   {0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+        @keyframes swim   {from{left:-80px}to{left:110vw}}
+        @keyframes swim2  {from{right:-80px}to{right:110vw}}
+        @keyframes tpulse {0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.3)}}
+        @keyframes xps    {0%,100%{opacity:1}50%{opacity:.6}}
+        @keyframes glow   {0%,100%{box-shadow:0 0 12px #ffe066,0 0 30px rgba(255,224,102,.3)}50%{box-shadow:0 0 24px #ffe066,0 0 55px rgba(255,224,102,.5)}}
+        @keyframes muspulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+        .stop-btn{cursor:pointer;transition:transform .2s,filter .2s;position:absolute;z-index:25;}
+        .stop-btn:hover{transform:scale(1.2) translateY(-7px);filter:brightness(1.1);}
+        .stop-btn:hover .tp{opacity:1;}
+        .tp{position:absolute;bottom:115%;left:50%;transform:translateX(-50%);background:#1a0044;color:#fff;border-radius:12px;padding:6px 12px;font-family:'Fredoka One',cursive;font-size:12px;white-space:nowrap;z-index:80;pointer-events:none;opacity:0;transition:opacity .2s;border:2px solid #7c4dff;}
+        .tp::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#7c4dff;}
+        .tgt{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:15px;animation:tpulse 1.4s ease-in-out infinite;}
+        .fi{width:100%;padding:10px 14px;border-radius:12px;border:2.5px solid #ddd;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#1a0044;margin-bottom:10px;outline:none;transition:border .2s;}
+        .fi:focus{border-color:#7c4dff;}
+        .gb{width:100%;padding:14px;border-radius:50px;border:none;background:linear-gradient(135deg,#7c4dff,#06b6d4);color:#fff;font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;margin-bottom:8px;border-bottom:4px solid #4a00cc;transition:transform .15s;}
+        .gb:hover{transform:scale(1.04);}
+        .fish-l{position:absolute;animation:swim linear infinite;}
+        .fish-r{position:absolute;animation:swim2 linear infinite;}
+      `}</style>
+
+      {/* AUDIO */}
+      <audio ref={audioRef} src="/landing page background music.mp3" loop />
+
+      {/* ── OCEAN / SKY BG ── */}
+      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,#87d4f5 0%,#a8e6f8 22%,#c2eefa 42%,#7ad3f0 60%,#3ab8e8 72%,#1a9fd4 82%,#0e7ab0 92%,#0a628f 100%)",zIndex:0}} />
+
+      {/* Animated wave shimmer on ocean */}
+      {[18,38,58,75].map((pct,i)=>(
+        <svg key={i} style={{position:"absolute",top:`${pct}%`,left:0,width:"100%",opacity:.22,zIndex:1,pointerEvents:"none"}} viewBox="0 0 800 18" preserveAspectRatio="none" height={14}>
+          <path d={`M0 9 Q100 ${i%2===0?2:16} 200 9 Q300 ${i%2===0?16:2} 400 9 Q500 ${i%2===0?2:16} 600 9 Q700 ${i%2===0?16:2} 800 9`} fill="none" stroke="white" strokeWidth="2"/>
+        </svg>
+      ))}
+
+      {/* Spinning sun */}
+      <div style={{position:"absolute",top:22,right:"10%",width:68,height:68,borderRadius:"50%",background:"#ffe066",animation:"glow 3s ease-in-out infinite",zIndex:5}}>
+        {Array.from({length:8}).map((_,i)=>(
+          <div key={i} style={{position:"absolute",width:5,height:20,background:"#ffe066",borderRadius:3,top:"50%",left:"50%",transformOrigin:"2.5px -28px",opacity:.85,transform:`rotate(${i*45+sunAngle}deg) translateX(-50%)`}} />
+        ))}
+      </div>
+
+      {/* Rainbow */}
+      <svg style={{position:"absolute",top:"2%",left:"2%",width:240,height:140,opacity:.5,pointerEvents:"none",zIndex:4}} viewBox="0 0 240 140">
+        {[["#ff6b6b",8],["#ff9500",7],["#ffd84d",7],["#4caf50",7],["#29b6f6",6],["#7c4dff",5]].map(([c,w],i)=>(
+          <path key={i} d={`M${6+i*10},135 Q120,${-10+i*14} ${234-i*10},135`} fill="none" stroke={c as string} strokeWidth={w as number}/>
+        ))}
+      </svg>
+
+      {/* Clouds */}
+      {[{dur:"42s",del:"0s",w:210,t:28},{dur:"58s",del:"-20s",w:160,t:60},{dur:"50s",del:"-33s",w:185,t:18},{dur:"35s",del:"-10s",w:130,t:45}].map((cl,i)=>(
+        <div key={i} style={{position:"absolute",top:cl.t,left:-cl.w,pointerEvents:"none",zIndex:6,animation:`drift ${cl.dur} linear infinite`,animationDelay:cl.del}}>
+          <svg viewBox="0 0 160 60" width={cl.w} height={cl.w*0.37}>
+            <ellipse cx="80" cy="42" rx="72" ry="18" fill="white" opacity=".97"/>
+            <ellipse cx="55" cy="28" rx="34" ry="26" fill="white" opacity=".97"/>
+            <ellipse cx="108" cy="26" rx="28" ry="21" fill="white" opacity=".97"/>
+          </svg>
         </div>
-      </header>
+      ))}
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-8 relative z-10 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F1F5F9] border border-[#E2E8F0]">
-               <SparkleIcon />
-               <span className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">AI study mentor for Africa</span>
-            </div>
-            <h1 className="text-6xl md:text-7xl font-black tracking-tighter leading-[1.1] text-[#0F172A]">
-              Learn smarter with your AI <br />
-              <span className="text-[#2563EB]">study mentor</span>
-            </h1>
-            <p className="text-lg text-[#64748B] max-w-lg leading-relaxed font-medium">
-              Soma AI simplifies your notes, builds personal study plans, and quizzes you so every student can succeed, even with dyslexia or reading challenges.
-            </p>
-            <Button size="lg" className="btn-soma-primary h-14 px-8 text-base" asChild>
-              <Link to="/login">Get started for free</Link>
-            </Button>
-            
-            {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4 pt-8">
-              <div className="p-4 rounded-xl border border-gray-100 bg-[#F8FAFC]">
-                <div className="text-xl font-black">1000+</div>
-                <div className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Total User</div>
-              </div>
-              <div className="p-4 rounded-xl border border-gray-100 bg-[#F8FAFC]">
-                <div className="text-xl font-black">100+</div>
-                <div className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Teachers</div>
-              </div>
-              <div className="p-4 rounded-xl border border-gray-100 bg-[#F8FAFC]">
-                <div className="text-xl font-black">95%</div>
-                <div className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Satisfaction</div>
-              </div>
-            </div>
+      {/* Birds */}
+      {[{t:"7%",dur:"20s",del:"-2s",e:"🐦"},{t:"13%",dur:"29s",del:"-14s",e:"🐦"},{t:"5%",dur:"25s",del:"-8s",e:"🦜"},{t:"18%",dur:"33s",del:"-22s",e:"🐦"}].map((b,i)=>(
+        <div key={i} style={{position:"absolute",top:b.t,left:-40,fontSize:17,pointerEvents:"none",zIndex:7,animation:`drift ${b.dur} linear infinite`,animationDelay:b.del}}>{b.e}</div>
+      ))}
+
+      {/* ── ISLAND PNG fills whole viewport ── */}
+      <img
+        src="/landing page island.png"
+        alt="Soma AI Island"
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"contain",objectPosition:"center 55%",zIndex:8,pointerEvents:"none",userSelect:"none"}}
+      />
+
+      {/* ── LIFESPAN TIMELINE on top pyramid island ── */}
+      <div style={{position:"absolute",left:"44%",top:"-2%",width:"14%",aspectRatio:"1",zIndex:15,pointerEvents:"none",opacity:.92,filter:"drop-shadow(0 4px 12px rgba(0,0,0,.3))"}}>
+        <RiveAnimation src="/riv-animations/22180-41567-level-up-badges-animation.riv" className="w-full h-full" />
+      </div>
+
+      {/* ── WATER CREATURES (z above ocean, below island overlay) ── */}
+      {/* Fish left→right */}
+      {[{e:"🐠",t:"82%",dur:"13s",del:"0s"},{e:"🐡",t:"88%",dur:"19s",del:"-6s"},{e:"🦑",t:"78%",dur:"15s",del:"-11s"},{e:"🐬",t:"85%",dur:"22s",del:"-17s"}].map((f,i)=>(
+        <div key={i} className="fish-l" style={{top:f.t,fontSize:26,animationDuration:f.dur,animationDelay:f.del,zIndex:4}}>{f.e}</div>
+      ))}
+      {/* Fish right→left */}
+      {[{e:"🐟",t:"80%",dur:"17s",del:"-4s"},{e:"🐙",t:"91%",dur:"24s",del:"-13s"},{e:"🦀",t:"86%",dur:"20s",del:"-9s"}].map((f,i)=>(
+        <div key={i} className="fish-r" style={{top:f.t,right:-60,fontSize:26,animationDuration:f.dur,animationDelay:f.del,zIndex:4,transform:"scaleX(-1)"}}>{f.e}</div>
+      ))}
+      {/* Boat, shark, whale */}
+      <div style={{position:"absolute",bottom:"6%",left:-60,fontSize:42,animation:"drift 30s linear infinite",zIndex:5,filter:"drop-shadow(0 3px 0 rgba(0,0,0,.3))",animationDelay:"-5s"}}>⛵</div>
+      <div style={{position:"absolute",bottom:"10%",left:-40,fontSize:30,animation:"drift 38s linear infinite",zIndex:4,opacity:.85,animationDelay:"-22s"}}>🦈</div>
+      <div style={{position:"absolute",bottom:"7%",fontSize:38,animation:"drift 50s linear infinite",zIndex:4,animationDelay:"-35s"}}>🐋</div>
+      {/* Bubbles */}
+      {[12,28,45,62,78,90].map((l,i)=>(
+        <div key={i} style={{position:"absolute",bottom:`${72+i*3}%`,left:`${l}%`,fontSize:11,opacity:.35,animation:`bob ${1.8+i*0.3}s ease-in-out infinite`,animationDelay:`${-i*0.4}s`,zIndex:3}}>🫧</div>
+      ))}
+
+      {/* ── STOPS spread across all islands ── */}
+      {STOPS.map(s=>(
+        <div key={s.id} className="stop-btn" style={{left:s.left,top:s.top}} onClick={()=>stopTap(s.desc)}>
+          <div className="tp">{s.icon} {s.label}: {s.desc}</div>
+          <div className="tgt">🎯</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <span style={{fontSize:36,filter:"drop-shadow(0 3px 6px rgba(0,0,0,.45)) drop-shadow(0 1px 2px rgba(0,0,0,.3))",lineHeight:1}}>{s.icon}</span>
+            <span className="f1" style={{fontSize:11,color:"#fff",textShadow:"0 1px 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.6)",textAlign:"center",lineHeight:1.2}}>{s.label}</span>
           </div>
-
-          <div className="relative animate-in zoom-in duration-700">
-            {/* Integrated Mosaic of Authentic Assets */}
-            <div className="grid grid-cols-12 grid-rows-12 gap-1 h-[600px] rounded-[48px] overflow-hidden border border-gray-100 bg-[#F8FAFC]">
-              {/* Main Image - Integrated */}
-              <div className="col-span-8 row-span-7 relative group overflow-hidden bg-gray-100">
-                <img 
-                  src={africaTeaching} 
-                  alt="Student Learning" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                />
-                {/* Integration Overlays (User-requested) */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white to-transparent" />
-                
-                <div className="absolute top-6 left-6 px-4 py-1.5 rounded-full bg-black/40 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
-                  Authentic Access
-                </div>
-              </div>
-
-              {/* Secondary Asset - Integrated */}
-              <div className="col-span-4 row-span-5 relative group overflow-hidden bg-gray-200">
-                <img 
-                  src={girlsLearning} 
-                  alt="Inclusive Education" 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
-              </div>
-
-              {/* Accent profiles/stats - Integrated */}
-              <div className="col-span-4 row-span-4 bg-[#2563EB] text-white p-8 flex flex-col justify-center">
-                <div className="text-4xl font-black">95%</div>
-                <div className="text-[10px] font-black uppercase tracking-widest opacity-80 leading-tight">Mastery Rating</div>
-              </div>
-
-              {/* Third Asset - Integrated */}
-              <div className="col-span-12 md:col-span-12 lg:col-span-5 row-span-5 relative group overflow-hidden bg-gray-100">
-                 <img 
-                  src={africaTeaching} 
-                  className="w-full h-full object-cover grayscale brightness-110 group-hover:grayscale-0 transition-all duration-1000"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white to-transparent" />
-              </div>
-
-              {/* Fourth Asset - Strategy */}
-              <div className="col-span-7 row-span-3 bg-[#0F172A] flex flex-col justify-end p-8">
-                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Precision Hub</p>
-                <h4 className="text-xl font-black tracking-tighter text-white leading-tight">Authentic Learning <br/> Platform.</h4>
-              </div>
-            </div>
-          </div>
+          <div style={{position:"absolute",bottom:-16,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,.92)",backdropFilter:"blur(4px)",borderRadius:20,padding:"2px 10px",fontFamily:"'Fredoka One',cursive",fontSize:9,whiteSpace:"nowrap",border:"1.5px solid rgba(0,0,0,.15)",color:"#333",boxShadow:"0 2px 6px rgba(0,0,0,.15)"}}>Tap!</div>
         </div>
-      </section>
+      ))}
 
-      {/* Social Proof */}
-      <div className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-10 w-10 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center">
-                 <User className="h-5 w-5 text-slate-400" />
-              </div>
-            ))}
-          </div>
-          <span className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">10,000+ Students connected nationwide</span>
+      {/* ── BOT GUIDE (bottom-left of main island) ── */}
+      <div style={{position:"absolute",left:"6%",top:"55%",zIndex:30,cursor:"pointer",animation:"bob 2.5s ease-in-out infinite"}} onClick={chrTap}>
+        <div style={{position:"absolute",bottom:"105%",left:"50%",transform:"translateX(-10%)",background:"#fff",border:"3px solid #7c4dff",borderRadius:14,padding:"8px 12px",fontFamily:"'Fredoka One',cursive",fontSize:12,color:"#1a0044",maxWidth:190,textAlign:"center",zIndex:31,boxShadow:"0 4px 16px rgba(124,77,255,.25)"}}>
+          {speech}
+          <div style={{position:"absolute",bottom:-12,left:18,borderWidth:7,borderStyle:"solid",borderColor:"#7c4dff transparent transparent transparent"}}/>
+          <div style={{position:"absolute",bottom:-6,left:20,borderWidth:5,borderStyle:"solid",borderColor:"white transparent transparent transparent",zIndex:1}}/>
+        </div>
+        <div style={{width:96,height:96}}>
+          <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full"/>
         </div>
       </div>
 
-      {/* Features Grid Section */}
-      <section className="py-32 bg-[#F8FAFC] border-y border-gray-100 relative">
-        <div className="max-w-7xl mx-auto px-6 text-center mb-20 space-y-4">
-            <h2 className="text-5xl font-black tracking-tight text-[#0F172A]">Designed for your success</h2>
-            <p className="text-[#64748B] font-bold text-[10px] uppercase tracking-[0.2em] leading-none">Inclusive · Accessible · Authentic · Shadow-Free</p>
+      {/* ── TOP NAV ── */}
+      <div style={{position:"absolute",top:0,left:0,width:"100%",padding:"14px 24px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",background:"linear-gradient(180deg,rgba(5,2,20,.72),transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <img src="/favicon.png" alt="Soma AI Logo" style={{width:44,height:44,objectFit:"contain",filter:"drop-shadow(0 2px 6px rgba(0,0,0,.4)) brightness(1.1)"}} />
+          <div className="f1" style={{fontSize:30,background:"linear-gradient(130deg,#c084fc,#22d3ee,#86efac)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>SOMA AI</div>
         </div>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          {/* 🔊 Music toggle */}
+          <button onClick={()=>setMuted(m=>!m)} title={muted?"Unmute music":"Mute music"} style={{width:44,height:44,borderRadius:"50%",border:"none",background:muted?"rgba(255,255,255,.15)":"linear-gradient(135deg,#22c55e,#16a34a)",cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 3px 12px rgba(0,0,0,.3)",animation:muted?"none":"muspulse 2s ease-in-out infinite",transition:"background .3s"}}>{muted?"🔇":"🔊"}</button>
+          <button className="f1" style={{borderRadius:50,padding:"8px 20px",fontSize:14,background:"rgba(255,255,255,.18)",color:"#fff",border:"2px solid rgba(255,255,255,.4)",cursor:"pointer"}} onClick={()=>{setTab("login");setModal(true);}}>Log In</button>
+          <button className="f1" style={{borderRadius:50,padding:"8px 20px",fontSize:14,background:"linear-gradient(135deg,#7c4dff,#06b6d4)",color:"#fff",border:"none",borderBottom:"3px solid #4a00cc",cursor:"pointer"}} onClick={()=>{setTab("signup");setModal(true);}}>Sign Up 🚀</button>
+        </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="group relative bg-white rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 border border-gray-100 h-full flex flex-col shadow-none">
-              <div className={`h-2 ${f.color}`} />
-              <div className="p-8 space-y-4 flex-1">
-                <div className="relative aspect-video rounded-2xl overflow-hidden mb-6 bg-slate-50">
-                  <img src={f.img} alt={f.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
-                </div>
-                <h3 className="text-xl font-black tracking-tight">{f.title}</h3>
-                <p className="text-sm font-medium text-[#64748B] leading-relaxed uppercase tracking-tight">
-                  {f.desc}
-                </p>
-              </div>
-            </div>
-          ))}
+      {/* ── STATS STRIP ── */}
+      <div style={{position:"absolute",bottom:0,left:0,width:"100%",zIndex:150,background:"linear-gradient(0deg,rgba(5,2,20,.92),rgba(5,2,20,.6),transparent)",padding:"12px 20px",display:"flex",gap:16,alignItems:"center",justifyContent:"center",flexWrap:"wrap",backdropFilter:"blur(3px)"}}>
+        {[["🪙","1,840","#ffd84d"],["🔥","12-day streak","#ff8a65"],["⭐","Lv 8","#c084fc"],["🏆","4 trophies","#67e8f9"]].map(([ico,val,col])=>(
+          <div key={val as string} className="f1" style={{display:"flex",alignItems:"center",gap:6,fontSize:16,color:col as string}}>{ico} {val}</div>
+        ))}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span className="f1" style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>XP</span>
+          <div style={{width:110,height:10,background:"rgba(255,255,255,.18)",borderRadius:5,overflow:"hidden"}}>
+            <div style={{height:"100%",width:"74%",background:"linear-gradient(90deg,#a855f7,#22d3ee)",borderRadius:5,animation:"xps 2s ease-in-out infinite"}}/>
+          </div>
+          <span className="f1" style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>1840/2500</span>
         </div>
-      </section>
+        <button className="f1" style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",color:"#fff",border:"none",borderRadius:50,padding:"10px 24px",fontSize:18,cursor:"pointer",borderBottom:"4px solid #b91c1c"}} onClick={()=>{setTab("signup");setModal(true);}}>▶ Play Now!</button>
+      </div>
 
-      {/* Banner Section */}
-      <section className="max-w-7xl mx-auto px-6 py-32">
-        <div className="relative rounded-[56px] bg-[#2563EB] overflow-hidden p-16 lg:p-24 flex flex-col lg:flex-row items-center gap-16 shadow-none">
-          <div className="relative z-10 text-white space-y-8 lg:w-1/2">
-            <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter">
-              Start Your Learning Journey Today
-            </h2>
-            <p className="text-lg opacity-90 font-medium leading-relaxed">
-              Join thousands of students across Rwanda using Soma AI to achieve excellence.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="bg-white text-[#2563EB] hover:bg-[#F1F5F9] h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest transition-transform hover:scale-105" asChild>
-                <Link to="/login">Create Account</Link>
-              </Button>
+      {/* ── MODAL ── */}
+      {modal&&(
+        <div style={{position:"absolute",inset:0,zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{position:"absolute",inset:0,background:"rgba(5,2,20,.88)",backdropFilter:"blur(4px)"}} onClick={()=>setModal(false)}/>
+          <div style={{position:"relative",zIndex:1,background:"#fff",borderRadius:28,width:340,padding:"24px 22px 20px",border:"4px solid #7c4dff",textAlign:"center"}}>
+            <div style={{position:"absolute",top:10,right:14,fontSize:20,cursor:"pointer",color:"#bbb"}} onClick={()=>setModal(false)}>✕</div>
+            <div className="f1" style={{fontSize:34,background:"linear-gradient(130deg,#a855f7,#06b6d4,#22c55e)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>✦ SOMA AI</div>
+            <div className="f2" style={{fontSize:10,letterSpacing:3,color:"#7c4dff",marginBottom:16}}>YOUR LEARNING ADVENTURE</div>
+            <div style={{display:"flex",background:"#f3eeff",borderRadius:14,padding:3,marginBottom:16}}>
+              {(["login","signup"] as const).map(t=>(
+                <button key={t} className="f1" style={{flex:1,padding:8,borderRadius:11,border:"none",cursor:"pointer",background:tab===t?"#7c4dff":"transparent",color:tab===t?"#fff":"#7c4dff",fontSize:14,transition:"all .2s"}} onClick={()=>setTab(t)}>{t==="login"?"Log In":"Sign Up"}</button>
+              ))}
             </div>
-          </div>
-          <div className="relative lg:w-1/2 flex justify-center">
-             <div className="relative w-full max-w-sm aspect-square rounded-[48px] overflow-hidden ring-8 ring-white/10 group shadow-none">
-                <img 
-                  src={girlsLearning} 
-                  alt="Inclusive Study" 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#2563EB] to-transparent opacity-80" />
-             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#0F172A] text-gray-500 py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-20 border-b border-white/5 pb-20">
-            <div className="space-y-8">
-              <Logo size={48} />
-              <p className="text-xs leading-relaxed max-w-xs font-medium">
-                The smart mentor for the modern student.
-              </p>
-            </div>
-            <div className="space-y-6">
-              <h3 className="text-white font-bold text-xs uppercase tracking-widest">Products</h3>
-              <ul className="space-y-4 text-[10px] font-bold uppercase tracking-wider">
-                <li><Link to="/student" className="hover:text-[#00C36B] transition-colors">AI Notes</Link></li>
-                <li><Link to="/student" className="hover:text-[#00C36B] transition-colors">Quiz Bank</Link></li>
-              </ul>
-            </div>
-            <div className="space-y-6">
-              <h3 className="text-white font-bold text-xs uppercase tracking-widest">Support</h3>
-              <ul className="space-y-4 text-[10px] font-bold uppercase tracking-wider">
-                <li>Phone: +250 785 0XX XXX</li>
-                <li>Email: somaai1@gmail.com</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <p className="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-white">© 2026 Soma AI Education · Authentic African Impact</p>
+            {tab==="login"?(
+              <>
+                <input className="fi f2" type="text" placeholder="👤 Username or Email"/>
+                <input className="fi f2" type="password" placeholder="🔒 Password"/>
+                <button className="gb" onClick={()=>navigate({to:"/login"})}>🚀 Enter the Island!</button>
+                <div className="f2" style={{fontSize:11,color:"#7c4dff",marginTop:8,cursor:"pointer"}} onClick={()=>setTab("signup")}>No account? Sign up free →</div>
+              </>
+            ):(
+              <>
+                <input className="fi f2" type="text" placeholder="👤 Your Name"/>
+                <input className="fi f2" type="email" placeholder="📧 Email"/>
+                <select className="fi f2" defaultValue=""><option value="" disabled>🎓 Select grade</option>{["1","2","3","4","5","6"].map(g=><option key={g}>Primary {g}</option>)}</select>
+                <button className="gb" onClick={()=>navigate({to:"/login"})}>🌟 Start My Adventure!</button>
+                <div className="f2" style={{fontSize:11,color:"#7c4dff",marginTop:8,cursor:"pointer"}} onClick={()=>setTab("login")}>Already have an account? Log in →</div>
+              </>
+            )}
           </div>
         </div>
-      </footer>
+      )}
     </div>
-  );
-}
-
-function SparkleIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#2563EB]">
-      <path d="M12 3L14.5 9L21 12L14.5 15L12 21L9.5 15L3 12L9.5 9L12 3Z" fill="currentColor"/>
-    </svg>
   );
 }

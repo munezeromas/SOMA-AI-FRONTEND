@@ -20,6 +20,10 @@ import { Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { cohereSimplify } from "@/lib/cohere-server";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { TalkingRobot } from "@/components/soma/TalkingRobot";
+import { lazy, Suspense } from "react";
+
+const PDFViewer = lazy(() => import("@/components/soma/PDFViewer"));
 
 const searchSchema = z.object({
   file: z.string(),
@@ -40,41 +44,75 @@ function Reader() {
   const [fontSize, setFontSize] = useState(18);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for prominence
   const [page, setPage] = useState(1);
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [isSimplifying, setIsSimplifying] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Only get what the student actually highlighted — NO clipboard fallback
+  const getActiveText = () => {
+    // 1. Prefer whatever is live-selected RIGHT NOW in the window
+    const liveSelection = window.getSelection()?.toString().trim() ?? "";
+    if (liveSelection.length > 0 && liveSelection.length <= 600) {
+      return liveSelection;
+    }
+
+    // 2. Fall back to the last selection stored on mouseup (capped at 600 chars)
+    if (selectedText.trim().length > 0 && selectedText.length <= 600) {
+      return selectedText.trim();
+    }
+
+    // 3. Nothing usable found
+    return "";
+  };
 
   // Real Cohere Simplification via Server Function
   const simplifyText = async () => {
-    if (!selectedText) {
-      alert("Please select some text in the book first!");
+    const textToSimplify = getActiveText();
+    
+    if (!textToSimplify) {
+      alert("Please highlight a word or sentence in the book first, then click Make it easier!");
       return;
     }
     
+    // Clear stored selection so it isn't reused next time
+    setSelectedText("");
     setIsSimplifying(true);
     setIsSidebarOpen(true);
     
     try {
-      const grade = title.split(' ')[0] || "1";
-      const subject = title.split(' ')[1] || "Mathematics";
+      const grade = title.match(/P(\d)/i)?.[1] || "3";
+      const subject = title.includes("English") ? "English"
+        : title.includes("French") ? "French"
+        : title.includes("Math") ? "Mathematics"
+        : title.includes("Science") ? "Science"
+        : "General";
       
       const text = await cohereSimplify({ 
-        data: { text: selectedText, grade, subject } 
+        data: { text: textToSimplify, grade, subject }
       });
       
-      setSimplifiedText(text || "I couldn't simplify that right now. Try another sentence!");
+      setSimplifiedText(text || "I couldn't simplify that right now. Try selecting a different word!");
     } catch (error) {
       console.error("Cohere Error:", error);
-      setSimplifiedText("Sorry, I'm having trouble connecting to my brain right now. Please try again in a moment!");
+      setSimplifiedText("Sorry, I'm having trouble right now. Please try again in a moment!");
     } finally {
       setIsSimplifying(false);
     }
   };
 
-  // Text Selection Handler
+  // Only store selection if it's a reasonable highlight (not the whole book)
   useEffect(() => {
     const handleSelection = () => {
-      const selection = window.getSelection()?.toString();
-      if (selection && selection.trim().length > 0) {
+      const selection = window.getSelection()?.toString().trim() ?? "";
+      // Accept selections between 1 and 600 characters
+      if (selection.length > 0 && selection.length <= 600) {
         setSelectedText(selection);
+      } else if (selection.length === 0) {
+        // Don't clear — user may have accidentally clicked away
       }
     };
     document.addEventListener("mouseup", handleSelection);
@@ -132,13 +170,14 @@ function Reader() {
       window.speechSynthesis.cancel();
       setIsReading(false);
     } else {
-      const textToRead = selectedText || (simplifiedText ? `Here is the simplified version: ${simplifiedText}` : `You are on page ${page} of ${title}. Please highlight any word or sentence you find difficult, and I will read it and explain it for you in a very simple way.`);
+      const textToRead = getActiveText()
+        || (simplifiedText ? `Here is the simplified version: ${simplifiedText}` : `You are on page ${page} of ${title}. Highlight any word or sentence you find difficult and I will explain it for you.`);
       speak(textToRead);
     }
   };
 
   return (
-    <div className={`fixed inset-0 z-50 bg-[#080C14] flex flex-col transition-all duration-500 ${isDyslexicMode ? 'font-dyslexic' : ''}`}>
+    <div className={`fixed inset-0 z-[100] bg-[#080C14] flex flex-col transition-all duration-500 ${isDyslexicMode ? 'font-dyslexic' : ''}`}>
       {/* Header */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#0A1020]/80 backdrop-blur-md">
         <div className="flex items-center gap-4">
@@ -154,17 +193,20 @@ function Reader() {
         <div className="flex items-center gap-4">
           {/* Page Navigation */}
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><ChevronLeft className="h-4 w-4 text-white" /></button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30" disabled={page <= 1}><ChevronLeft className="h-4 w-4 text-white" /></button>
             <div className="flex items-center gap-1.5 px-2">
               <span className="text-[10px] font-black text-white/40 uppercase">Page</span>
               <input 
                 type="number" 
                 value={page} 
-                onChange={(e) => setPage(Number(e.target.value))}
+                min={1}
+                max={numPages ?? undefined}
+                onChange={(e) => setPage(Math.max(1, Math.min(numPages ?? 9999, Number(e.target.value))))}
                 className="w-10 bg-transparent text-center text-sm font-black text-white focus:outline-none"
               />
+              {numPages && <span className="text-[10px] font-black text-white/30">/ {numPages}</span>}
             </div>
-            <button onClick={() => setPage(p => p + 1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"><ChevronRight className="h-4 w-4 text-white" /></button>
+            <button onClick={() => setPage(p => numPages ? Math.min(numPages, p + 1) : p + 1)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30" disabled={!!(numPages && page >= numPages)}><ChevronRight className="h-4 w-4 text-white" /></button>
           </div>
 
           <div className="w-px h-6 bg-white/10" />
@@ -185,26 +227,40 @@ function Reader() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center custom-scrollbar">
-          <div className="max-w-5xl w-full bg-[#0E1524] rounded-[40px] border border-white/5 shadow-2xl relative overflow-hidden h-full">
-            <iframe 
-              key={`${file}-${page}`}
-              src={`${file}#page=${page}&toolbar=0&navpanes=0&scrollbar=0`} 
-              className="w-full h-full bg-white"
-              title={title}
-            />
+        <div className="flex-1 overflow-y-auto bg-[#F8FAFC] flex flex-col items-center custom-scrollbar">
+          <div className="w-full max-w-4xl px-4 py-8">
+            {isClient && file.toLowerCase().endsWith('.pdf') ? (
+              <Suspense fallback={
+                <div className="w-full flex flex-col items-center justify-center py-20">
+                  <Brain className="h-12 w-12 text-[#4A90D9] animate-pulse mb-4 mx-auto" />
+                  <p className="text-[#4A6A8A] font-black text-lg uppercase tracking-widest">Opening Book...</p>
+                </div>
+              }>
+                <PDFViewer file={file} page={page} fontSize={fontSize} onTotalPages={setNumPages} onPageChange={setPage} />
+              </Suspense>
+            ) : (
+              <div className="w-full h-[80vh] bg-white shadow-2xl rounded-2xl overflow-hidden">
+                <iframe 
+                  key={`${file}-${page}`}
+                  src={`${file}#page=${page}&toolbar=0&navpanes=0&scrollbar=0`} 
+                  className="w-full h-full"
+                  title={title}
+                />
+              </div>
+            )}
             
-            {/* Prominent floating tools */}
-            <div className="absolute top-6 right-6 flex flex-col gap-3">
-               <button onClick={simplifyText} className="h-12 w-12 rounded-2xl bg-primary text-white shadow-glow flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative">
-                 <Sparkles className="h-5 w-5" />
-                 <span className="absolute right-full mr-3 px-3 py-1.5 rounded-lg bg-[#0A1020] border border-white/10 text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Make it easier</span>
-               </button>
-               <button onClick={toggleSpeech} className="h-12 w-12 rounded-2xl bg-[#0A1020] text-primary border border-primary/20 shadow-xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 group relative">
-                 <Volume2 className="h-5 w-5" />
-                 <span className="absolute right-full mr-3 px-3 py-1.5 rounded-lg bg-[#0A1020] border border-white/10 text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Read aloud</span>
-               </button>
-            </div>
+            
+          </div>
+          {/* Floating tools - sticky to the PDF reading area */}
+          <div className="sticky bottom-8 mt-auto z-50 flex flex-row gap-3 bg-[#0A1020]/80 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 shadow-2xl">
+             <button onClick={simplifyText} disabled={isSimplifying} className="h-11 px-4 rounded-xl bg-primary text-white shadow-glow flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-xs font-black uppercase tracking-widest disabled:opacity-50">
+               <Sparkles className="h-4 w-4" />
+               {isSimplifying ? "Thinking..." : "Make it easier"}
+             </button>
+             <button onClick={toggleSpeech} className="h-11 px-4 rounded-xl bg-white/5 text-primary border border-primary/20 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-xs font-black uppercase tracking-widest">
+               <Volume2 className="h-4 w-4" />
+               {isReading ? "Stop" : "Read aloud"}
+             </button>
           </div>
         </div>
 
@@ -218,15 +274,17 @@ function Reader() {
             </h3>
             
             {simplifiedText ? (
-              <div className="space-y-6">
-                <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20 relative group overflow-hidden">
-                  <div className="absolute -right-4 -bottom-4 h-24 w-24 opacity-20 group-hover:scale-125 transition-transform">
-                     <RiveAnimation src="/riv-animations/17629-33045-strawberry-studying-mascot.riv" className="w-full h-full" />
+              <div className="space-y-4">
+                {/* Mascot sits above the explanation card */}
+                <div className="flex justify-end pr-1">
+                  <div className="h-20 w-20">
+                    <RiveAnimation src="/riv-animations/17633-33058-little-fella.riv" className="w-full h-full" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Simplified Explanation</p>
-                  <p className="text-sm font-medium leading-relaxed text-white/80 relative z-10">{simplifiedText}</p>
                 </div>
-                
+                <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Simplified Explanation</p>
+                  <p className="text-sm font-medium leading-relaxed text-white/80">{simplifiedText}</p>
+                </div>
                 <div className="space-y-3">
                   <button onClick={() => speak(simplifiedText)} className="w-full py-4 rounded-2xl bg-white/5 border border-white/5 text-sm font-black text-white hover:bg-white/10 transition-all flex items-center justify-center gap-3">
                     <Volume2 className="h-4 w-4 text-primary" />
@@ -236,13 +294,32 @@ function Reader() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 space-y-4">
-                <div className="h-20 w-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
-                  <Brain className="h-10 w-10 text-white/20" />
+              <div className="flex flex-col items-center py-8 space-y-5">
+                {/* Mascot */}
+                <div className="h-40 w-40">
+                  <RiveAnimation src="/riv-animations/17633-33058-little-fella.riv" className="w-full h-full" />
                 </div>
-                <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-relaxed">
-                  Select any text in the book <br /> to get an AI-powered <br /> simplified version.
-                </p>
+
+                {/* Selected text preview */}
+                {selectedText ? (
+                  <div className="w-full space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary text-center">
+                      ✅ You selected:
+                    </p>
+                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                      <p className="text-sm font-semibold text-white/80 leading-relaxed line-clamp-3">
+                        "{selectedText}"
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-white/40 text-center font-semibold">
+                      Now click <span className="text-primary font-black">Make it easier</span> below!
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm font-bold text-white/30 uppercase tracking-widest text-center leading-relaxed max-w-[180px]">
+                    Highlight a word or sentence in the book to explain it
+                  </p>
+                )}
               </div>
             )}
           </aside>
