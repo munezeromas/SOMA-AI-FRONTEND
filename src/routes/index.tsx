@@ -351,11 +351,63 @@ function Index() {
       <section className="relative pt-16 pb-20 overflow-hidden" style={{
         background: "#f5f0f5",
       }}>
+        <style>{`
+          @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(6deg); }
+          }
+          @keyframes float-medium {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(-8deg); }
+          }
+          @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .floating-deco {
+            pointer-events: auto;
+            cursor: pointer;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.06));
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .floating-deco:hover {
+            opacity: 0.95 !important;
+            transform: scale(1.25) translateY(-5px) !important;
+            filter: drop-shadow(0 12px 24px rgba(37,99,235,0.18));
+          }
+        `}</style>
        
 
         {/* Decorative blobs */}
         <div aria-hidden="true" className="absolute top-[-80px] right-[10%] w-[340px] h-[340px] rounded-full z-0" style={{ background: "rgba(37,99,235,0.07)" }} />
         <div aria-hidden="true" className="absolute bottom-[-50px] left-[5%] w-[220px] h-[220px] rounded-full z-0" style={{ background: "rgba(0,195,107,0.08)" }} />
+
+        {/* Floating background decorative symbols */}
+        <div className="absolute top-[12%] left-[6%] floating-deco opacity-35 z-20 hidden md:block" style={{ animation: "float-slow 6s ease-in-out infinite" }}>
+          <div className="p-4 bg-white/70 border border-white/40 backdrop-blur-md rounded-2xl shadow-xl flex items-center justify-center">
+            <Brain className="h-9 w-9 text-[#2563EB]" />
+          </div>
+        </div>
+        <div className="absolute top-[32%] left-[43%] floating-deco opacity-30 z-20 hidden md:block" style={{ animation: "float-medium 5s ease-in-out infinite" }}>
+          <div className="p-3 bg-white/60 border border-white/30 backdrop-blur-md rounded-2xl shadow-lg flex items-center justify-center">
+            <Sparkles className="h-7 w-7 text-amber-500" />
+          </div>
+        </div>
+        <div className="absolute bottom-[22%] left-[38%] floating-deco opacity-30 z-20 hidden md:block" style={{ animation: "float-slow 7s ease-in-out infinite" }}>
+          <div className="p-3.5 bg-white/70 border border-white/40 backdrop-blur-md rounded-2xl shadow-xl flex items-center justify-center">
+            <BookOpen className="h-8 w-8 text-emerald-500" />
+          </div>
+        </div>
+        <div className="absolute top-[18%] right-[42%] floating-deco opacity-35 z-20 hidden md:block" style={{ animation: "float-slow 5.5s ease-in-out infinite" }}>
+          <div className="p-3 bg-white/60 border border-white/30 backdrop-blur-md rounded-2xl shadow-lg flex items-center justify-center">
+            <Star className="h-7 w-7 text-yellow-500 fill-yellow-400" />
+          </div>
+        </div>
+        <div className="absolute bottom-[28%] right-[5%] floating-deco opacity-40 z-20 hidden md:block" style={{ animation: "float-medium 6.5s ease-in-out infinite" }}>
+          <div className="p-4 bg-white/70 border border-white/40 backdrop-blur-md rounded-2xl shadow-xl flex items-center justify-center">
+            <Languages className="h-9 w-9 text-violet-500" />
+          </div>
+        </div>
 
         {/* Bottom wave / scallop */}
         <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 z-0 overflow-hidden leading-none">
