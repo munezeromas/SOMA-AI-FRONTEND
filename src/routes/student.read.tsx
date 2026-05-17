@@ -178,6 +178,25 @@ function Reader() {
 
   return (
     <div className={`fixed inset-0 z-[100] bg-[#080C14] flex flex-col transition-all duration-500 ${isDyslexicMode ? 'font-dyslexic' : ''}`}>
+      <style>{`
+        /* Force the react-pdf text layer to be perfectly on top of the canvas and fully interactive */
+        .react-pdf__Page__textLayer {
+          z-index: 2 !important;
+          pointer-events: auto !important;
+          opacity: 1 !important;
+          mix-blend-mode: multiply;
+        }
+        /* Ensure the canvas lies in the background and ignores selection mouse gestures */
+        .react-pdf__Page__canvas {
+          z-index: 1 !important;
+          pointer-events: none !important;
+        }
+        /* Style high-contrast child selection background */
+        .react-pdf__Page__textLayer span::selection {
+          background-color: rgba(37, 99, 235, 0.35) !important;
+          color: inherit !important;
+        }
+      `}</style>
       {/* Header */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#0A1020]/80 backdrop-blur-md">
         <div className="flex items-center gap-4">

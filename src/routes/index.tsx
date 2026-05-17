@@ -1,264 +1,949 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
-import { RiveAnimation } from "@/components/soma/RiveAnimation";
+// TEST CHANGE
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import logo from "@/assets/logo.png";
+import img1 from "@/assets/img1.png";
+import img2 from "@/assets/img2.png";
+import {
+  ChevronDown,
+  Brain,
+  BookOpen,
+  Star,
+  BarChart2,
+  Languages,
+  Briefcase,
+  Upload,
+  Sparkles,
+  Trophy,
+  Check,
+  Phone,
+  Mail,
+  Menu,
+  X,
+  User,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Soma AI Island" }] }),
+  head: () => ({
+    meta: [
+      { title: "Soma AI — Learn Smarter with your AI study mentor" },
+      {
+        name: "description",
+        content: "AI-powered, inclusive learning platform for African students.",
+      },
+    ],
+  }),
   component: Index,
 });
 
-// ── All student app features spread across ALL 5 islands ──
-const STOPS = [
-  // 🏜️ Desert island (LEFT) — 2 stops, sitting on the sandy island
-  { id:"home",      icon:"🏠", label:"Dashboard",  desc:"Your streaks, badges, XP & daily goals!",            left:"28%",  top:"37%" },
-  { id:"progress",  icon:"📊", label:"Progress",   desc:"Live charts tracking your subject mastery!",          left:"33%",  top:"50%" },
+/* ─────────────── DATA ─────────────── */
 
-  // 🌿 Pyramid / Jungle island (TOP CENTER) — 3 stops
-  { id:"tutor",     icon:"🤖", label:"Soma AI",    desc:"24/7 AI tutor — any subject, any time!",              left:"41%",  top:"25%" },
-  { id:"aiquiz",    icon:"✨", label:"AI Quiz",    desc:"Auto-generated quizzes tailored just for you!",       left:"54%",  top:"20%" },
-  { id:"simplify",  icon:"📝", label:"Simplify",   desc:"Paste anything hard — get it explained simply!",      left:"47%",  top:"33%" },
-
-  // 🧊 Ice / Volcano island (RIGHT) — 3 stops
-  { id:"quizzes",   icon:"⚡", label:"Quizzes",    desc:"Thousands of curriculum-aligned practice quizzes!",   left:"74%",  top:"24%" },
-  { id:"homework",  icon:"📚", label:"Homework",   desc:"Step-by-step AI homework help for every subject!",    left:"83%",  top:"35%" },
-  { id:"community", icon:"🌍", label:"Community",  desc:"Connect, share & learn with students island-wide!",   left:"78%",  top:"45%" },
-
-  // 🟢 Main center island — 4 stops
-  { id:"games",     icon:"🎮", label:"Games",      desc:"Learn while playing awesome educational games!",       left:"56%",  top:"57%" },
-  { id:"planner",   icon:"📅", label:"Planner",    desc:"Smart daily study planner to keep you on track!",     left:"42%",  top:"64%" },
-  { id:"read",      icon:"📖", label:"Reading",    desc:"Interactive reading & writing practice island!",       left:"63%",  top:"66%" },
-  { id:"videos",    icon:"📺", label:"Videos",     desc:"Fun explainer videos for every subject & topic!",     left:"50%",  top:"74%" },
-
-  // 🪨 Small bottom-left island — 2 stops (Library + Career)
-  { id:"library",   icon:"🏛️", label:"Library",    desc:"Unlock a huge book & notes library!",                 left:"21%",  top:"71%" },
-  { id:"career",    icon:"🚀", label:"Career",     desc:"Explore future career paths powered by AI!",          left:"30%",  top:"77%" },
+const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Features", href: "#features" },
+  { label: "Demo", href: "#demo" },
+  { label: "For Schools", href: "#schools" },
+  { label: "Pricing", href: "#pricing" },
 ];
 
-const CHR_MSGS = ["Let's learn something new! ✨","I love this island! 🏝️","Tap a stop to explore! 🎯","SOMA AI is my best friend! 🤖","Choose your world! 🌍"];
+const STATS = [
+  { value: "150k+", label: "Notes Simplified" },
+  { value: "50+", label: "African Languages" },
+  { value: "92%", label: "Exam Pass Rate" },
+  { value: "12ms", label: "Response Time" },
+];
+
+const FEATURES = [
+  {
+    icon: Brain,
+    title: "Dyslexia Mode",
+    desc: "Switch to high-contrast themes and accessible fonts like OpenDyslexic with one click.",
+    color: "#2563EB",
+  },
+  {
+    icon: BookOpen,
+    title: "Simplify Notes",
+    desc: "Paste any textbook paragraph and let Soma AI rewrite it in simpler language or bullet points.",
+    color: "#00C36B",
+  },
+  {
+    icon: Star,
+    title: "AI Quizzes",
+    desc: "Instantly generate practice tests from your study materials to reinforce learning.",
+    color: "#F59E0B",
+  },
+  {
+    icon: Languages,
+    title: "Multi-lingual",
+    desc: "Learn in Swahili, Yoruba, Zulu or French. Soma speaks your language.",
+    color: "#8B5CF6",
+  },
+  {
+    icon: BarChart2,
+    title: "Smart Tracking",
+    desc: "Visual dashboards show exactly where you excel and where you need more focus.",
+    color: "#EC4899",
+  },
+  {
+    icon: Briefcase,
+    title: "Career Paths",
+    desc: "AI career coach connects your academic strengths to real-world job opportunities.",
+    color: "#14B8A6",
+  },
+];
+
+const STEPS = [
+  {
+    num: "1",
+    title: "Upload Materials",
+    desc: "Snap a photo of your textbook or upload a PDF syllabus.",
+    icon: Upload,
+  },
+  {
+    num: "2",
+    title: "AI Transforms",
+    desc: "Our AI adapts the content to your reading style and language preference.",
+    icon: Sparkles,
+  },
+  {
+    num: "3",
+    title: "Ace Your Exams",
+    desc: "Practice with quizzes and follow your custom study roadmap.",
+    icon: Trophy,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    initials: 'AK',
+    name: 'Amina Kamanzi',
+    role: 'S4 Student, Kigali',
+    color: 'bg-primary text-white',
+    quote: 'I used to struggle with biology notes. Soma AI made everything clear and even quizzed me. My grade went from C to A in one term.',
+  },
+  {
+    initials: 'MN',
+    name: 'Mr. Nshimiyimana',
+    role: 'Teacher, FAWE Girls School',
+    color: 'bg-accent text-white',
+    quote: 'I can finally understand which students are struggling. The dashboard shows me exactly who needs help before it is too late.',
+  },
+  {
+    initials: 'EM',
+    name: 'Eric Manzi',
+    role: 'S5 Student, Musanze',
+    color: 'bg-warm text-white',
+    quote: 'The dyslexia mode changed everything for me. I no longer get lost in the text. I actually enjoy studying now.',
+  },
+]
+const PLANS = [
+  {
+    name: "Free",
+    price: "0",
+    period: "forever",
+    color: "#E2E8F0",
+    textColor: "#0F172A",
+    highlight: false,
+    features: [
+      "5 note simplifications/day",
+      "10 AI quiz questions/day",
+      "Basic dyslexia mode",
+      "1 language",
+      "Community support",
+    ],
+  },
+  {
+    name: "Student",
+    price: "2,500",
+    period: "RWF / month",
+    color: "#ffffff",
+    textColor: "#0F172A",
+    highlight: true,
+    features: [
+      "Unlimited note simplifications",
+      "Unlimited AI quizzes",
+      "Full dyslexia & accessibility suite",
+      "5+ African languages",
+      "Smart progress tracking",
+      "Priority support",
+    ],
+  },
+  {
+    name: "School",
+    price: "Custom",
+    period: "per institution",
+    color: "#0F172A",
+    textColor: "#0F172A",
+    highlight: false,
+    features: [
+      "Everything in Student",
+      "Teacher dashboard",
+      "Class analytics",
+      "Curriculum alignment",
+      "Dedicated account manager",
+      "LMS integration",
+    ],
+  },
+];
+
+/* ─────────────── COMPONENT ─────────────── */
+
+const LANGUAGES = [
+  { code: "rw", flag: "🇷🇼", label: "Kinyarwanda" },
+  { code: "us", flag: "🇺🇸", label: "English" },
+  { code: "fr", flag: "🇫🇷", label: "French" },
+  { code: "ke", flag: "🇰🇪", label: "Kiswahili" },
+];
 
 function Index() {
-  const navigate = useNavigate();
-  const [modal, setModal]   = useState(false);
-  const [tab, setTab]       = useState<"login"|"signup">("signup");
-  const [speech, setSpeech] = useState("Tap any stop to explore! 🗺️");
-  const [msgIdx, setMsgIdx] = useState(0);
-  const [muted, setMuted]   = useState(false);
-  const [sunAngle, setSunAngle] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  // Autoplay music on mount
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.volume = 0.45;
-    a.play().catch(() => {
-      // Browser blocked autoplay — play on first click
-      const unlock = () => { a.play().catch(()=>{}); document.removeEventListener("click", unlock); };
-      document.addEventListener("click", unlock);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = muted;
-  }, [muted]);
-
-  useEffect(() => {
-    const t = setInterval(() => setSunAngle(a => a + 0.4), 40);
-    return () => clearInterval(t);
-  }, []);
-
-  const chrTap  = () => { setSpeech(CHR_MSGS[msgIdx % CHR_MSGS.length]); setMsgIdx(i=>i+1); };
-  const stopTap = (desc: string) => setSpeech("🏝️ " + desc.slice(0, 58));
+  const [dyslexia, setDyslexia] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(LANGUAGES[1]);
 
   return (
-    <div style={{width:"100vw",height:"100vh",overflow:"hidden",position:"relative"}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
-        *{box-sizing:border-box;}
-        .f1{font-family:'Fredoka One',cursive;}
-        .f2{font-family:'Nunito',sans-serif;font-weight:800;}
-        @keyframes drift  {from{transform:translateX(-260px)}to{transform:translateX(110vw)}}
-        @keyframes bob    {0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-        @keyframes sway   {0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
-        @keyframes swim   {from{left:-80px}to{left:110vw}}
-        @keyframes swim2  {from{right:-80px}to{right:110vw}}
-        @keyframes tpulse {0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.3)}}
-        @keyframes xps    {0%,100%{opacity:1}50%{opacity:.6}}
-        @keyframes glow   {0%,100%{box-shadow:0 0 12px #ffe066,0 0 30px rgba(255,224,102,.3)}50%{box-shadow:0 0 24px #ffe066,0 0 55px rgba(255,224,102,.5)}}
-        @keyframes muspulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-        .stop-btn{cursor:pointer;transition:transform .2s,filter .2s;position:absolute;z-index:25;}
-        .stop-btn:hover{transform:scale(1.2) translateY(-7px);filter:brightness(1.1);}
-        .stop-btn:hover .tp{opacity:1;}
-        .tp{position:absolute;bottom:115%;left:50%;transform:translateX(-50%);background:#1a0044;color:#fff;border-radius:12px;padding:6px 12px;font-family:'Fredoka One',cursive;font-size:12px;white-space:nowrap;z-index:80;pointer-events:none;opacity:0;transition:opacity .2s;border:2px solid #7c4dff;}
-        .tp::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#7c4dff;}
-        .tgt{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:15px;animation:tpulse 1.4s ease-in-out infinite;}
-        .fi{width:100%;padding:10px 14px;border-radius:12px;border:2.5px solid #ddd;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#1a0044;margin-bottom:10px;outline:none;transition:border .2s;}
-        .fi:focus{border-color:#7c4dff;}
-        .gb{width:100%;padding:14px;border-radius:50px;border:none;background:linear-gradient(135deg,#7c4dff,#06b6d4);color:#fff;font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;margin-bottom:8px;border-bottom:4px solid #4a00cc;transition:transform .15s;}
-        .gb:hover{transform:scale(1.04);}
-        .fish-l{position:absolute;animation:swim linear infinite;}
-        .fish-r{position:absolute;animation:swim2 linear infinite;}
-      `}</style>
+    <div
+      className={`min-h-screen bg-white text-[#0F172A] font-sans selection:bg-[#00C36B]/30 ${dyslexia ? "dyslexia-mode" : ""}`}
+      style={
+        dyslexia
+          ? ({ fontFamily: "OpenDyslexic, Arial, sans-serif", fontSize: "1.05em", lineHeight: "1.8" } as React.CSSProperties)
+          : {}
+      }
+    >
+      {/* ── NAVBAR ── */}
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 h-25 flex items-center justify-between gap-6">
+          {/* Logo */}
+          <img src={logo} alt="Soma AI" className="h-25 w-auto object-contain" />
 
-      {/* AUDIO */}
-      <audio ref={audioRef} src="/landing page background music.mp3" loop />
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-7">
+            {NAV_LINKS.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className="text-sm font-semibold text-[#475569] hover:text-[#0F172A] transition-colors"
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
 
-      {/* ── OCEAN / SKY BG ── */}
-      <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,#87d4f5 0%,#a8e6f8 22%,#c2eefa 42%,#7ad3f0 60%,#3ab8e8 72%,#1a9fd4 82%,#0e7ab0 92%,#0a628f 100%)",zIndex:0}} />
+          {/* Right Controls */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Language Dropdown */}
+            <div className="relative" onMouseEnter={() => setLangOpen(true)} onMouseLeave={() => setLangOpen(false)}>
+              <button className="flex items-center gap-1.5 text-sm font-semibold text-[#475569] border border-gray-200 rounded-full px-3 py-1.5 hover:border-gray-300 transition-colors bg-white">
+                <span className="text-[10px] font-black text-[#94A3B8] uppercase tracking-wider">{selectedLang.code}</span>
+                <span className="text-base">{selectedLang.flag}</span>
+                <span>{selectedLang.label}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${langOpen ? "rotate-180" : ""}`} />
+              </button>
 
-      {/* Animated wave shimmer on ocean */}
-      {[18,38,58,75].map((pct,i)=>(
-        <svg key={i} style={{position:"absolute",top:`${pct}%`,left:0,width:"100%",opacity:.22,zIndex:1,pointerEvents:"none"}} viewBox="0 0 800 18" preserveAspectRatio="none" height={14}>
-          <path d={`M0 9 Q100 ${i%2===0?2:16} 200 9 Q300 ${i%2===0?16:2} 400 9 Q500 ${i%2===0?2:16} 600 9 Q700 ${i%2===0?16:2} 800 9`} fill="none" stroke="white" strokeWidth="2"/>
-        </svg>
-      ))}
+              {/* Dropdown panel */}
+              {langOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => { setSelectedLang(lang); setLangOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                        selectedLang.code === lang.code
+                          ? "bg-[#EFF6FF] text-[#2563EB] font-bold"
+                          : "text-[#374151] hover:bg-gray-50 font-semibold"
+                      }`}
+                    >
+                      <span className="text-[10px] font-black text-[#94A3B8] uppercase tracking-wider w-5">{lang.code}</span>
+                      <span className="text-base">{lang.flag}</span>
+                      <span className="flex-1">{lang.label}</span>
+                      {selectedLang.code === lang.code && (
+                        <span className="text-[#2563EB]">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-      {/* Spinning sun */}
-      <div style={{position:"absolute",top:22,right:"10%",width:68,height:68,borderRadius:"50%",background:"#ffe066",animation:"glow 3s ease-in-out infinite",zIndex:5}}>
-        {Array.from({length:8}).map((_,i)=>(
-          <div key={i} style={{position:"absolute",width:5,height:20,background:"#ffe066",borderRadius:3,top:"50%",left:"50%",transformOrigin:"2.5px -28px",opacity:.85,transform:`rotate(${i*45+sunAngle}deg) translateX(-50%)`}} />
-        ))}
-      </div>
+            {/* Dyslexia Toggle */}
+            <button
+              onClick={() => setDyslexia(!dyslexia)}
+              className={`flex items-center gap-2 text-sm font-semibold border rounded-full px-3 py-1.5 transition-all ${
+                dyslexia
+                  ? "bg-[#2563EB] text-white border-[#2563EB]"
+                  : "text-[#475569] border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <span
+                className={`w-8 h-4 rounded-full relative transition-all ${dyslexia ? "bg-white/30" : "bg-gray-200"}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${dyslexia ? "left-4" : "left-0.5"}`}
+                />
+              </span>
+              Aa Dyslexia mode
+            </button>
 
-      {/* Rainbow */}
-      <svg style={{position:"absolute",top:"2%",left:"2%",width:240,height:140,opacity:.5,pointerEvents:"none",zIndex:4}} viewBox="0 0 240 140">
-        {[["#ff6b6b",8],["#ff9500",7],["#ffd84d",7],["#4caf50",7],["#29b6f6",6],["#7c4dff",5]].map(([c,w],i)=>(
-          <path key={i} d={`M${6+i*10},135 Q120,${-10+i*14} ${234-i*10},135`} fill="none" stroke={c as string} strokeWidth={w as number}/>
-        ))}
-      </svg>
+            <Link
+              to="/island"
+              className="text-sm font-bold text-[#2563EB] hover:text-[#1D4ED8] transition-colors flex items-center gap-1.5"
+            >
+              🏝️ Soma Island
+            </Link>
+            <Link
+              to="/login"
+              className="text-sm font-bold text-[#0F172A] hover:text-[#2563EB] transition-colors"
+            >
+              Login
+            </Link>
+            <Button
+              className="h-9 px-5 text-sm font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl"
+              asChild
+            >
+              <Link to="/login">Get started</Link>
+            </Button>
+          </div>
 
-      {/* Clouds */}
-      {[{dur:"42s",del:"0s",w:210,t:28},{dur:"58s",del:"-20s",w:160,t:60},{dur:"50s",del:"-33s",w:185,t:18},{dur:"35s",del:"-10s",w:130,t:45}].map((cl,i)=>(
-        <div key={i} style={{position:"absolute",top:cl.t,left:-cl.w,pointerEvents:"none",zIndex:6,animation:`drift ${cl.dur} linear infinite`,animationDelay:cl.del}}>
-          <svg viewBox="0 0 160 60" width={cl.w} height={cl.w*0.37}>
-            <ellipse cx="80" cy="42" rx="72" ry="18" fill="white" opacity=".97"/>
-            <ellipse cx="55" cy="28" rx="34" ry="26" fill="white" opacity=".97"/>
-            <ellipse cx="108" cy="26" rx="28" ry="21" fill="white" opacity=".97"/>
+          {/* Mobile Hamburger */}
+          <button
+            className="lg:hidden p-2 rounded-lg text-[#475569]"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="lg:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-4">
+            {NAV_LINKS.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className="block text-sm font-semibold text-[#475569] hover:text-[#0F172A]"
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.label}
+              </a>
+            ))}
+            <div className="flex flex-col gap-3 pt-2">
+              <Link to="/island" className="text-sm font-bold text-[#2563EB] flex items-center gap-1.5" onClick={() => setMobileOpen(false)}>
+                🏝️ Explore Soma Island
+              </Link>
+              <div className="flex gap-3">
+                <Link to="/login" className="text-sm font-bold text-[#0F172A]" onClick={() => setMobileOpen(false)}>
+                  Login
+                </Link>
+                <Button
+                  className="h-9 px-5 text-sm font-bold bg-[#2563EB] text-white rounded-xl"
+                  asChild
+                >
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>Get started</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* ── HERO ── */}
+      <section className="relative pt-16 pb-20 overflow-hidden" style={{
+        background: "#f5f0f5",
+      }}>
+       
+
+        {/* Decorative blobs */}
+        <div aria-hidden="true" className="absolute top-[-80px] right-[10%] w-[340px] h-[340px] rounded-full z-0" style={{ background: "rgba(37,99,235,0.07)" }} />
+        <div aria-hidden="true" className="absolute bottom-[-50px] left-[5%] w-[220px] h-[220px] rounded-full z-0" style={{ background: "rgba(0,195,107,0.08)" }} />
+
+        {/* Bottom wave / scallop */}
+        <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 z-0 overflow-hidden leading-none">
+          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <circle key={i} cx={i * 120 + 60} cy={60} r={62} fill="white" />
+            ))}
           </svg>
         </div>
-      ))}
 
-      {/* Birds */}
-      {[{t:"7%",dur:"20s",del:"-2s",e:"🐦"},{t:"13%",dur:"29s",del:"-14s",e:"🐦"},{t:"5%",dur:"25s",del:"-8s",e:"🦜"},{t:"18%",dur:"33s",del:"-22s",e:"🐦"}].map((b,i)=>(
-        <div key={i} style={{position:"absolute",top:b.t,left:-40,fontSize:17,pointerEvents:"none",zIndex:7,animation:`drift ${b.dur} linear infinite`,animationDelay:b.del}}>{b.e}</div>
-      ))}
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
+          {/* Left */}
+          <div className="space-y-7">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 border border-[#BFDBFE] backdrop-blur-sm">
+              <SparkleIcon />
+              <span className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest">
+                AI study mentor for Africa
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight leading-[1.1] text-[#0F172A]">
+              Learn smarter with your AI{" "}
+              <span className="text-[#2563EB]">study buddy</span>
+            </h1>
+            <p className="text-base text-[#4B5563] max-w-md leading-relaxed font-medium">
+              Soma AI simplifies your notes, builds personal study plans, and
+              quizzes you so every student can succeed, even with dyslexia or
+              reading challenges.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                size="lg"
+                className="h-12 px-7 text-sm font-bold bg-[#22C55E] hover:bg-[#1D4ED8] text-white rounded-2xl"
+                asChild
+              >
+                <Link to="/login">Get started for free</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 px-7 text-sm font-bold border-2 border-gray-300 rounded-2xl text-[#0F172A] hover:bg-black hover:border-white hover:text-white bg-white/60"
+                asChild
+              >
+                <a href="#demo">Watch Demo</a>
+              </Button>
+              <Button
+                size="lg"
+                className="h-12 px-7 text-sm font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl border-none transition-transform hover:scale-105 shadow-[0_4px_12px_rgba(245,158,11,0.2)] flex items-center gap-1.5"
+                asChild
+              >
+                <Link to="/island">🏝️ Explore Soma Island</Link>
+              </Button>
+            </div>
 
-      {/* ── ISLAND PNG fills whole viewport ── */}
-      <img
-        src="/landing page island.png"
-        alt="Soma AI Island"
-        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"contain",objectPosition:"center 55%",zIndex:8,pointerEvents:"none",userSelect:"none"}}
-      />
-
-      {/* ── LIFESPAN TIMELINE on top pyramid island ── */}
-      <div style={{position:"absolute",left:"44%",top:"-2%",width:"14%",aspectRatio:"1",zIndex:15,pointerEvents:"none",opacity:.92,filter:"drop-shadow(0 4px 12px rgba(0,0,0,.3))"}}>
-        <RiveAnimation src="/riv-animations/22180-41567-level-up-badges-animation.riv" className="w-full h-full" />
-      </div>
-
-      {/* ── WATER CREATURES (z above ocean, below island overlay) ── */}
-      {/* Fish left→right */}
-      {[{e:"🐠",t:"82%",dur:"13s",del:"0s"},{e:"🐡",t:"88%",dur:"19s",del:"-6s"},{e:"🦑",t:"78%",dur:"15s",del:"-11s"},{e:"🐬",t:"85%",dur:"22s",del:"-17s"}].map((f,i)=>(
-        <div key={i} className="fish-l" style={{top:f.t,fontSize:26,animationDuration:f.dur,animationDelay:f.del,zIndex:4}}>{f.e}</div>
-      ))}
-      {/* Fish right→left */}
-      {[{e:"🐟",t:"80%",dur:"17s",del:"-4s"},{e:"🐙",t:"91%",dur:"24s",del:"-13s"},{e:"🦀",t:"86%",dur:"20s",del:"-9s"}].map((f,i)=>(
-        <div key={i} className="fish-r" style={{top:f.t,right:-60,fontSize:26,animationDuration:f.dur,animationDelay:f.del,zIndex:4,transform:"scaleX(-1)"}}>{f.e}</div>
-      ))}
-      {/* Boat, shark, whale */}
-      <div style={{position:"absolute",bottom:"6%",left:-60,fontSize:42,animation:"drift 30s linear infinite",zIndex:5,filter:"drop-shadow(0 3px 0 rgba(0,0,0,.3))",animationDelay:"-5s"}}>⛵</div>
-      <div style={{position:"absolute",bottom:"10%",left:-40,fontSize:30,animation:"drift 38s linear infinite",zIndex:4,opacity:.85,animationDelay:"-22s"}}>🦈</div>
-      <div style={{position:"absolute",bottom:"7%",fontSize:38,animation:"drift 50s linear infinite",zIndex:4,animationDelay:"-35s"}}>🐋</div>
-      {/* Bubbles */}
-      {[12,28,45,62,78,90].map((l,i)=>(
-        <div key={i} style={{position:"absolute",bottom:`${72+i*3}%`,left:`${l}%`,fontSize:11,opacity:.35,animation:`bob ${1.8+i*0.3}s ease-in-out infinite`,animationDelay:`${-i*0.4}s`,zIndex:3}}>🫧</div>
-      ))}
-
-      {/* ── STOPS spread across all islands ── */}
-      {STOPS.map(s=>(
-        <div key={s.id} className="stop-btn" style={{left:s.left,top:s.top}} onClick={()=>stopTap(s.desc)}>
-          <div className="tp">{s.icon} {s.label}: {s.desc}</div>
-          <div className="tgt">🎯</div>
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <span style={{fontSize:36,filter:"drop-shadow(0 3px 6px rgba(0,0,0,.45)) drop-shadow(0 1px 2px rgba(0,0,0,.3))",lineHeight:1}}>{s.icon}</span>
-            <span className="f1" style={{fontSize:11,color:"#fff",textShadow:"0 1px 4px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.6)",textAlign:"center",lineHeight:1.2}}>{s.label}</span>
+            {/* Social proof */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-9 w-9 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center"
+                  >
+                    <User className="h-4 w-4 text-slate-400" />
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs font-bold text-[#6B7280] uppercase tracking-widest">
+                1000 rate from different schools
+              </span>
+            </div>
           </div>
-          <div style={{position:"absolute",bottom:-16,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,.92)",backdropFilter:"blur(4px)",borderRadius:20,padding:"2px 10px",fontFamily:"'Fredoka One',cursive",fontSize:9,whiteSpace:"nowrap",border:"1.5px solid rgba(0,0,0,.15)",color:"#333",boxShadow:"0 2px 6px rgba(0,0,0,.15)"}}>Tap!</div>
-        </div>
-      ))}
 
-      {/* ── BOT GUIDE (bottom-left of main island) ── */}
-      <div style={{position:"absolute",left:"6%",top:"55%",zIndex:30,cursor:"pointer",animation:"bob 2.5s ease-in-out infinite"}} onClick={chrTap}>
-        <div style={{position:"absolute",bottom:"105%",left:"50%",transform:"translateX(-10%)",background:"#fff",border:"3px solid #7c4dff",borderRadius:14,padding:"8px 12px",fontFamily:"'Fredoka One',cursive",fontSize:12,color:"#1a0044",maxWidth:190,textAlign:"center",zIndex:31,boxShadow:"0 4px 16px rgba(124,77,255,.25)"}}>
-          {speech}
-          <div style={{position:"absolute",bottom:-12,left:18,borderWidth:7,borderStyle:"solid",borderColor:"#7c4dff transparent transparent transparent"}}/>
-          <div style={{position:"absolute",bottom:-6,left:20,borderWidth:5,borderStyle:"solid",borderColor:"white transparent transparent transparent",zIndex:1}}/>
-        </div>
-        <div style={{width:96,height:96}}>
-          <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full"/>
-        </div>
-      </div>
+          {/* Right – Hero Image with ring + floating avatars */}
+          <div className="relative flex justify-center items-center py-10">
+            {/* Outer ring */}
+            <div
+              aria-hidden="true"
+              className="absolute"
+              style={{
+                width: 550,
+                height: 520,
+                borderRadius: "50%",
+                border: "6px solid rgba(100,120,220,0.25)",
+              }}
+            />
+            {/* Inner ring */}
+            <div
+              aria-hidden="true"
+              className="absolute"
+              style={{
+                width: 500,
+                height: 480,
+                borderRadius: "50%",
+                border: "4px solid rgba(100,120,220,0.15)",
+              }}
+            />
 
-      {/* ── TOP NAV ── */}
-      <div style={{position:"absolute",top:0,left:0,width:"100%",padding:"14px 24px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",background:"linear-gradient(180deg,rgba(5,2,20,.72),transparent)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <img src="/favicon.png" alt="Soma AI Logo" style={{width:44,height:44,objectFit:"contain",filter:"drop-shadow(0 2px 6px rgba(0,0,0,.4)) brightness(1.1)"}} />
-          <div className="f1" style={{fontSize:30,background:"linear-gradient(130deg,#c084fc,#22d3ee,#86efac)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>SOMA AI</div>
-        </div>
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          {/* 🔊 Music toggle */}
-          <button onClick={()=>setMuted(m=>!m)} title={muted?"Unmute music":"Mute music"} style={{width:44,height:44,borderRadius:"50%",border:"none",background:muted?"rgba(255,255,255,.15)":"linear-gradient(135deg,#22c55e,#16a34a)",cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 3px 12px rgba(0,0,0,.3)",animation:muted?"none":"muspulse 2s ease-in-out infinite",transition:"background .3s"}}>{muted?"🔇":"🔊"}</button>
-          <button className="f1" style={{borderRadius:50,padding:"8px 20px",fontSize:14,background:"rgba(255,255,255,.18)",color:"#fff",border:"2px solid rgba(255,255,255,.4)",cursor:"pointer"}} onClick={()=>{setTab("login");setModal(true);}}>Log In</button>
-          <button className="f1" style={{borderRadius:50,padding:"8px 20px",fontSize:14,background:"linear-gradient(135deg,#7c4dff,#06b6d4)",color:"#fff",border:"none",borderBottom:"3px solid #4a00cc",cursor:"pointer"}} onClick={()=>{setTab("signup");setModal(true);}}>Sign Up 🚀</button>
-        </div>
-      </div>
+            {/* Floating avatar – top center */}
+            <div
+              className="absolute z-20"
+              style={{ top: 0, left: "50%", transform: "translateX(-50%)" }}
+            >
+              <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+                <img src={img2} alt="Student" className="w-full h-full object-cover" />
+              </div>
+            </div>
 
-      {/* ── STATS STRIP ── */}
-      <div style={{position:"absolute",bottom:0,left:0,width:"100%",zIndex:150,background:"linear-gradient(0deg,rgba(5,2,20,.92),rgba(5,2,20,.6),transparent)",padding:"12px 20px",display:"flex",gap:16,alignItems:"center",justifyContent:"center",flexWrap:"wrap",backdropFilter:"blur(3px)"}}>
-        {[["🪙","1,840","#ffd84d"],["🔥","12-day streak","#ff8a65"],["⭐","Lv 8","#c084fc"],["🏆","4 trophies","#67e8f9"]].map(([ico,val,col])=>(
-          <div key={val as string} className="f1" style={{display:"flex",alignItems:"center",gap:6,fontSize:16,color:col as string}}>{ico} {val}</div>
-        ))}
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span className="f1" style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>XP</span>
-          <div style={{width:110,height:10,background:"rgba(255,255,255,.18)",borderRadius:5,overflow:"hidden"}}>
-            <div style={{height:"100%",width:"74%",background:"linear-gradient(90deg,#a855f7,#22d3ee)",borderRadius:5,animation:"xps 2s ease-in-out infinite"}}/>
+            {/* Floating avatar – left middle */}
+            <div
+              className="absolute z-20"
+              style={{ top: "50%", left: -10, transform: "translateY(-50%)" }}
+            >
+              <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+                <img src={img2} alt="Student" className="w-full h-full object-cover object-top" />
+              </div>
+            </div>
+
+            {/* Floating avatar – right middle */}
+            <div
+              className="absolute z-20"
+              style={{ top: "50%", right: -10, transform: "translateY(-50%)" }}
+            >
+              <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+                <img src={img2} alt="Student" className="w-full h-full object-cover object-bottom" />
+              </div>
+            </div>
+
+            {/* Main image – clipped circle bottom */}
+            <div
+              className="relative z-10 overflow-hidden"
+              style={{
+                width: 400,
+                height: 500,
+                borderRadius: "160px 160px 0 0",
+                background: "rgba(180,160,200,0.25)",
+              }}
+            >
+              <img
+                src={img1}
+                alt="Student learning with Soma AI"
+                className="w-full h-full object-cover object-top"
+              />
+
+              
+            </div>
           </div>
-          <span className="f1" style={{fontSize:11,color:"rgba(255,255,255,.6)"}}>1840/2500</span>
         </div>
-        <button className="f1" style={{background:"linear-gradient(135deg,#f59e0b,#ef4444)",color:"#fff",border:"none",borderRadius:50,padding:"10px 24px",fontSize:18,cursor:"pointer",borderBottom:"4px solid #b91c1c"}} onClick={()=>{setTab("signup");setModal(true);}}>▶ Play Now!</button>
+      </section>
+
+      {/* ── STATS BAR ── */}
+      <div className="bg-white border-y border-white py-10 mt-">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {STATS.map((s) => (
+            <div key={s.label}>
+              <div className="text-3xl font-black text-[#2563EB]">{s.value}</div>
+              <div className="text-[10px] font-bold text-black uppercase tracking-widest mt-1">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ── MODAL ── */}
-      {modal&&(
-        <div style={{position:"absolute",inset:0,zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{position:"absolute",inset:0,background:"rgba(5,2,20,.88)",backdropFilter:"blur(4px)"}} onClick={()=>setModal(false)}/>
-          <div style={{position:"relative",zIndex:1,background:"#fff",borderRadius:28,width:340,padding:"24px 22px 20px",border:"4px solid #7c4dff",textAlign:"center"}}>
-            <div style={{position:"absolute",top:10,right:14,fontSize:20,cursor:"pointer",color:"#bbb"}} onClick={()=>setModal(false)}>✕</div>
-            <div className="f1" style={{fontSize:34,background:"linear-gradient(130deg,#a855f7,#06b6d4,#22c55e)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>✦ SOMA AI</div>
-            <div className="f2" style={{fontSize:10,letterSpacing:3,color:"#7c4dff",marginBottom:16}}>YOUR LEARNING ADVENTURE</div>
-            <div style={{display:"flex",background:"#f3eeff",borderRadius:14,padding:3,marginBottom:16}}>
-              {(["login","signup"] as const).map(t=>(
-                <button key={t} className="f1" style={{flex:1,padding:8,borderRadius:11,border:"none",cursor:"pointer",background:tab===t?"#7c4dff":"transparent",color:tab===t?"#fff":"#7c4dff",fontSize:14,transition:"all .2s"}} onClick={()=>setTab(t)}>{t==="login"?"Log In":"Sign Up"}</button>
+      {/* ── FEATURES ── */}
+       <section id="features" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16 space-y-3">
+            <h2 className="text-4xl font-black tracking-tight">
+              Tools for Every Learner
+            </h2>
+            <p className="text-sm text-[#64748B] font-semibold">
+              Designed to remove barriers and spark curiosity
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {FEATURES.map((f, i) => (
+              <div
+                key={f.title}
+                className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:-translate-y-1 transition-all duration-300 hover:shadow-lg"
+              >
+                {/* Image banner with colour overlay */}
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={i % 2 === 0 ? img1 : img2}
+                    alt={f.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    style={{ objectPosition: i === 2 ? "center 30%" : i === 4 ? "center 60%" : "top center" }}
+                  />
+                  {/* tinted colour overlay */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: `linear-gradient(to bottom, ${f.color}22, ${f.color}88)` }}
+                  />
+                  {/* icon badge */}
+                  <div
+                    className="absolute top-4 left-4 w-10 h-10 rounded-2xl flex items-center justify-center shadow-md"
+                    style={{ background: "rgba(255,255,255,0.95)" }}
+                  >
+                    <f.icon className="h-5 w-5" style={{ color: f.color }} />
+                  </div>
+                  {/* bottom accent bar */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: f.color }} />
+                </div>
+                {/* Text */}
+                <div className="p-6 space-y-2">
+                  <h3 className="text-base font-black">{f.title}</h3>
+                  <p className="text-sm text-[#64748B] leading-relaxed font-medium">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── DEMO / EXPERIENCE ── */}
+      <section
+        id="demo"
+        className="py-28 bg-[#F8FAFC] border-y border-gray-100"
+      >
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-[#2563EB] mb-3">
+              Experience Soma
+            </p>
+            <h2 className="text-4xl font-black tracking-tight mb-8">
+              See how it works
+            </h2>
+            <div className="space-y-3">
+              <div className="bg-[#2563EB] text-white rounded-2xl px-5 py-4 flex items-center gap-4">
+                <BookOpen className="h-5 w-5 shrink-0" />
+                <div>
+                  <div className="text-sm font-black">Note Simplifier</div>
+                  <div className="text-xs opacity-80">Textbook to easy read</div>
+                </div>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 flex items-center gap-4">
+                <Star className="h-5 w-5 shrink-0 text-[#F59E0B]" />
+                <div>
+                  <div className="text-sm font-black">Quick Quiz</div>
+                  <div className="text-xs text-[#64748B]">Test Your Knowledge</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Demo card */}
+          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-5">
+            <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest">
+              Paste your text below
+            </p>
+            <div className="text-sm text-[#475569] leading-relaxed bg-[#F8FAFC] rounded-xl p-4 border border-gray-100">
+              "Photosynthesis is a process used by plants and other organisms to
+              convert light energy into chemical energy that, through cellular
+              respiration, can later be released to fuel the organism's
+              activities."
+            </div>
+            <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+              <span>Textbook complexity: High</span>
+              <button className="bg-[#2563EB] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-[#1D4ED8] transition-colors">
+                Simplify Now
+              </button>
+            </div>
+            <div className="border-t border-gray-100 pt-4 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-black text-[#2563EB]">
+                  Soma Simplified
+                </span>
+                <span className="text-xs text-[#94A3B8] font-semibold">
+                  🔊 Read Aloud
+                </span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-[#0F172A]">
+                <Check className="h-4 w-4 text-[#00C36B] shrink-0 mt-0.5" />
+                Plants take sunlight and turn it into food.
+              </div>
+              <div className="flex items-start gap-2 text-sm text-[#0F172A]">
+                <Check className="h-4 w-4 text-[#00C36B] shrink-0 mt-0.5" />
+                This food gives plants energy to grow.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3 STEPS ── */}
+      <section className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black tracking-tight">
+              Three Steps to Success
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-10">
+            {STEPS.map((s, i) => (
+              <div key={s.num} className="text-center space-y-4">
+                <div className="w-14 h-14 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xl font-black mx-auto">
+                  {s.num}
+                </div>
+                <h3 className="text-lg font-black">{s.title}</h3>
+                <p className="text-sm text-[#64748B] font-medium leading-relaxed max-w-xs mx-auto">
+                  {s.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+       <section className="bg-primary  py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="text-center mb-12">
+          <span className="section-label text-white/60 block mb-3">
+            Student stories
+          </span>
+          <h2 className="font-display font-bold text-[36px] text-white">
+            Loved by students and teachers
+          </h2>
+        </div>
+
+        {/* Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.name}
+                 className="bg-white rounded-[20px] p-6 flex flex-col gap-4 shadow-float">
+
+              {/* Stars */}
+              <div className="flex gap-1">
+                {Array(5).fill(0).map((_, i) => (
+                  <i key={i} className="ti ti-star-filled text-warm text-[16px]"
+                     aria-hidden="true" />
+                ))}
+              </div>
+
+              {/* Quote */}
+              <p className="font-body text-textMid text-[14px] leading-relaxed flex-1 italic">
+                "{t.quote}"
+              </p>
+
+              {/* Author */}
+              <div className="flex items-center gap-3 pt-2 border-t border-border">
+                <div className={`w-10 h-10 rounded-full ${t.color} flex items-center
+                                 justify-center font-display font-bold text-[13px]
+                                 flex-shrink-0`}>
+                  {t.initials}
+                </div>
+                <div>
+                  <p className="font-display font-semibold text-[14px] text-textDark">
+                    {t.name}
+                  </p>
+                  <p className="font-body text-[12px] text-textMuted">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16 space-y-3">
+            <h2 className="text-4xl font-black tracking-tight">
+              Simple, fair pricing
+            </h2>
+            <p className="text-sm text-[#64748B] font-semibold max-w-md mx-auto">
+              Start free, upgrade when you're ready. No hidden fees.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`rounded-3xl p-8 flex flex-col gap-6 ${
+                  plan.highlight
+                    ? "ring-4 ring-[#2563EB] ring-offset-2 scale-105 shadow-xl"
+                    : "border border-gray-100"
+                }`}
+                style={{ background: plan.highlight ? "#abb8e7" : "#F8FAFC" }}
+              >
+                {plan.highlight && (
+                  <div className="text-[10px] font-black uppercase tracking-widest text-black text-center">
+                    Most Popular
+                  </div>
+                )}
+                <div>
+                  <div
+                    className="text-lg font-black"
+                    style={{ color: plan.textColor }}
+                  >
+                    {plan.name}
+                  </div>
+                  <div className="flex items-baseline gap-1 mt-2">
+                    {plan.price !== "Custom" && (
+                      <span
+                        className="text-3xl font-black"
+                        style={{ color: plan.textColor }}
+                      >
+                        {plan.price === "0" ? "Free" : plan.price}
+                      </span>
+                    )}
+                    {plan.price === "Custom" && (
+                      <span
+                        className="text-3xl font-black"
+                        style={{ color: plan.textColor }}
+                      >
+                        Custom
+                      </span>
+                    )}
+                    {plan.price !== "0" && plan.price !== "Custom" && (
+                      <span
+                        className="text-xs font-bold opacity-70"
+                        style={{ color: plan.textColor }}
+                      >
+                        {plan.period}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ul className="space-y-3 flex-1">
+                  {plan.features.map((f) => (
+                    <li
+                      key={f}
+                      className="flex items-start gap-2 text-sm font-medium"
+                      style={{ color: plan.textColor }}
+                    >
+                      <Check
+                        className="h-4 w-4 shrink-0 mt-0.5"
+                        style={{ color: plan.highlight ? "#86EFAC" : "#00C36B" }}
+                      />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={`w-full h-11 rounded-2xl text-sm font-black transition-transform hover:scale-105 ${
+                    plan.highlight
+                      ? "bg-white text-[#2563EB] hover:bg-[#F1F5F9]"
+                      : "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
+                  }`}
+                  asChild
+                >
+                  <Link to="/login">
+                    {plan.price === "Custom"
+                      ? "Contact Us"
+                      : plan.price === "0"
+                        ? "Get started free"
+                        : "Get Student Plan"}
+                  </Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA BANNER ── */}
+      <section id="schools" className="max-w-7xl mx-auto px-6 py-20">
+        <div className="relative rounded-[48px] bg-[#0F172A] overflow-hidden p-14 lg:p-20 flex flex-col lg:flex-row items-center gap-14">
+          <div className="relative z-10 text-white space-y-6 lg:w-1/2">
+            <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tight">
+              Start Your Learning Journey Today
+            </h2>
+            <p className="text-base opacity-80 font-medium leading-relaxed">
+              Join thousands of students across Rwanda using Soma AI to achieve
+              higher grades and clearer understanding.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Button
+                size="lg"
+                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-12 px-8 rounded-2xl font-black text-sm transition-transform hover:scale-105"
+                asChild
+              >
+                <Link to="/login">Create Account</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white/20 text-black hover:bg-white/10 h-12 px-8 rounded-2xl font-black text-sm"
+                asChild
+              >
+                <a href="#schools">For Schools</a>
+              </Button>
+            </div>
+          </div>
+          <div className="relative lg:w-1/2 flex justify-center">
+            <div className="w-full max-w-xs aspect-square rounded-[40px] overflow-hidden ring-8 ring-white/10">
+              <img
+                src={img2}
+                alt="Student with Soma AI"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="bg-[#0F172A] text-gray-500 py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 border-b border-white/5 pb-16">
+            <div className="space-y-5 md:col-span-2">
+              <img src={logo} alt="Soma AI" className="h-10 w-auto brightness-0 invert" />
+              <p className="text-xs leading-relaxed max-w-xs font-medium">
+                The smart mentor for the modern African student. Making education
+                accessible, personalised, and engaging through AI.
+              </p>
+            </div>
+            <div className="space-y-5">
+              <h3 className="text-white font-bold text-xs uppercase tracking-widest">
+                Products
+              </h3>
+              <ul className="space-y-3 text-xs font-semibold">
+                <li>
+                  <Link to="/student" className="hover:text-[#00C36B] transition-colors">
+                    AI Notes
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/student" className="hover:text-[#00C36B] transition-colors">
+                    Quiz Bank
+                  </Link>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-[#00C36B] transition-colors">
+                    Study Planner
+                  </a>
+                </li>
+                <li>
+                  <a href="#schools" className="hover:text-[#00C36B] transition-colors">
+                    For Schools
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div className="space-y-5">
+              <h3 className="text-white font-bold text-xs uppercase tracking-widest">
+                Support
+              </h3>
+              <ul className="space-y-3 text-xs font-semibold">
+                <li className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-[#00C36B]" />
+                  +250 785 0XX XXX
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-[#00C36B]" />
+                  somaai1@gmail.com
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <p className="text-xs font-semibold uppercase tracking-widest">
+              © 2026 Soma AI Education. All rights reserved.
+            </p>
+            <div className="flex gap-4">
+              {["𝕏", "in", "f"].map((s) => (
+                <button
+                  key={s}
+                  className="w-8 h-8 rounded-full border border-white/10 text-xs flex items-center justify-center hover:border-[#00C36B] hover:text-[#00C36B] transition-colors"
+                >
+                  {s}
+                </button>
               ))}
             </div>
-            {tab==="login"?(
-              <>
-                <input className="fi f2" type="text" placeholder="👤 Username or Email"/>
-                <input className="fi f2" type="password" placeholder="🔒 Password"/>
-                <button className="gb" onClick={()=>navigate({to:"/login"})}>🚀 Enter the Island!</button>
-                <div className="f2" style={{fontSize:11,color:"#7c4dff",marginTop:8,cursor:"pointer"}} onClick={()=>setTab("signup")}>No account? Sign up free →</div>
-              </>
-            ):(
-              <>
-                <input className="fi f2" type="text" placeholder="👤 Your Name"/>
-                <input className="fi f2" type="email" placeholder="📧 Email"/>
-                <select className="fi f2" defaultValue=""><option value="" disabled>🎓 Select grade</option>{["1","2","3","4","5","6"].map(g=><option key={g}>Primary {g}</option>)}</select>
-                <button className="gb" onClick={()=>navigate({to:"/login"})}>🌟 Start My Adventure!</button>
-                <div className="f2" style={{fontSize:11,color:"#7c4dff",marginTop:8,cursor:"pointer"}} onClick={()=>setTab("login")}>Already have an account? Log in →</div>
-              </>
-            )}
           </div>
         </div>
-      )}
+      </footer>
     </div>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="text-[#2563EB]"
+    >
+      <path
+        d="M12 3L14.5 9L21 12L14.5 15L12 21L9.5 15L3 12L9.5 9L12 3Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }

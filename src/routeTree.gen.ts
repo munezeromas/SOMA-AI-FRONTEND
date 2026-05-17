@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as StudentRouteImport } from './routes/student'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as IslandRouteImport } from './routes/island'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeacherIndexRouteImport } from './routes/teacher.index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
@@ -46,6 +47,11 @@ const StudentRoute = StudentRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IslandRoute = IslandRouteImport.update({
+  id: '/island',
+  path: '/island',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -151,6 +157,7 @@ const StudentAiQuizzesRoute = StudentAiQuizzesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/island': typeof IslandRoute
   '/login': typeof LoginRoute
   '/student': typeof StudentRouteWithChildren
   '/teacher': typeof TeacherRouteWithChildren
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/island': typeof IslandRoute
   '/login': typeof LoginRoute
   '/student/ai-quizzes': typeof StudentAiQuizzesRoute
   '/student/career': typeof StudentCareerRoute
@@ -200,6 +208,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/island': typeof IslandRoute
   '/login': typeof LoginRoute
   '/student': typeof StudentRouteWithChildren
   '/teacher': typeof TeacherRouteWithChildren
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/island'
     | '/login'
     | '/student'
     | '/teacher'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/island'
     | '/login'
     | '/student/ai-quizzes'
     | '/student/career'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/island'
     | '/login'
     | '/student'
     | '/teacher'
@@ -301,6 +313,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  IslandRoute: typeof IslandRoute
   LoginRoute: typeof LoginRoute
   StudentRoute: typeof StudentRouteWithChildren
   TeacherRoute: typeof TeacherRouteWithChildren
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/island': {
+      id: '/island'
+      path: '/island'
+      fullPath: '/island'
+      preLoaderRoute: typeof IslandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -530,6 +550,7 @@ const TeacherRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  IslandRoute: IslandRoute,
   LoginRoute: LoginRoute,
   StudentRoute: StudentRouteWithChildren,
   TeacherRoute: TeacherRouteWithChildren,

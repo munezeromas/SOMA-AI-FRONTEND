@@ -123,7 +123,7 @@ function Games() {
           <div className="w-full h-full p-4 md:p-12 relative flex items-center justify-center">
             {ALL_RIVE_FILES.find(g => g.id === active) ? (
                <div className="w-full h-full max-w-7xl max-h-full bg-black/50 rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(255,255,255,0.1)] relative border border-white/5">
-                 <RiveAnimation src={`/riv-animations/${ALL_RIVE_FILES.find(g => g.id === active)!.file}`} className="w-full h-full" withSound />
+                 <RiveAnimation src={`/riv-animations/${ALL_RIVE_FILES.find(g => g.id === active)!.file}`} className="w-full h-full" withSound stateMachines="State Machine 1" />
                </div>
             ) : (
                <div className="w-full max-w-4xl max-h-full overflow-y-auto rounded-[40px] bg-background/5 p-10 shadow-2xl relative border border-white/10 text-white">

@@ -182,12 +182,12 @@ export const TalkingChatbot = memo(function TalkingChatbot({
         headRef.current.stopSpeaking?.();
       }
 
-      // We use browserSpeak for the actual audio
-      browserSpeak(text, queue);
+      // Ensure AudioContext is active
+      if (headRef.current.audioCtx?.state === "suspended") {
+        headRef.current.audioCtx.resume().catch(() => {});
+      }
 
-      // To make TalkingHead animate visemes without a TTS backend, we use speakAudio
-      // with a silent AudioBuffer of the estimated speech duration, and provide the words.
-      // TalkingHead's lipsync modules will automatically convert the words to visemes!
+      // Parse words and estimate durations
       const words = text.split(/[\s]+/).filter((w) => w.length > 0);
       const wtimes: number[] = [];
       const wdurations: number[] = [];
@@ -202,21 +202,42 @@ export const TalkingChatbot = memo(function TalkingChatbot({
       });
 
       const totalDurationMs = currentTime || 1000;
-      const ctx = headRef.current.audioCtx;
-      if (ctx) {
-        const sampleRate = ctx.sampleRate || 44100;
-        const frameCount = Math.max(1, Math.floor(sampleRate * (totalDurationMs / 1000)));
-        const emptyBuffer = ctx.createBuffer(1, frameCount, sampleRate);
 
-        headRef.current.speakAudio({
-          audio: emptyBuffer,
-          words,
-          wtimes,
-          wdurations,
-        });
-      }
+      // Delayed lipsync triggers only when speechSynthesis actually starts
+      browserSpeak(
+        text,
+        queue,
+        () => {
+          // Speak onstart: trigger visemes
+          try {
+            const ctx = headRef.current?.audioCtx;
+            if (ctx) {
+              const sampleRate = ctx.sampleRate || 44100;
+              const frameCount = Math.max(1, Math.floor(sampleRate * (totalDurationMs / 1000)));
+              const emptyBuffer = ctx.createBuffer(1, frameCount, sampleRate);
 
-      console.log("[TalkingChatbot] speakAudio fallback called ✓ (queue: " + queue + ")");
+              headRef.current.speakAudio({
+                audio: emptyBuffer,
+                words,
+                wtimes,
+                wdurations,
+              });
+            }
+          } catch (e) {
+            console.error("[TalkingChatbot] speakAudio error:", e);
+          }
+        },
+        () => {
+          // Speak onend: stop speaking
+          try {
+            headRef.current?.stopSpeaking?.();
+          } catch (e) {
+            console.error("[TalkingChatbot] stopSpeaking error:", e);
+          }
+        }
+      );
+
+      console.log("[TalkingChatbot] speakAudio fallback set up successfully ✓ (queue: " + queue + ")");
     } catch (err) {
       console.error("[TalkingChatbot] speakAudio failed, using browser TTS only:", err);
       browserSpeak(text, queue);
