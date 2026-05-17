@@ -286,6 +286,12 @@ function Index() {
             </button>
 
             <Link
+              to="/island"
+              className="text-sm font-bold text-[#2563EB] hover:text-[#1D4ED8] transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            >
+              🏝️ Soma Island
+            </Link>
+            <Link
               to="/login"
               className="text-sm font-bold text-[#0F172A] hover:text-[#2563EB] transition-colors"
             >
@@ -321,16 +327,21 @@ function Index() {
                 {l.label}
               </a>
             ))}
-            <div className="flex gap-3 pt-2">
-              <Link to="/login" className="text-sm font-bold text-[#0F172A]" onClick={() => setMobileOpen(false)}>
-                Login
+            <div className="flex flex-col gap-3 pt-2">
+              <Link to="/island" className="text-sm font-bold text-[#2563EB] flex items-center gap-1.5" onClick={() => setMobileOpen(false)}>
+                🏝️ Explore Soma Island
               </Link>
-              <Button
-                className="h-9 px-5 text-sm font-bold bg-[#2563EB] text-white rounded-xl"
-                asChild
-              >
-                <Link to="/login" onClick={() => setMobileOpen(false)}>Get started</Link>
-              </Button>
+              <div className="flex gap-3">
+                <Link to="/login" className="text-sm font-bold text-[#0F172A]" onClick={() => setMobileOpen(false)}>
+                  Login
+                </Link>
+                <Button
+                  className="h-9 px-5 text-sm font-bold bg-[#2563EB] text-white rounded-xl"
+                  asChild
+                >
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>Get started</Link>
+                </Button>
+              </div>
             </div>
           </div>
         )}
