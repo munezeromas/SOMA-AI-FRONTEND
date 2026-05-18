@@ -55,47 +55,51 @@ function Tutor() {
       return;
     }
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
       alert("Speech recognition isn't supported in your browser. Please try Chrome.");
       return;
     }
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
-    recognition.onresult = (event: any) => {
-      let finalTranscript = "";
-      let interimTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-      
-      if (interimTranscript) {
-         setInput(prev => {
-            // To prevent appending multiple times during interim results, 
-            // we'd theoretically need more complex state. For now, just overriding it 
-            // gives the live feedback they asked for without spamming text loops!
-            return interimTranscript;
-         });
-      }
-      
-      if (finalTranscript.trim()) {
-        setInput(finalTranscript);
-        send(finalTranscript);
-      }
-    };
     
-    recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      const recognition = new SR();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = (e: any) => {
+        console.warn("Speech error:", e.error);
+        if (e.error === 'not-allowed') alert("Microphone access is blocked by Windows or your browser! Please check Windows Privacy Settings -> Microphone.");
+        else if (e.error === 'audio-capture') alert("No microphone detected. Please plug in a microphone.");
+        else if (e.error === 'network') alert("Network error. Speech recognition requires an internet connection.");
+        
+        setIsListening(false);
+      };
+      
+      recognition.onresult = (event: any) => {
+        let combined = "";
+        for (let i = 0; i < event.results.length; ++i) {
+           combined += event.results[i][0].transcript;
+        }
+        
+        setInput(combined);
+        
+        // Wait until it's final to send
+        const isFinal = event.results[event.results.length - 1]?.isFinal;
+        if (isFinal && combined.trim()) {
+          send(combined.trim());
+          recognition.stop();
+        }
+      };
+      
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch(err) {
+      console.error("Speech init error", err);
+      setIsListening(false);
+    }
   };
 
   const send = async (t?: string) => {

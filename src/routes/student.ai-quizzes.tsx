@@ -135,23 +135,39 @@ function AIQuizzes() {
   const toggleMic = () => {
     if (isListening && recognitionRef.current) {
       recognitionRef.current.stop();
+      setIsListening(false);
       return;
     }
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { alert("Microphone not supported in this browser."); return; }
 
-    const rec = new SR();
-    rec.lang = "en-US";
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.onstart = () => setIsListening(true);
-    rec.onend = () => setIsListening(false);
-    rec.onresult = (e: any) => {
-      const t = e.results[0][0].transcript;
-      setTranscript(t);
-    };
-    recognitionRef.current = rec;
-    rec.start();
+    try {
+      const rec = new SR();
+      rec.lang = "en-US";
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onstart = () => setIsListening(true);
+      rec.onend = () => setIsListening(false);
+      rec.onerror = (e: any) => {
+        console.warn("Quiz Speech Error:", e.error);
+        if (e.error === 'not-allowed') alert("Microphone access is blocked by Windows or your browser! Please check Windows Privacy Settings -> Microphone.");
+        else if (e.error === 'audio-capture') alert("No microphone detected. Please plug in a microphone.");
+        else if (e.error === 'network') alert("Network error. Speech recognition requires an internet connection.");
+        if (e.error !== 'no-speech') setIsListening(false);
+      };
+      rec.onresult = (e: any) => {
+        let full = "";
+        for (let i = 0; i < e.results.length; ++i) {
+          full += e.results[i][0].transcript;
+        }
+        setTranscript(full);
+      };
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (err) {
+      console.error(err);
+      setIsListening(false);
+    }
   };
 
   const resetQuiz = () => {

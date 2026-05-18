@@ -35,6 +35,7 @@ const NAV_ITEMS = [
   { to: "/student/homework",   label: "Homework",             emoji: "📋", riv: "/riv-animations/21441-40283-students-tools-notebook-pencil.riv" },
   { to: "/student/quizzes",    label: "Quizzes",              emoji: "⚡" },
   { to: "/student/videos",     label: "Videos",               emoji: "📺" },
+  { to: "/student/speak",      label: "Language",             emoji: "🗣️" },
   { to: "/student/games",      label: "Games",                emoji: "🎮" },
   { to: "/student/library",    label: "Library",              emoji: "📚" },
   { to: "/student/planner",    label: "Planner",              emoji: "📅" },

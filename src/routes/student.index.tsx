@@ -42,6 +42,17 @@ const ISLANDS = [
     badgeColor: "#FF9500",
     emoji: "🤖",
   },
+  {
+    id: "speak",
+    to: "/student/speak",
+    label: "Speak & Listen",
+    img: "/island-speak.png",
+    color: "#9B59B6",
+    shadow: "rgba(155,89,182,0.4)",
+    badge: "Languages",
+    badgeColor: "#9B59B6",
+    emoji: "🗣️",
+  },
 ];
 
 const QUICK_ACTIONS = [

@@ -16,6 +16,8 @@ export const cohereSimplify: any = createServerFn({ method: "POST" })
       userMessage = `Create question 1 of a 3-question quiz about "${data.text}" for a Grade ${data.grade} student. Only ask the question, nothing else.`;
     } else if (data.promptType === "quiz-answer") {
       userMessage = data.text;
+    } else if (data.promptType === "language-practice") {
+      userMessage = `Generate a single short, fun, and completely new sentence (max 10 words) for a Grade ${data.grade} student to practice ${data.skill} in English. The student is dyslexic, so use simple, highly decodable words and clear structure. Be very creative and avoid repeating previous sentences. Only output the sentence itself without quotes or extra text.`;
     } else {
       userMessage = `A Grade ${data.grade} student highlighted this from their ${data.subject} book: "${data.text}". Explain what it means simply.`;
     }

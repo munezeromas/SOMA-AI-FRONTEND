@@ -22,6 +22,7 @@ import { Route as TeacherAssignmentsRouteImport } from './routes/teacher.assignm
 import { Route as TeacherAlertsRouteImport } from './routes/teacher.alerts'
 import { Route as StudentVideosRouteImport } from './routes/student.videos'
 import { Route as StudentTutorRouteImport } from './routes/student.tutor'
+import { Route as StudentSpeakRouteImport } from './routes/student.speak'
 import { Route as StudentSimplifyRouteImport } from './routes/student.simplify'
 import { Route as StudentReadRouteImport } from './routes/student.read'
 import { Route as StudentQuizzesRouteImport } from './routes/student.quizzes'
@@ -99,6 +100,11 @@ const StudentTutorRoute = StudentTutorRouteImport.update({
   path: '/tutor',
   getParentRoute: () => StudentRoute,
 } as any)
+const StudentSpeakRoute = StudentSpeakRouteImport.update({
+  id: '/speak',
+  path: '/speak',
+  getParentRoute: () => StudentRoute,
+} as any)
 const StudentSimplifyRoute = StudentSimplifyRouteImport.update({
   id: '/simplify',
   path: '/simplify',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/student/quizzes': typeof StudentQuizzesRoute
   '/student/read': typeof StudentReadRoute
   '/student/simplify': typeof StudentSimplifyRoute
+  '/student/speak': typeof StudentSpeakRoute
   '/student/tutor': typeof StudentTutorRoute
   '/student/videos': typeof StudentVideosRoute
   '/teacher/alerts': typeof TeacherAlertsRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/student/quizzes': typeof StudentQuizzesRoute
   '/student/read': typeof StudentReadRoute
   '/student/simplify': typeof StudentSimplifyRoute
+  '/student/speak': typeof StudentSpeakRoute
   '/student/tutor': typeof StudentTutorRoute
   '/student/videos': typeof StudentVideosRoute
   '/teacher/alerts': typeof TeacherAlertsRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/student/quizzes': typeof StudentQuizzesRoute
   '/student/read': typeof StudentReadRoute
   '/student/simplify': typeof StudentSimplifyRoute
+  '/student/speak': typeof StudentSpeakRoute
   '/student/tutor': typeof StudentTutorRoute
   '/student/videos': typeof StudentVideosRoute
   '/teacher/alerts': typeof TeacherAlertsRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/student/quizzes'
     | '/student/read'
     | '/student/simplify'
+    | '/student/speak'
     | '/student/tutor'
     | '/student/videos'
     | '/teacher/alerts'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/student/quizzes'
     | '/student/read'
     | '/student/simplify'
+    | '/student/speak'
     | '/student/tutor'
     | '/student/videos'
     | '/teacher/alerts'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/student/quizzes'
     | '/student/read'
     | '/student/simplify'
+    | '/student/speak'
     | '/student/tutor'
     | '/student/videos'
     | '/teacher/alerts'
@@ -412,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentTutorRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/student/speak': {
+      id: '/student/speak'
+      path: '/speak'
+      fullPath: '/student/speak'
+      preLoaderRoute: typeof StudentSpeakRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/student/simplify': {
       id: '/student/simplify'
       path: '/simplify'
@@ -504,6 +523,7 @@ interface StudentRouteChildren {
   StudentQuizzesRoute: typeof StudentQuizzesRoute
   StudentReadRoute: typeof StudentReadRoute
   StudentSimplifyRoute: typeof StudentSimplifyRoute
+  StudentSpeakRoute: typeof StudentSpeakRoute
   StudentTutorRoute: typeof StudentTutorRoute
   StudentVideosRoute: typeof StudentVideosRoute
   StudentIndexRoute: typeof StudentIndexRoute
@@ -521,6 +541,7 @@ const StudentRouteChildren: StudentRouteChildren = {
   StudentQuizzesRoute: StudentQuizzesRoute,
   StudentReadRoute: StudentReadRoute,
   StudentSimplifyRoute: StudentSimplifyRoute,
+  StudentSpeakRoute: StudentSpeakRoute,
   StudentTutorRoute: StudentTutorRoute,
   StudentVideosRoute: StudentVideosRoute,
   StudentIndexRoute: StudentIndexRoute,

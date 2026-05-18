@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
-import logo from "@/assets/logo.png";
+import { Logo } from "@/components/soma/Logo";
 
 export const Route = createFileRoute("/island")({
   head: () => ({ meta: [{ title: "Soma AI Island" }] }),
@@ -223,8 +223,8 @@ function Index() {
           >
             ← Back
           </button>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src={logo} alt="Soma AI Logo" className="h-25 w-auto object-contain" />
+          <div style={{display:"flex",alignItems:"center",gap:10, background: "rgba(255,255,255,0.8)", padding: "4px 12px", borderRadius: "50px"}}>
+            <Logo size={40} />
           </div>
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
