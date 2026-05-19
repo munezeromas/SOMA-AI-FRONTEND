@@ -1,11 +1,11 @@
 export const STUDENT = {
-  name: "Amani",
+  name: "MUNEZERO Aline",
   grade: "P6",
-  streak: 12,
-  xp: 1840,
-  level: 8,
+  streak: 0,
+  xp: 0,
+  level: 1,
   weakSubject: "Mathematics",
-  badges: ["Reader Star", "Math Brave", "7-Day Streak", "Game Master"],
+  badges: [],
 };
 
 export const SUBJECTS = ["Math", "English", "Science", "Kinyarwanda", "Social"];

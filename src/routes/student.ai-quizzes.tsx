@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { cohereSimplify } from "@/lib/cohere-server";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/student/ai-quizzes")({
   head: () => ({ meta: [{ title: "AI Quizzes — Soma AI" }] }),
@@ -50,6 +51,41 @@ function parseQuestion(raw: string, type: string): QuizQuestion {
   return { type: type as any, question: questionText };
 }
 
+const getFriendlyMicError = (errorCode: string): { message: string, suggestion: string } => {
+  switch (errorCode) {
+    case 'not-allowed':
+      return {
+        message: "Microphone access is blocked!",
+        suggestion: "Please click the lock icon 🔒 in your browser's address bar (top-left) and set Microphone to 'Allow'. If you are on Windows, also check Windows Settings -> Privacy -> Microphone and turn on 'Allow apps to access your microphone'."
+      };
+    case 'audio-capture':
+      return {
+        message: "No microphone detected!",
+        suggestion: "Please make sure a microphone or headset is plugged in, powered on, and selected as the default input device in your computer settings."
+      };
+    case 'network':
+      return {
+        message: "Internet connection issue!",
+        suggestion: "Speech translation requires a stable internet connection in your browser. Please check your Wi-Fi or Ethernet connection and try again."
+      };
+    case 'service-not-allowed':
+      return {
+        message: "Speech service not allowed!",
+        suggestion: "Your browser or device has restricted access to the speech recognition service. Try using official Google Chrome or check system permissions."
+      };
+    case 'no-speech':
+      return {
+        message: "We didn't hear anything!",
+        suggestion: "Please speak a bit louder or check if your microphone is muted. Click the microphone button to try speaking again!"
+      };
+    default:
+      return {
+        message: `Microphone issue detected: ${errorCode}`,
+        suggestion: "Please try refreshing the page, replugging your microphone, or opening this page in a secure browser like Google Chrome."
+      };
+  }
+};
+
 function AIQuizzes() {
   const [step, setStep] = useState<"setup" | "quiz" | "result">("setup");
   const [subject, setSubject] = useState("");
@@ -64,7 +100,49 @@ function AIQuizzes() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [score, setScore] = useState(0);
+  const [micError, setMicError] = useState<{ message: string, suggestion: string } | null>(null);
   const recognitionRef = useRef<any>(null);
+  const shouldBeListeningRef = useRef(false);
+  const accumulatedTranscriptRef = useRef("");
+  const dspStreamRef = useRef<MediaStream | null>(null);
+  const retryCountRef = useRef(0);
+  const currentSpokenTextRef = useRef("");
+
+  const startDSPStream = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        dspStreamRef.current = stream;
+        console.log("[DSP] Pre-warmed audio pipeline with Auto-Gain Control.");
+      }
+    } catch (e) {
+      console.warn("[DSP] Could not warm up hardware audio pipeline:", e);
+    }
+  };
+
+  const stopDSPStream = () => {
+    if (dspStreamRef.current) {
+      dspStreamRef.current.getTracks().forEach((track) => track.stop());
+      dspStreamRef.current = null;
+      console.log("[DSP] Released audio pipeline.");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        shouldBeListeningRef.current = false;
+        recognitionRef.current.stop();
+      }
+      stopDSPStream();
+    };
+  }, []);
 
   const startQuiz = async () => {
     if (!subject.trim()) return;
@@ -74,6 +152,7 @@ function AIQuizzes() {
     setAnswers([]);
     setFeedback(null);
     setQuestions([]);
+    setMicError(null);
 
     // Generate all questions upfront
     const generated: QuizQuestion[] = [];
@@ -97,6 +176,15 @@ function AIQuizzes() {
 
   const submitAnswer = async (ans: string) => {
     if (!ans.trim() || loading) return;
+    
+    // Stop recording session if active to release mic resource
+    if (shouldBeListeningRef.current && recognitionRef.current) {
+      shouldBeListeningRef.current = false;
+      recognitionRef.current.stop();
+      stopDSPStream();
+      setIsListening(false);
+    }
+
     setLoading(true);
     const q = questions[currentQ];
 
@@ -124,7 +212,16 @@ function AIQuizzes() {
   };
 
   const nextQuestion = () => {
+    // Stop recording session if active
+    if (shouldBeListeningRef.current && recognitionRef.current) {
+      shouldBeListeningRef.current = false;
+      recognitionRef.current.stop();
+      stopDSPStream();
+      setIsListening(false);
+    }
+
     setFeedback(null);
+    setMicError(null);
     if (currentQ + 1 >= questions.length) {
       setStep("result");
     } else {
@@ -132,45 +229,143 @@ function AIQuizzes() {
     }
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     if (isListening && recognitionRef.current) {
+      shouldBeListeningRef.current = false;
       recognitionRef.current.stop();
+      stopDSPStream();
       setIsListening(false);
       return;
     }
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { alert("Microphone not supported in this browser."); return; }
 
-    try {
-      const rec = new SR();
-      rec.lang = "en-US";
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onstart = () => setIsListening(true);
-      rec.onend = () => setIsListening(false);
-      rec.onerror = (e: any) => {
-        console.warn("Quiz Speech Error:", e.error);
-        if (e.error === 'not-allowed') alert("Microphone access is blocked by Windows or your browser! Please check Windows Privacy Settings -> Microphone.");
-        else if (e.error === 'audio-capture') alert("No microphone detected. Please plug in a microphone.");
-        else if (e.error === 'network') alert("Network error. Speech recognition requires an internet connection.");
-        if (e.error !== 'no-speech') setIsListening(false);
-      };
-      rec.onresult = (e: any) => {
-        let full = "";
-        for (let i = 0; i < e.results.length; ++i) {
-          full += e.results[i][0].transcript;
-        }
-        setTranscript(full);
-      };
-      recognitionRef.current = rec;
-      rec.start();
-    } catch (err) {
-      console.error(err);
-      setIsListening(false);
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      toast.error("Your browser does not support speech recognition. Please try Chrome!", { id: "speech-support" });
+      return;
     }
+
+    shouldBeListeningRef.current = true;
+    setMicError(null);
+    accumulatedTranscriptRef.current = "";
+    retryCountRef.current = 0;
+    currentSpokenTextRef.current = "";
+    setTranscript("");
+    setIsListening(true);
+
+    // Warm up hardware DSP pipeline for quiet/far voices
+    await startDSPStream();
+
+    const startRecognitionSession = () => {
+      if (!shouldBeListeningRef.current) return;
+
+      try {
+        const recognition = new SR();
+        recognition.lang = 'en-US';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          let currentSegment = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            currentSegment += event.results[i][0].transcript;
+          }
+
+          const combined = (accumulatedTranscriptRef.current + " " + currentSegment).trim();
+          currentSpokenTextRef.current = combined;
+
+          const currentQType = questions[currentQ]?.type;
+          if (currentQType === "open") {
+            setOpenAnswer(combined);
+          } else {
+            setTranscript(combined);
+          }
+
+          if (currentQType === "multiple_choice") {
+            const normalized = combined.toLowerCase().trim();
+            let letter = "";
+            if (/\b(a|option a|choice a)\b/.test(normalized)) letter = "A";
+            else if (/\b(b|option b|choice b)\b/.test(normalized)) letter = "B";
+            else if (/\b(c|option c|choice c)\b/.test(normalized)) letter = "C";
+            else if (/\b(d|option d|choice d)\b/.test(normalized)) letter = "D";
+
+            if (letter) {
+              shouldBeListeningRef.current = false;
+              stopDSPStream();
+              setIsListening(false);
+              recognition.stop();
+              submitAnswer(letter);
+            }
+          }
+        };
+
+        recognition.onerror = (e: any) => {
+          console.warn("[Quiz Speech Engine] Session Error:", e.error);
+
+          if (e.error === 'no-speech') {
+            console.log('[Quiz Speech Engine] No speech detected, stopping restart cycle.');
+            const friendly = getFriendlyMicError(e.error);
+            setMicError(friendly);
+            shouldBeListeningRef.current = false;
+            stopDSPStream();
+            setIsListening(false);
+            return;
+          }
+
+          if (e.error === 'aborted') {
+            // Ignore intentional abort without restarting
+            return;
+          }
+
+          const friendly = getFriendlyMicError(e.error);
+          setMicError(friendly);
+          toast.error(friendly.message, { id: "mic-error" });
+
+          shouldBeListeningRef.current = false;
+          stopDSPStream();
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          if (shouldBeListeningRef.current) {
+            // Save what we have accumulated so far
+            accumulatedTranscriptRef.current = currentSpokenTextRef.current;
+            console.log("[Quiz Speech Engine] Segment ended. Seamlessly restarting via new session...");
+            setTimeout(() => {
+              if (shouldBeListeningRef.current) {
+                startRecognitionSession();
+              }
+            }, 100);
+            return;
+          }
+
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err) {
+        console.error("[Quiz Speech Engine] Start failed:", err);
+        setIsListening(false);
+      }
+    };
+
+    startRecognitionSession();
   };
 
   const resetQuiz = () => {
+    // Stop recording session if active
+    if (shouldBeListeningRef.current && recognitionRef.current) {
+      shouldBeListeningRef.current = false;
+      recognitionRef.current.stop();
+      stopDSPStream();
+      setIsListening(false);
+    }
+
     setStep("setup");
     setQuestions([]);
     setAnswers([]);
@@ -179,6 +374,7 @@ function AIQuizzes() {
     setCurrentQ(0);
     setOpenAnswer("");
     setTranscript("");
+    setMicError(null);
   };
 
   const q = questions[currentQ];
@@ -335,43 +531,120 @@ function AIQuizzes() {
 
         {/* Question card */}
         <div className="rounded-3xl bg-card/60 border border-white/10 p-8 space-y-6">
-          {/* Question type badge */}
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
-            {typeLabel}
-          </span>
+          {q.type !== "speaking" && (
+            <>
+              {/* Question type badge */}
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
+                {typeLabel}
+              </span>
 
-          {/* Question text */}
-          <p className="text-2xl font-black leading-snug">{q.question}</p>
+              {/* Question text */}
+              <p className="text-2xl font-black leading-snug">{q.question}</p>
+            </>
+          )}
 
           {/* ── MULTIPLE CHOICE ── */}
           {q.type === "multiple_choice" && !feedback && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {q.options?.map((opt, i) => {
-                const letter = opt.match(/^([A-D])/)?.[1] ?? String.fromCharCode(65 + i);
-                return (
-                  <button
-                    key={i}
-                    onClick={() => submitAnswer(letter)}
-                    disabled={loading}
-                    className="h-16 rounded-2xl bg-white/5 border-2 border-white/10 hover:border-primary hover:bg-primary/10 font-bold text-left px-5 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 text-sm"
-                  >
-                    {opt}
-                  </button>
-                );
-              })}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {q.options?.map((opt, i) => {
+                  const letter = opt.match(/^([A-D])/)?.[1] ?? String.fromCharCode(65 + i);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => submitAnswer(letter)}
+                      disabled={loading}
+                      className="h-16 rounded-2xl bg-white/5 border-2 border-white/10 hover:border-primary hover:bg-primary/10 font-bold text-left px-5 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 text-sm"
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex flex-col items-center gap-2 pt-4 border-t border-white/5">
+                {micError && (
+                  <div className="w-full p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left animate-in fade-in duration-300">
+                    <div className="flex items-start gap-3">
+                      <XCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
+                          {micError.message}
+                        </p>
+                        <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                          {micError.suggestion}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground font-bold">
+                  🎙️ Speak your choice: say "A", "B", "C", or "D"!
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center transition-all ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse scale-105"
+                      : "bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-white"
+                  }`}
+                  title="Speak choice"
+                >
+                  {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                </button>
+                {transcript && (
+                  <p className="text-xs font-semibold italic text-muted-foreground">
+                    Heard: "{transcript}"
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
           {/* ── OPEN QUESTION ── */}
           {q.type === "open" && !feedback && (
             <div className="space-y-3">
-              <textarea
-                value={openAnswer}
-                onChange={(e) => setOpenAnswer(e.target.value)}
-                placeholder="Type your answer here…"
-                rows={4}
-                className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 text-base font-semibold focus:outline-none focus:ring-2 ring-primary/30 resize-none placeholder:text-muted-foreground/40"
-              />
+              {micError && (
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left animate-in fade-in duration-300">
+                  <div className="flex items-start gap-3">
+                    <XCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
+                        {micError.message}
+                      </p>
+                      <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                        {micError.suggestion}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="relative">
+                <textarea
+                  value={openAnswer}
+                  onChange={(e) => setOpenAnswer(e.target.value)}
+                  placeholder="Type or dictate your answer here…"
+                  rows={4}
+                  className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 pr-14 text-base font-semibold focus:outline-none focus:ring-2 ring-primary/30 resize-none placeholder:text-muted-foreground/40"
+                />
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  className={`absolute right-4 bottom-4 p-3 rounded-full transition-all ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-primary/10 text-primary hover:bg-primary hover:text-white"
+                  }`}
+                  title="Dictate answer"
+                >
+                  {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                </button>
+              </div>
+              {isListening && (
+                <p className="text-xs font-bold text-red-400 animate-pulse uppercase tracking-widest text-right mr-2">
+                  Listening… speak your answer!
+                </p>
+              )}
               <button
                 onClick={() => submitAnswer(openAnswer)}
                 disabled={!openAnswer.trim() || loading}
@@ -385,37 +658,60 @@ function AIQuizzes() {
 
           {/* ── SPEAKING QUESTION ── */}
           {q.type === "speaking" && !feedback && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground font-semibold">
-                🎤 Click the microphone button and speak your answer clearly!
-              </p>
-              <div className="flex flex-col items-center gap-4">
+            <div className="space-y-6 flex flex-col items-center">
+              <div className="w-full space-y-3 text-left">
+                {/* Question text - large & bold */}
+                <h2 className="text-3xl font-black leading-snug text-white">{q.question}</h2>
+                
+                {/* Instruction */}
+                <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
+                  🎙️ Click the microphone button and speak your answer clearly!
+                </p>
+              </div>
+
+              {micError && (
+                <div className="w-full p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left animate-in fade-in duration-300">
+                  <div className="flex items-start gap-3">
+                    <XCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
+                        {micError.message}
+                      </p>
+                      <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                        {micError.suggestion}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col items-center gap-4 w-full mt-4">
                 <button
                   onClick={toggleMic}
                   className={`h-24 w-24 rounded-full flex items-center justify-center transition-all ${
                     isListening
-                      ? "bg-red-500 text-white animate-pulse scale-110"
+                      ? "bg-red-500 text-white animate-pulse scale-110 shadow-[0_0_20px_rgba(239,68,68,0.4)]"
                       : "bg-primary/10 border-2 border-primary text-primary hover:bg-primary hover:text-white hover:scale-105"
                   }`}
                 >
                   {isListening ? <MicOff className="h-10 w-10" /> : <Mic className="h-10 w-10" />}
                 </button>
                 {isListening && (
-                  <p className="text-sm font-bold text-red-400 animate-pulse uppercase tracking-widest">
-                    Listening… speak now!
+                  <p className="text-sm font-bold text-red-500 animate-pulse uppercase tracking-widest">
+                    LISTENING... SPEAK NOW!
                   </p>
                 )}
                 {transcript && (
-                  <div className="w-full p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">You said:</p>
-                    <p className="text-base font-semibold">{transcript}</p>
+                  <div className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-left">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">YOU SAID:</p>
+                    <p className="text-base font-semibold text-white">{transcript}</p>
                   </div>
                 )}
                 {transcript && (
                   <button
                     onClick={() => submitAnswer(transcript)}
                     disabled={loading}
-                    className="w-full h-14 rounded-2xl bg-primary text-white font-black flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-40"
+                    className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/95 text-white font-black flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-40 shadow-[0_8px_30px_rgba(74,144,217,0.4)]"
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     Submit This Answer

@@ -3,9 +3,10 @@ import { useState, useRef, useEffect } from "react";
 import { TalkingChatbot } from "@/components/soma/TalkingChatbot";
 import { TUTOR_REPLIES } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Send, Cpu, Sparkles, Network, Mic, MicOff, Volume2 } from "lucide-react";
+import { Send, Cpu, Sparkles, Network, Mic, MicOff, Volume2, XCircle } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
 import { memo as reactMemo } from "react";
+import { toast } from "sonner";
 
 const MemoizedTalkingChatbot = reactMemo(TalkingChatbot);
 
@@ -21,13 +22,47 @@ export const Route = createFileRoute("/student/tutor")({
   )
 });
 
-const SUGGESTIONS = ["Explain the water cycle", "What is an algorithm?", "Help me practice French", "How do Black Holes work?"];
 type Msg = { role: "user" | "ai"; text: string };
 
 // Persist chat history across navigations
 let globalChatHistory: Msg[] = [
   { role: "ai", text: "Neural synchronization complete. I am Soma, designed to help you learn and improve your grammar! What shall we explore today?" }
 ];
+
+const getFriendlyMicError = (errorCode: string): { message: string, suggestion: string } => {
+  switch (errorCode) {
+    case 'not-allowed':
+      return {
+        message: "Microphone access is blocked!",
+        suggestion: "Please click the lock icon 🔒 in your browser's address bar (top-left) and set Microphone to 'Allow'. If you are on Windows, also check Windows Settings -> Privacy -> Microphone and turn on 'Allow apps to access your microphone'."
+      };
+    case 'audio-capture':
+      return {
+        message: "No microphone detected!",
+        suggestion: "Please make sure a microphone or headset is plugged in, powered on, and selected as the default input device in your computer settings."
+      };
+    case 'network':
+      return {
+        message: "Internet connection issue!",
+        suggestion: "Speech translation requires a stable internet connection in your browser. Please check your Wi-Fi or Ethernet connection and try again."
+      };
+    case 'service-not-allowed':
+      return {
+        message: "Speech service not allowed!",
+        suggestion: "Your browser or device has restricted access to the speech recognition service. Try using official Google Chrome or check system permissions."
+      };
+    case 'no-speech':
+      return {
+        message: "We didn't hear anything!",
+        suggestion: "Please speak a bit louder or check if your microphone is muted. Click the microphone button to try speaking again!"
+      };
+    default:
+      return {
+        message: `Microphone issue detected: ${errorCode}`,
+        suggestion: "Please try refreshing the page, replugging your microphone, or opening this page in a secure browser like Google Chrome."
+      };
+  }
+};
 
 function Tutor() {
   const [messages, setMessages] = useState<Msg[]>(globalChatHistory);
@@ -41,6 +76,7 @@ function Tutor() {
   const [isListening, setIsListening] = useState(false);
   const [lastSpeech, setLastSpeech] = useState("Neural synchronization complete. I am Soma, designed to help you learn and improve your grammar. What shall we explore today?");
   const [isMuted, setIsMuted] = useState(false);
+  const [micError, setMicError] = useState<{ message: string, suggestion: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -48,58 +84,173 @@ function Tutor() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, loading]);
 
-  const toggleListen = () => {
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      shouldBeListeningRef.current = false;
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      stopDSPStream();
+    };
+  }, []);
 
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      alert("Speech recognition isn't supported in your browser. Please try Chrome.");
-      return;
-    }
-    
+  const shouldBeListeningRef = useRef(false);
+  const dspStreamRef = useRef<MediaStream | null>(null);
+  const retryCountRef = useRef(0);
+
+  const startDSPStream = async () => {
     try {
-      const recognition = new SR();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = (e: any) => {
-        console.warn("Speech error:", e.error);
-        if (e.error === 'not-allowed') alert("Microphone access is blocked by Windows or your browser! Please check Windows Privacy Settings -> Microphone.");
-        else if (e.error === 'audio-capture') alert("No microphone detected. Please plug in a microphone.");
-        else if (e.error === 'network') alert("Network error. Speech recognition requires an internet connection.");
-        
-        setIsListening(false);
-      };
-      
-      recognition.onresult = (event: any) => {
-        let combined = "";
-        for (let i = 0; i < event.results.length; ++i) {
-           combined += event.results[i][0].transcript;
-        }
-        
-        setInput(combined);
-        
-        // Wait until it's final to send
-        const isFinal = event.results[event.results.length - 1]?.isFinal;
-        if (isFinal && combined.trim()) {
-          send(combined.trim());
-          recognition.stop();
-        }
-      };
-      
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch(err) {
-      console.error("Speech init error", err);
-      setIsListening(false);
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        dspStreamRef.current = stream;
+        console.log("[DSP] Pre-warmed audio pipeline with Auto-Gain Control.");
+      }
+    } catch (e) {
+      console.warn("[DSP] Could not warm up hardware audio pipeline:", e);
     }
+  };
+
+  const stopDSPStream = () => {
+    if (dspStreamRef.current) {
+      dspStreamRef.current.getTracks().forEach((track) => track.stop());
+      dspStreamRef.current = null;
+      console.log("[DSP] Released audio pipeline.");
+    }
+  };
+
+  const toggleListen = async () => {
+    if (isListening && recognitionRef.current) {
+      shouldBeListeningRef.current = false;
+      recognitionRef.current.stop();
+      stopDSPStream();
+      setIsListening(false);
+      return;
+    }
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Speech recognition isn't supported in your browser. Please try Chrome.", { id: "speech-support" });
+      return;
+    }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    shouldBeListeningRef.current = true;
+    retryCountRef.current = 0;
+    setMicError(null);
+    setIsListening(true);
+    setLastSpeech(""); // Stop any current avatar speaking immediately
+
+    // Warm up the hardware DSP pipeline
+    await startDSPStream();
+
+    const startRecognitionSession = () => {
+      if (!shouldBeListeningRef.current) return;
+
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false; // standard sentence chunking
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          let finalTranscript = "";
+          let interimTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          if (interimTranscript) {
+             setInput(interimTranscript);
+          }
+          
+          if (finalTranscript.trim()) {
+            setInput(finalTranscript);
+            shouldBeListeningRef.current = false;
+            stopDSPStream();
+            setIsListening(false);
+            recognition.stop();
+            send(finalTranscript);
+          }
+        };
+
+        recognition.onerror = (e: any) => {
+          console.warn("[Tutor Speech] Session Error:", e.error);
+          
+          if (e.error === 'no-speech') {
+            console.log('[Tutor Speech] No speech detected, stopping restart cycle.');
+            const friendly = getFriendlyMicError(e.error);
+            setMicError(friendly);
+            shouldBeListeningRef.current = false;
+            stopDSPStream();
+            setIsListening(false);
+            return;
+          }
+
+          if (e.error === 'aborted') {
+            // Ignore intentional abort without restarting
+            return;
+          }
+          
+          if (e.error === 'network') {
+            retryCountRef.current += 1;
+            if (retryCountRef.current <= 5) {
+              console.log(`[Tutor Speech] Network glitch. Retrying segment (${retryCountRef.current}/5)...`);
+              setTimeout(() => {
+                startRecognitionSession();
+              }, 1000);
+              return;
+            } else {
+              toast.error("Network issue with Chrome's speech servers. Please check your internet connection.", { id: "network-error" });
+              shouldBeListeningRef.current = false;
+              stopDSPStream();
+              setIsListening(false);
+            }
+            return;
+          }
+          
+          const friendly = getFriendlyMicError(e.error);
+          setMicError(friendly);
+          toast.error(friendly.message, { id: "mic-error" });
+          shouldBeListeningRef.current = false;
+          stopDSPStream();
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+           if (shouldBeListeningRef.current) {
+              console.log("[Tutor Speech] Silence/Pause segment ended. Seamlessly restarting via new session...");
+              setTimeout(() => {
+                if (shouldBeListeningRef.current) {
+                  startRecognitionSession();
+                }
+              }, 100);
+              return;
+           }
+           setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err) {
+         console.error("[Tutor Speech] Start failed:", err);
+         setIsListening(false);
+      }
+    };
+
+    startRecognitionSession();
   };
 
   const send = async (t?: string) => {
@@ -107,6 +258,7 @@ function Tutor() {
     if (!txt) return;
     setInput("");
     setLastSpeech(""); // Stop current speech immediately
+    setMicError(null);
     setMessages((m) => [...m, { role: "user", text: txt }]);
     setLoading(true);
 
@@ -168,16 +320,7 @@ function Tutor() {
                  replyTokenBuffer += data.text;
                  chunkCount++;
                  
-                 // Look for sentence boundaries to stream speech
-                 const match = replyTokenBuffer.substring(spokenCursor).match(/([.!?]+[\s\n]+)/);
-                 if (match) {
-                    const boundary = match.index! + match[0].length;
-                    const sentence = replyTokenBuffer.substring(spokenCursor, spokenCursor + boundary).trim();
-                    if (sentence) {
-                      window.dispatchEvent(new CustomEvent("soma-speak", { detail: { text: sentence, queue: true } }));
-                    }
-                    spokenCursor += boundary;
-                 }
+                 // Look for sentence boundaries to stream speech (REMOVED: we will wait till the end so it lipsyncs everything from the beginning)
 
                  // Update the chat state periodically to prevent freezing (throttle)
                  if (chunkCount % 4 === 0) {
@@ -206,15 +349,11 @@ function Tutor() {
          return newM;
       });
 
-      // Speak any remaining text that didn't end with a punctuation mark
-      const remaining = replyTokenBuffer.substring(spokenCursor).trim();
-      if (remaining) {
-        window.dispatchEvent(new CustomEvent("soma-speak", { detail: { text: remaining, queue: true } }));
-      }
-
       console.log("Final Reply Buffer:", replyTokenBuffer);
       if (!replyTokenBuffer) {
         setLastSpeech("Diagnostic failed. Neural path not found.");
+      } else {
+        setLastSpeech(replyTokenBuffer);
       }
       setLoading(false);
     } catch (err: any) {
@@ -227,7 +366,7 @@ function Tutor() {
   };
 
   return (
-    <div className="grid xl:grid-cols-[500px_1fr] gap-8 max-w-[1600px] w-full mx-auto animate-in fade-in zoom-in-95 duration-700 h-[calc(100vh-7rem)] pb-6 px-4">
+    <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[450px_1fr] xl:grid-cols-[500px_1fr] gap-4 md:gap-6 xl:gap-8 max-w-[1600px] w-full mx-auto animate-in fade-in zoom-in-95 duration-700 h-auto min-h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] pb-6 px-4">
       
       {/* 3D AVATAR MODULE */}
       <div className="relative rounded-[40px] bg-gradient-to-b from-card/80 to-background/50 border border-white/10 shadow-[0_0_80px_rgba(var(--primary),0.05)] overflow-hidden flex flex-col items-center">
@@ -235,7 +374,7 @@ function Tutor() {
         {/* Dynamic backdrop glow */}
         <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
 
-        <div className="w-full shrink-0 relative mt-8 px-8">
+        <div className="w-full shrink-0 relative mt-4 md:mt-6 lg:mt-8 px-4 md:px-6 lg:px-8">
            <div className="rounded-[32px] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] relative bg-black/10 border border-white/5 ring-1 ring-black/20">
              <MemoizedTalkingChatbot textToSpeak={lastSpeech} isMuted={isMuted} />
              <div className="absolute top-4 left-4 glass bg-black/40 rounded-full px-4 py-1.5 flex items-center gap-2 border border-white/10 shadow-sm backdrop-blur-md">
@@ -251,24 +390,13 @@ function Tutor() {
              </button>
            </div>
         </div>
-
-        <div className="text-center mt-10 mb-8 z-10 px-8 flex-1 flex flex-col justify-end w-full">
+        <div className="text-center mt-6 md:mt-8 lg:mt-10 mb-6 md:mb-8 lg:mb-10 z-10 px-4 md:px-6 lg:px-8 flex-1 flex flex-col justify-center w-full">
            <h2 className="text-4xl font-black tracking-tighter mb-2">Soma <span className="text-primary drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">AI</span></h2>
-           <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest opacity-80">Embodied AI Link</p>
-           
-           <div className="mt-8 space-y-3 w-full">
-             {SUGGESTIONS.map((s) => (
-               <button key={s} onClick={() => send(s)} disabled={loading} className="w-full text-xs font-bold tracking-wide rounded-2xl glass bg-card/60 hover:bg-primary/10 hover:border-primary/30 px-6 py-4 text-left transition-all duration-300 border border-white/5 disabled:opacity-50 flex items-center justify-between group text-foreground shadow-sm">
-                 {s} 
-                 <Sparkles className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all scale-75 group-hover:scale-100" />
-               </button>
-             ))}
-           </div>
         </div>
       </div>
 
       {/* INTELLIGENT CHAT INTERFACE */}
-      <div className="rounded-[40px] glass bg-card/40 border border-white/5 shadow-2xl flex flex-col h-full overflow-hidden relative">
+      <div className="rounded-[40px] glass bg-card/40 border border-white/5 shadow-2xl flex flex-col h-[500px] md:h-full overflow-hidden relative mt-4 md:mt-0">
         <div className="absolute right-0 bottom-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
         
         {/* Header */}
@@ -313,7 +441,22 @@ function Tutor() {
         </div>
 
         {/* Input area */}
-        <div className="p-6 pt-2 relative z-10 bg-gradient-to-t from-background/80 to-transparent">
+        <div className="p-6 pt-2 relative z-10 bg-gradient-to-t from-background/80 to-transparent flex flex-col gap-4">
+          {micError && (
+            <div className="w-full p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left animate-in fade-in duration-300">
+              <div className="flex items-start gap-3">
+                <XCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
+                    {micError.message}
+                  </p>
+                  <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                    {micError.suggestion}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="relative flex items-center gap-3">
              <Button size="icon" variant={isListening ? "default" : "outline"} onClick={toggleListen} className={`h-16 w-16 shrink-0 rounded-full transition-all border-white/10 ${isListening ? "animate-pulse shadow-[0_0_20px_rgba(var(--primary),0.6)] bg-primary text-white" : "glass bg-background/50 hover:bg-background/80"}`}>
                 {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6 text-primary" />}

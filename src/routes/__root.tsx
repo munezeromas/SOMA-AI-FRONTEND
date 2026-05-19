@@ -72,7 +72,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" },
       { title: "Soma AI" },
       { name: "description", content: "Soma AI is an AI-powered learning platform for African students, offering personalized support for diverse learning styles." },
       { name: "author", content: "Soma AI" },
@@ -87,6 +87,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/favicon.png",
       },
     ],
   }),

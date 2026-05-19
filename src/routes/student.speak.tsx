@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, ArrowLeft, Mic, Volume2, Edit3, BookOpen, Loader2, Play } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mic, Volume2, Edit3, BookOpen, Loader2, Play, XCircle } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
 import { STUDENT } from "@/lib/mock-data";
 import { cohereSimplify } from "@/lib/cohere-server";
+import { useTheme } from "@/lib/theme-context";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/student/speak")({
   head: () => ({ meta: [{ title: "Language Playground — Soma AI" }] }),
@@ -42,7 +44,44 @@ const MODES = [
   },
 ];
 
+const getFriendlyMicError = (errorCode: string): { message: string, suggestion: string } => {
+  switch (errorCode) {
+    case 'not-allowed':
+      return {
+        message: "Microphone access is blocked!",
+        suggestion: "Please click the lock icon 🔒 in your browser's address bar (top-left) and set Microphone to 'Allow'. If you are on Windows, also check Windows Settings -> Privacy -> Microphone and turn on 'Allow apps to access your microphone'."
+      };
+    case 'audio-capture':
+      return {
+        message: "No microphone detected!",
+        suggestion: "Please make sure a microphone or headset is plugged in, powered on, and selected as the default input device in your computer settings."
+      };
+    case 'network':
+      return {
+        message: "Internet connection issue!",
+        suggestion: "Speech translation requires a stable internet connection in your browser. Please check your Wi-Fi or Ethernet connection and try again."
+      };
+    case 'service-not-allowed':
+      return {
+        message: "Speech service not allowed!",
+        suggestion: "Your browser or device has restricted access to the speech recognition service. Try using official Google Chrome or check system permissions."
+      };
+    case 'no-speech':
+      return {
+        message: "We didn't hear anything!",
+        suggestion: "Please speak a bit louder or check if your microphone is muted. Click the microphone button to try speaking again!"
+      };
+    default:
+      return {
+        message: `Microphone issue detected: ${errorCode}`,
+        suggestion: "Please try refreshing the page, replugging your microphone, or opening this page in a secure browser like Google Chrome."
+      };
+  }
+};
+
 function SpeakListenDashboard() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [activeMode, setActiveMode] = useState<ModeId | null>(null);
   const [practiceText, setPracticeText] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -51,12 +90,23 @@ function SpeakListenDashboard() {
   const [isRecording, setIsRecording] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string, isSuccess: boolean } | null>(null);
   const [userInput, setUserInput] = useState("");
+  const [micError, setMicError] = useState<{ message: string, suggestion: string } | null>(null);
   const recognitionRef = useRef<any>(null);
   const practiceTextRef = useRef(practiceText);
   
   useEffect(() => {
      practiceTextRef.current = practiceText;
   }, [practiceText]);
+
+  useEffect(() => {
+    return () => {
+      shouldBeRecordingRef.current = false;
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      stopDSPStream();
+    };
+  }, []);
 
   const fetchNewPractice = async (modeId: string) => {
     const mode = MODES.find((m) => m.id === modeId);
@@ -67,6 +117,7 @@ function SpeakListenDashboard() {
     setTranscript("");
     setFeedback(null);
     setUserInput("");
+    setMicError(null);
 
     try {
       const result = await cohereSimplify({
@@ -102,70 +153,204 @@ function SpeakListenDashboard() {
     }
   };
 
-  const toggleRecording = () => {
+  const transcriptRef = useRef("");
+  const evaluatedRef = useRef(false);
+  const hasSpokenRef = useRef(false);
+  const shouldBeRecordingRef = useRef(false);
+  const accumulatedTranscriptRef = useRef("");
+  const dspStreamRef = useRef<MediaStream | null>(null);
+  const retryCountRef = useRef(0);
+
+  const startDSPStream = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        dspStreamRef.current = stream;
+        console.log("[DSP] Pre-warmed audio pipeline with Auto-Gain Control.");
+      }
+    } catch (e) {
+      console.warn("[DSP] Could not warm up hardware audio pipeline:", e);
+    }
+  };
+
+  const stopDSPStream = () => {
+    if (dspStreamRef.current) {
+      dspStreamRef.current.getTracks().forEach((track) => track.stop());
+      dspStreamRef.current = null;
+      console.log("[DSP] Released audio pipeline.");
+    }
+  };
+
+  const toggleRecording = async () => {
     if (isRecording && recognitionRef.current) {
+      shouldBeRecordingRef.current = false;
       recognitionRef.current.stop();
+      stopDSPStream();
       setIsRecording(false);
       return;
     }
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      alert("Your browser does not support speech recognition. Please try Chrome!");
+      toast.error("Your browser does not support speech recognition. Please try Chrome!", { id: "speech-support" });
       return;
     }
     
-    try {
-      const recognition = new SR();
-      recognition.lang = 'en-US';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
+    shouldBeRecordingRef.current = true;
+    accumulatedTranscriptRef.current = "";
+    retryCountRef.current = 0;
+    setTranscript("");
+    transcriptRef.current = "";
+    setFeedback(null);
+    setMicError(null);
+    setIsRecording(true);
 
-      recognition.onstart = () => {
-        setIsRecording(true);
-        setFeedback(null);
-      };
-      
-      recognition.onresult = (event: any) => {
-        let combined = "";
-        for (let i = 0; i < event.results.length; ++i) {
-          combined += event.results[i][0].transcript;
-        }
-        setTranscript(combined);
+    // Warm up the hardware DSP pipeline for quiet/far voices
+    await startDSPStream();
+    
+    const startRecognitionSession = () => {
+      if (!shouldBeRecordingRef.current) return;
+
+      try {
+        const recognition = new SR();
+        recognition.lang = 'en-US';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          setIsRecording(true);
+          evaluatedRef.current = false;
+          hasSpokenRef.current = false;
+        };
         
-        // Use the ref to ensure we compare against the latest practiceText
-        const targetText = practiceTextRef.current;
-        if (targetText) {
-           const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ").trim();
-           if (normalize(combined) === normalize(targetText)) {
-              setFeedback({ text: "Correct! Amazing job! 🌟", isSuccess: true });
-              recognition.stop();
-           }
-        }
-      };
-      
-      recognition.onerror = (e: any) => {
-        console.warn("Speech Error:", e.error);
-        if (e.error === 'not-allowed') alert("Microphone access is blocked by Windows or your browser! Please check Windows Privacy Settings -> Microphone.");
-        else if (e.error === 'audio-capture') alert("No microphone detected. Please plug in a microphone.");
-        else if (e.error === 'network') alert("Network error. Speech recognition requires an internet connection.");
+        recognition.onresult = (event: any) => {
+          let currentSegment = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            currentSegment += event.results[i][0].transcript;
+          }
+          
+          const combined = (accumulatedTranscriptRef.current + " " + currentSegment).trim();
+          setTranscript(combined);
+          transcriptRef.current = combined;
+          hasSpokenRef.current = true;
+          
+          const targetText = practiceTextRef.current;
+          if (targetText) {
+             const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ").trim();
+             const normCombined = normalize(combined);
+             const normTarget = normalize(targetText);
+             if (normCombined === normTarget || normCombined.includes(normTarget)) {
+                evaluatedRef.current = true;
+                shouldBeRecordingRef.current = false;
+                stopDSPStream();
+                setFeedback({ text: "Correct! Amazing job! 🌟", isSuccess: true });
+                recognition.stop();
+             }
+          }
+        };
         
-        if (e.error !== 'no-speech') {
+        recognition.onerror = (e: any) => {
+          console.warn("[Speech Engine] Session Error:", e.error);
+          
+          if (e.error === 'no-speech') {
+            console.log('[Speech Engine] No speech detected, stopping restart cycle.');
+            const friendly = getFriendlyMicError(e.error);
+            setMicError(friendly);
+            shouldBeRecordingRef.current = false;
+            stopDSPStream();
+            setIsRecording(false);
+            return;
+          }
+
+          if (e.error === 'aborted') {
+            // Ignore intentional abort without restarting
+            return;
+          }
+          
+          if (e.error === 'network') {
+            retryCountRef.current += 1;
+            if (retryCountRef.current <= 5) {
+              console.log(`[Speech Engine] Network glitch. Retrying segment (${retryCountRef.current}/5)...`);
+              setTimeout(() => {
+                startRecognitionSession();
+              }, 1000);
+              return;
+            } else {
+              const friendly = getFriendlyMicError(e.error);
+              setMicError(friendly);
+              toast.error(friendly.message, { id: "network-error" });
+              shouldBeRecordingRef.current = false;
+              stopDSPStream();
+              setIsRecording(false);
+            }
+            return;
+          }
+          
+          const friendly = getFriendlyMicError(e.error);
+          setMicError(friendly);
+          toast.error(friendly.message, { id: "mic-error" });
+          shouldBeRecordingRef.current = false;
+          stopDSPStream();
           setIsRecording(false);
-          setFeedback({ text: "Microphone error: " + e.error, isSuccess: false });
-        }
-      };
-      
-      recognition.onend = () => {
+        };
+        
+        recognition.onend = () => {
+           if (shouldBeRecordingRef.current) {
+              // Save what we have accumulated so far
+              accumulatedTranscriptRef.current = transcriptRef.current;
+              console.log("[Speech Engine] Segment ended. Seamlessly restarting via new session...");
+              setTimeout(() => {
+                if (shouldBeRecordingRef.current) {
+                  startRecognitionSession();
+                }
+              }, 100);
+              return;
+           }
+           
+           setIsRecording(false);
+           if (evaluatedRef.current) return;
+           if (!hasSpokenRef.current && !accumulatedTranscriptRef.current) return;
+           setTimeout(() => {
+             evaluateSpeech(transcriptRef.current);
+           }, 400);
+        };
+        
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err) {
+         console.error("[Speech Engine] Start failed:", err);
          setIsRecording(false);
-      };
-      
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-       console.error("Speech init err", err);
-       setIsRecording(false);
+      }
+    };
+
+    startRecognitionSession();
+  };
+
+  const evaluateSpeech = (spoken: string) => {
+    if (!practiceTextRef.current) return;
+    
+    if (!spoken || spoken.trim() === "") {
+      setFeedback({ text: "I didn't catch that! Please check your microphone settings or try speaking a bit louder.", isSuccess: false });
+      return;
+    }
+
+    const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ").trim();
+    
+    const target = normalize(practiceTextRef.current);
+    const provided = normalize(spoken);
+    
+    // We already handled success during typing/speaking, this checks if we failed
+    if (provided === target || provided.includes(target) || target.includes(provided)) {
+      setFeedback({ text: "Correct! Amazing job! 🌟", isSuccess: true });
+    } else {
+      setFeedback({ text: `Almost! You said: "${spoken}". Try again!`, isSuccess: false });
     }
   };
 
@@ -211,7 +396,7 @@ function SpeakListenDashboard() {
         <div className="card-cloud p-10 text-center min-h-[500px] flex flex-col items-center animate-pop-in relative overflow-hidden" style={{ borderTop: `8px solid ${mode.color}` }}>
           
           <div className="text-5xl mb-4 p-4 rounded-full" style={{ background: mode.bg }}>{mode.emoji}</div>
-          <h2 className="text-3xl font-black text-[#1A3A5C] mb-8">{mode.title}</h2>
+          <h2 className={`text-3xl font-black mb-8 ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>{mode.title}</h2>
 
           {loading ? (
              <div className="flex flex-col items-center justify-center flex-1">
@@ -223,13 +408,13 @@ function SpeakListenDashboard() {
                
                {/* Read & Speak shows the text. The others hide it initially. */}
                {activeMode === "read-speak" ? (
-                 <div className="bg-[#F8FAFC] w-full p-8 rounded-3xl mb-8 border-2 border-[#E2E8F0] shadow-inner">
-                   <p className="text-3xl font-black text-[#1A3A5C] tracking-wide" style={{ fontFamily: "Comic Sans MS, OpenDyslexic, sans-serif", lineHeight: 1.6 }}>
+                 <div className={`w-full p-8 rounded-3xl mb-8 border-2 shadow-inner ${isDark ? 'bg-[#0B162C] border-gray-700' : 'bg-[#F8FAFC] border-[#E2E8F0]'}`}>
+                   <p className={`text-3xl font-black tracking-wide ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`} style={{ fontFamily: "Comic Sans MS, OpenDyslexic, sans-serif", lineHeight: 1.6 }}>
                      {practiceText}
                    </p>
                  </div>
                ) : (
-                 <div className="bg-[#F8FAFC] w-full p-8 rounded-3xl mb-8 border-2 border-[#E2E8F0] shadow-inner flex flex-col items-center">
+                 <div className={`w-full p-8 rounded-3xl mb-8 border-2 shadow-inner flex flex-col items-center ${isDark ? 'bg-[#0B162C] border-gray-700' : 'bg-[#F8FAFC] border-[#E2E8F0]'}`}>
                     <p className="text-lg font-bold text-[#4A6A8A] mb-4">Click to hear the secret sentence!</p>
                     <button 
                       onClick={() => playTTS(practiceText)}
@@ -246,6 +431,21 @@ function SpeakListenDashboard() {
                  {/* Voice Recording for Speak modes */}
                  {(activeMode === "read-speak" || activeMode === "listen-repeat") && (
                    <div className="flex flex-col items-center w-full gap-4">
+                     {micError && (
+                       <div className="w-full p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-left animate-in fade-in duration-300">
+                         <div className="flex items-start gap-3">
+                           <XCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                           <div>
+                             <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
+                               {micError.message}
+                             </p>
+                             <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                               {micError.suggestion}
+                             </p>
+                           </div>
+                         </div>
+                       </div>
+                     )}
                      <button 
                        onClick={toggleRecording}
                        disabled={feedback?.isSuccess}
@@ -257,7 +457,7 @@ function SpeakListenDashboard() {
                      
                      {/* Live Transcript Display */}
                      {transcript && (
-                       <div className="w-full bg-white p-4 rounded-xl border border-dashed border-[#A0AEC0] min-h-[60px] text-[#4A6A8A] font-medium text-lg italic text-center">
+                       <div className={`w-full p-4 rounded-xl border border-dashed min-h-[60px] font-medium text-lg italic text-center ${isDark ? 'bg-[#0B162C] border-gray-600 text-gray-300' : 'bg-white border-[#A0AEC0] text-[#4A6A8A]'}`}>
                          "{transcript}"
                        </div>
                      )}
@@ -272,7 +472,7 @@ function SpeakListenDashboard() {
                        value={userInput}
                        onChange={(e) => setUserInput(e.target.value)}
                        placeholder="Type what you heard here..."
-                       className="w-full p-4 rounded-2xl border-2 border-[#E2E8F0] focus:border-[#4A90D9] outline-none text-xl font-bold text-[#1A3A5C] min-h-[120px] shadow-inner resize-none"
+                       className={`w-full p-4 rounded-2xl border-2 outline-none text-xl font-bold min-h-[120px] shadow-inner resize-none ${isDark ? 'bg-[#0B162C] border-gray-700 text-white focus:border-[#4A90D9]' : 'border-[#E2E8F0] focus:border-[#4A90D9] text-[#1A3A5C]'}`}
                      />
                      <button 
                        onClick={checkWrittenAnswer}

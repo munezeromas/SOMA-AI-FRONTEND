@@ -41,3 +41,11 @@ src/images/
 *.glb 
 *.riv 
 .env 
+
+# Local SDK and build tools
+android-sdk/
+jdk/
+jdk21/
+*.zip
+*.apk
+dev-dist/

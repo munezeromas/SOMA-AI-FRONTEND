@@ -2,6 +2,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Logo } from "@/components/soma/Logo";
 import logo from "@/assets/logo.png";
 import img1 from "@/assets/img1.png";
 import img2 from "@/assets/img2.png";
@@ -212,18 +213,20 @@ function Index() {
       }
     >
       {/* ── NAVBAR ── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-25 flex items-center justify-between gap-6">
+      <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-6">
           {/* Logo */}
-          <img src={logo} alt="Soma AI" className="h-25 w-auto object-contain" />
+          <Link to="/">
+            <Logo size={42} lightBg={true} />
+          </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden lg:flex items-center gap-8">
             {NAV_LINKS.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
-                className="text-sm font-semibold text-[#475569] hover:text-[#0F172A] transition-colors"
+                className="text-sm font-semibold text-[#475569] hover:text-[#2563EB] transition-colors relative py-2 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-[#2563EB] hover:after:w-full after:transition-all after:duration-300"
               >
                 {l.label}
               </a>
@@ -231,78 +234,71 @@ function Index() {
           </nav>
 
           {/* Right Controls */}
-          <div className="hidden lg:flex items-center gap-3">
-            {/* Language Dropdown */}
-            <div className="relative" onMouseEnter={() => setLangOpen(true)} onMouseLeave={() => setLangOpen(false)}>
-              <button className="flex items-center gap-1.5 text-sm font-semibold text-[#475569] border border-gray-200 rounded-full px-3 py-1.5 hover:border-gray-300 transition-colors bg-white">
-                <span className="text-[10px] font-black text-[#94A3B8] uppercase tracking-wider">{selectedLang.code}</span>
-                <span className="text-base">{selectedLang.flag}</span>
-                <span>{selectedLang.label}</span>
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${langOpen ? "rotate-180" : ""}`} />
-              </button>
+          <div className="hidden lg:flex items-center gap-4">
+            {/* Accessibility and Language Group */}
+            <div className="flex items-center gap-2.5 bg-gray-50 border border-gray-200/60 rounded-full p-1">
+              {/* Language Dropdown */}
+              <div className="relative" onMouseEnter={() => setLangOpen(true)} onMouseLeave={() => setLangOpen(false)}>
+                <button className="flex items-center gap-1.5 text-xs font-bold text-[#475569] hover:text-[#0F172A] rounded-full px-3 py-1.5 transition-colors bg-white shadow-sm border border-gray-100">
+                  <span className="text-sm leading-none">{selectedLang.flag}</span>
+                  <span>{selectedLang.label}</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${langOpen ? "rotate-180" : ""}`} />
+                </button>
 
-              {/* Dropdown panel */}
-              {langOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
-                  {LANGUAGES.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => { setSelectedLang(lang); setLangOpen(false); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                        selectedLang.code === lang.code
-                          ? "bg-[#EFF6FF] text-[#2563EB] font-bold"
-                          : "text-[#374151] hover:bg-gray-50 font-semibold"
-                      }`}
-                    >
-                      <span className="text-[10px] font-black text-[#94A3B8] uppercase tracking-wider w-5">{lang.code}</span>
-                      <span className="text-base">{lang.flag}</span>
-                      <span className="flex-1">{lang.label}</span>
-                      {selectedLang.code === lang.code && (
-                        <span className="text-[#2563EB]">✓</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {/* Dropdown panel */}
+                {langOpen && (
+                  <div className="absolute top-full left-0 mt-1.5 w-44 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => { setSelectedLang(lang); setLangOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition-colors ${
+                          selectedLang.code === lang.code
+                            ? "bg-[#EFF6FF] text-[#2563EB] font-bold"
+                            : "text-[#374151] hover:bg-gray-50 font-semibold"
+                        }`}
+                      >
+                        <span className="text-sm">{lang.flag}</span>
+                        <span className="flex-1">{lang.label}</span>
+                        {selectedLang.code === lang.code && (
+                          <span className="text-[#2563EB]">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dyslexia Toggle */}
+              <button
+                onClick={() => setDyslexia(!dyslexia)}
+                title="Toggle Dyslexia-friendly font & theme"
+                className={`flex items-center gap-2 text-xs font-bold rounded-full px-3 py-1.5 transition-all ${
+                  dyslexia
+                    ? "bg-[#2563EB] text-white shadow-sm"
+                    : "text-[#475569] hover:text-[#0F172A] hover:bg-white/50"
+                }`}
+              >
+                <span className="text-xs font-semibold">Aa</span>
+                <span className="hidden xl:inline">Dyslexia</span>
+              </button>
             </div>
 
-            {/* Dyslexia Toggle */}
-            <button
-              onClick={() => setDyslexia(!dyslexia)}
-              className={`flex items-center gap-2 text-sm font-semibold border rounded-full px-3 py-1.5 transition-all ${
-                dyslexia
-                  ? "bg-[#2563EB] text-white border-[#2563EB]"
-                  : "text-[#475569] border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <span
-                className={`w-8 h-4 rounded-full relative transition-all ${dyslexia ? "bg-white/30" : "bg-gray-200"}`}
+            {/* Auth Actions */}
+            <div className="flex items-center gap-3 pl-2 border-l border-gray-200">
+              <Link
+                to="/login"
+                className="text-sm font-bold text-[#475569] hover:text-[#2563EB] transition-colors px-3 py-1.5"
               >
-                <span
-                  className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${dyslexia ? "left-4" : "left-0.5"}`}
-                />
-              </span>
-              Aa Dyslexia mode
-            </button>
-
-            <Link
-              to="/island"
-              className="text-sm font-bold text-[#2563EB] hover:text-[#1D4ED8] transition-colors flex items-center gap-1.5 whitespace-nowrap"
-            >
-              🏝️ Soma Island
-            </Link>
-            <Link
-              to="/login"
-              className="text-sm font-bold text-[#0F172A] hover:text-[#2563EB] transition-colors"
-            >
-              Login
-            </Link>
-            <Button
-              className="h-9 px-5 text-sm font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl"
-              asChild
-            >
-              <Link to="/login">Get started</Link>
-            </Button>
+                Login
+              </Link>
+              <Button
+                className="h-9 px-5 text-sm font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_16px_rgba(37,99,235,0.3)] transition-all hover:-translate-y-0.5"
+                asChild
+              >
+                <Link to="/login">Get started</Link>
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Hamburger */}
@@ -316,27 +312,62 @@ function Index() {
 
         {/* Mobile Menu */}
         {mobileOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-4">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                className="block text-sm font-semibold text-[#475569] hover:text-[#0F172A]"
-                onClick={() => setMobileOpen(false)}
+          <div className="lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-100 px-6 py-5 space-y-5 animate-in slide-in-from-top duration-300">
+            <div className="space-y-3.5">
+              {NAV_LINKS.map((l) => (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  className="block text-sm font-bold text-[#475569] hover:text-[#2563EB] transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {l.label}
+                </a>
+              ))}
+            </div>
+            
+            {/* Mobile Settings */}
+            <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center gap-3">
+              {/* Dyslexia Toggle */}
+              <button
+                onClick={() => setDyslexia(!dyslexia)}
+                className={`flex items-center gap-2 text-xs font-bold rounded-full px-4 py-2 border transition-all ${
+                  dyslexia
+                    ? "bg-[#2563EB] text-white border-[#2563EB]"
+                    : "text-[#475569] border-gray-200 bg-gray-50"
+                }`}
               >
-                {l.label}
-              </a>
-            ))}
-            <div className="flex flex-col gap-3 pt-2">
+                <span>Aa Dyslexia mode</span>
+              </button>
+
+              {/* Language selection in mobile */}
+              <div className="flex gap-2">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setSelectedLang(lang)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                      selectedLang.code === lang.code
+                        ? "bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]"
+                        : "text-[#475569] border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <span>{lang.flag} {lang.code.toUpperCase()}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-2 border-t border-gray-100">
               <Link to="/island" className="text-sm font-bold text-[#2563EB] flex items-center gap-1.5" onClick={() => setMobileOpen(false)}>
                 🏝️ Explore Soma Island
               </Link>
-              <div className="flex gap-3">
-                <Link to="/login" className="text-sm font-bold text-[#0F172A]" onClick={() => setMobileOpen(false)}>
+              <div className="flex items-center gap-4 pt-1">
+                <Link to="/login" className="text-sm font-bold text-[#475569] hover:text-[#2563EB]" onClick={() => setMobileOpen(false)}>
                   Login
                 </Link>
                 <Button
-                  className="h-9 px-5 text-sm font-bold bg-[#2563EB] text-white rounded-xl"
+                  className="h-10 px-6 text-sm font-bold bg-[#2563EB] text-white rounded-full flex-1"
                   asChild
                 >
                   <Link to="/login" onClick={() => setMobileOpen(false)}>Get started</Link>
@@ -426,11 +457,11 @@ function Index() {
           </div>
 
           {/* Right – Hero Image with ring + floating avatars */}
-          <div className="relative flex justify-center items-center py-10">
+          <div className="relative flex justify-center items-center py-10 overflow-hidden md:overflow-visible">
             {/* Outer ring */}
             <div
               aria-hidden="true"
-              className="absolute"
+              className="absolute hidden md:block"
               style={{
                 width: 550,
                 height: 520,
@@ -441,7 +472,7 @@ function Index() {
             {/* Inner ring */}
             <div
               aria-hidden="true"
-              className="absolute"
+              className="absolute hidden md:block"
               style={{
                 width: 500,
                 height: 480,
@@ -452,7 +483,7 @@ function Index() {
 
             {/* Floating avatar – top center */}
             <div
-              className="absolute z-20"
+              className="absolute z-20 hidden md:block"
               style={{ top: 0, left: "50%", transform: "translateX(-50%)" }}
             >
               <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
@@ -462,7 +493,7 @@ function Index() {
 
             {/* Floating avatar – left middle */}
             <div
-              className="absolute z-20"
+              className="absolute z-20 hidden md:block"
               style={{ top: "50%", left: -10, transform: "translateY(-50%)" }}
             >
               <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
@@ -472,7 +503,7 @@ function Index() {
 
             {/* Floating avatar – right middle */}
             <div
-              className="absolute z-20"
+              className="absolute z-20 hidden md:block"
               style={{ top: "50%", right: -10, transform: "translateY(-50%)" }}
             >
               <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
@@ -482,11 +513,9 @@ function Index() {
 
             {/* Main image – clipped circle bottom */}
             <div
-              className="relative z-10 overflow-hidden"
+              className="relative z-10 overflow-hidden w-[280px] h-[350px] sm:w-[400px] sm:h-[500px]"
               style={{
-                width: 400,
-                height: 500,
-                borderRadius: "160px 160px 0 0",
+                borderRadius: "140px 140px 0 0",
                 background: "rgba(180,160,200,0.25)",
               }}
             >
@@ -734,7 +763,7 @@ function Index() {
                     ? "ring-4 ring-[#2563EB] ring-offset-2 scale-105 shadow-xl"
                     : "border border-gray-100"
                 }`}
-                style={{ background: plan.highlight ? "#abb8e7" : "#F8FAFC" }}
+                style={{ background: plan.highlight ? "linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)" : "#F8FAFC" }}
               >
                 {plan.highlight && (
                   <div className="text-[10px] font-black uppercase tracking-widest text-black text-center">
@@ -784,7 +813,7 @@ function Index() {
                     >
                       <Check
                         className="h-4 w-4 shrink-0 mt-0.5"
-                        style={{ color: plan.highlight ? "#86EFAC" : "#00C36B" }}
+                        style={{ color: plan.highlight ? "#2563EB" : "#00C36B" }}
                       />
                       {f}
                     </li>
@@ -793,7 +822,7 @@ function Index() {
                 <Button
                   className={`w-full h-11 rounded-2xl text-sm font-black transition-transform hover:scale-105 ${
                     plan.highlight
-                      ? "bg-white text-[#2563EB] hover:bg-[#F1F5F9]"
+                      ? "bg-white text-[#2563EB] hover:bg-[#F1F5F9] border border-blue-100 shadow-sm"
                       : "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
                   }`}
                   asChild
@@ -858,7 +887,7 @@ function Index() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 border-b border-white/5 pb-16">
             <div className="space-y-5 md:col-span-2">
-              <img src={logo} alt="Soma AI" className="h-10 w-auto brightness-0 invert" />
+              <Logo size={42} lightBg={false} />
               <p className="text-xs leading-relaxed max-w-xs font-medium">
                 The smart mentor for the modern African student. Making education
                 accessible, personalised, and engaging through AI.
