@@ -3,7 +3,7 @@ import logo from "@/assets/soma-logo.png";
 export function Logo({
   size = 160,
   withText = true,
-  lightBg = false,
+  lightBg = true,
 }: {
   size?: number;
   withText?: boolean;
@@ -27,7 +27,7 @@ export function Logo({
             className="font-black tracking-tighter flex items-center"
             style={{
               fontSize: `${textSize}px`,
-              color: "#1A3A5C",
+              color: lightBg ? "#1A3A5C" : "#FFFFFF",
               fontFamily: "'Nunito', sans-serif",
             }}
           >
@@ -38,7 +38,7 @@ export function Logo({
             style={{
               fontSize: `${subTextSize}px`,
               letterSpacing: "0.3em",
-              color: "#4A90D9",
+              color: lightBg ? "#4A90D9" : "#93C5FD",
               fontFamily: "'Nunito', sans-serif",
             }}
           >

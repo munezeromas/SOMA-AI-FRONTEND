@@ -1,301 +1,250 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/soma/Logo";
 import { useState } from "react";
-import logo from "@/assets/logo.png";
-import login from "@/assets/login.jpg";
-import logo2 from "@/assets/logo2.png";
+import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { 
+  GraduationCap, 
+  Presentation, 
+  ArrowRight, 
+  ArrowLeft, 
+  Globe, 
+  Eye,
+  EyeOff
+} from "lucide-react";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Login — Soma AI" }] }),
+  head: () => ({ meta: [{ title: "Sign In — Soma AI" }] }),
   component: Login,
 });
 
-const RWANDAN_SCHOOLS = [
-  "Riviera High School",
-  "Gashora Girls Academy of Science and Technology",
-  "Green Hills Academy",
-  "FAWE Girls' School",
-  "Lycée de Kigali",
-  "Agahozo-Shalom Youth Village",
-  "White Dove Global School",
-  "Nu-Vision High School",
-  "Wellspring Academy",
-  "King David Academy",
-  "ES Caf Muhese",
-  "Groupe Scolaire Officiel de Butare",
-  "Groupe Scolaire Sainte Bernadette de Save",
-  "Collège du Christ-Roi",
-  "Petit Séminaire Virgo Fidelis",
-  "École des Sciences Byimana",
-  "Stella Matutina",
-  "Sonrise High School",
-  "Hope Haven Rwanda",
-  "Kigali International Community School",
-];
-
 function Login() {
-  const [mode, setMode]           = useState<"login" | "register">("login");
-  const [role, setRole]           = useState<"student" | "teacher">("student");
   const [studentId, setStudentId] = useState("");
-  const [school, setSchool]       = useState("");
-  const [password, setPassword]   = useState("");
-  const [confirm, setConfirm]     = useState("");
-  const [name, setName]           = useState("");
-  const [showSchools, setShowSchools] = useState(false);
-
-  const filteredSchools = RWANDAN_SCHOOLS.filter(s =>
-    s.toLowerCase().includes(school.toLowerCase())
-  );
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<"student" | "teacher">("student");
+  const [isRegister, setIsRegister] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    /* ── Page shell: striped lavender bg matching hero ── */
-    <div
-      className="min-h-screen flex flex-col font-sans selection:bg-[#00C36B]/30"
-      style={{
-        background: "#f5f0f5",
-        backgroundImage:
-          "repeating-linear-gradient(90deg, rgba(150,130,180,0.10) 0px, rgba(150,130,180,0.10) 1px, transparent 1px, transparent 48px)",
-      }}
-    >
-      {/* ── Minimal top bar ── */}
-      <header className="py-4 px-8 flex items-center justify-between">
-       
-        <Link
-          to="/"
-          className="text-xm font-bold text-black hover:text-[#0F172A] transition-colors flex items-center gap-1"
-        >
-          ← Back to Home
+    <div className="sky-bg min-h-screen flex flex-col font-['Nunito'] relative overflow-hidden">
+      {/* Animated background clouds */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[5%] left-[3%] animate-cloud-drift" style={{ animationDuration: "7s" }}>
+          <CloudShape width={120} opacity={0.8} />
+        </div>
+        <div className="absolute top-[10%] right-[6%] animate-cloud-drift delay-500" style={{ animationDuration: "9s" }}>
+          <CloudShape width={95} opacity={0.75} />
+        </div>
+        <div className="absolute bottom-[15%] left-[8%] animate-cloud-drift delay-1000" style={{ animationDuration: "8s" }}>
+          <CloudShape width={110} opacity={0.7} />
+        </div>
+        <div className="absolute bottom-[20%] right-[4%] animate-cloud-drift delay-200" style={{ animationDuration: "6s" }}>
+          <CloudShape width={130} opacity={0.8} />
+        </div>
+        {/* Stars */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="absolute text-yellow-300 animate-star-twinkle" style={{
+            left: `${8 + i * 15}%`, top: `${3 + (i % 2) * 6}%`,
+            fontSize: `${10 + (i % 3) * 5}px`, animationDelay: `${i * 0.5}s`
+          }}>✦</div>
+        ))}
+      </div>
+
+      {/* Absolute positioned Header to avoid pushing layout down */}
+      <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-2">
+        <Link to="/" className="text-[#1A3A5C] font-black text-sm flex items-center gap-1 hover:opacity-70 transition-opacity">
+          <ArrowLeft className="w-3.5 h-3.5" /> Back
         </Link>
+        <Logo size={36} />
+        <div className="w-16" />
       </header>
 
-      {/* ── Card ── */}
-      <main className="flex-1 flex items-center justify-center p-4 py-10">
-        <div className="w-full max-w-5xl bg-white rounded-[36px] overflow-hidden shadow-xl flex flex-col md:flex-row border border-gray-100">
-
-          {/* ── LEFT: image panel ── */}
-          <div className="hidden md:block md:w-/12 relative overflow-hidden bg-[#e8e0f0] brightness-80">
-            <img
-              src={login}
-              alt="Student learning"
-              className="w- h-full object-cover object-top"
-            />
-            {/* bottom gradient fade */}
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#2563EB]/80 to-transparent" />
-            {/* caption */}
-            <div className="absolute bottom-8 left-7 right-7 z-10">
-              <p className="text-[20px] font-black text-white/90 uppercase tracking-widest mb-1">
-                Soma AI
-              </p>
-              <h2 className="text-l  font-black text-white leading-snug">
-                Welcome Back!<br />
-              </h2>
+      {/* Main login card */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-14 pb-4">
+        <div 
+          className="card-cloud w-full max-w-2xl p-6 animate-slide-up relative z-10 flex flex-col md:flex-row items-stretch gap-6 md:gap-8"
+          style={{ boxShadow: "none", border: "2px solid rgba(74, 144, 217, 0.2)" }}
+        >
+          {/* Left Part: Mascot Rive Animation & Welcome Message */}
+          <div className="flex-1 flex flex-col items-center justify-center min-w-[180px] border-b md:border-b-0 md:border-r border-[#4A90D9]/15 pb-4 md:pb-0 md:pr-8">
+            <div className="h-32 w-32 animate-float-slow" style={{ animationDuration: "5s" }}>
+              <RiveAnimation src="/riv-animations/5573-10970-login2.riv" className="w-full h-full drop-shadow-sm" />
+            </div>
+            <div className="text-center mt-2 flex flex-col items-center">
+              {isRegister ? (
+                <>
+                  <h1 className="text-base font-black text-[#1A3A5C]">Join the Adventure!</h1>
+                  <p className="text-[10px] font-semibold text-[#4A6A8A] mt-0.5">Create an account to start learning</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-base font-black text-[#1A3A5C]">Welcome back!</h1>
+                  <p className="text-[10px] font-semibold text-[#4A6A8A] mt-0.5">Sign in to continue your adventure</p>
+                </>
+              )}
             </div>
           </div>
 
-          {/* ── RIGHT: form panel ── */}
-          <div className="w-full md:w-7/12 p-8 lg:p-10 flex flex-col gap-1 bg-white">
-
-            {/* Logo icon + heading */}
-            <div className="flex flex-col items-center gap- text-center">
-              
-                <img src={logo2} alt="" className="h-20 w-auto object-contain " />
-              
-              <div>
-                <h1 className="text-2xl font-black text-[#0F172A]">
-                  {mode === "login" ? "Welcome back!" : "Create account"}
-                </h1>
-                <p className="text-xs text-[#94A3B8] font-semibold mt-0.5">
-                  {mode === "login"
-                    ? "Sign in to your study hub"
-                    : "Join thousands of Rwandan students"}
-                </p>
-              </div>
+          {/* Right Part: Login Form */}
+          <div className="flex-1 w-full max-w-xs flex flex-col justify-center">
+            {/* Role Toggle */}
+            <div className="flex p-0.5 rounded-lg mb-3" style={{ background: "rgba(74,144,217,0.1)" }}>
+              <button
+                id="role-student"
+                onClick={() => setRole("student")}
+                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  role === "student"
+                    ? "bg-white text-[#4A90D9]"
+                    : "text-[#4A6A8A]"
+                }`}
+                style={{ boxShadow: "none" }}
+              >
+                <GraduationCap className="w-3.5 h-3.5" /> Student
+              </button>
+              <button
+                id="role-teacher"
+                onClick={() => setRole("teacher")}
+                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  role === "teacher"
+                    ? "bg-white text-[#4A90D9]"
+                    : "text-[#4A6A8A]"
+                }`}
+                style={{ boxShadow: "none" }}
+              >
+                <Presentation className="w-3.5 h-3.5" /> Teacher
+              </button>
             </div>
 
-            {/* Role toggle */}
-            <div className="flex p-1 bg-[#F8FAFC] rounded-xl border border-gray-100">
-              {(["student", "teacher"] as const).map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`flex-1 h-9 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
-                    role === r
-                      ? "bg-[#2563EB] text-white shadow-sm"
-                      : "text-[#94A3B8] hover:text-[#475569]"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-
-            {/* Form */}
-            <form className="flex flex-col gap-4" onSubmit={e => e.preventDefault()}>
-
-              {/* Name — register only */}
-              {mode === "register" && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+            <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+              {/* Full Name (Registration only) */}
+              {isRegister && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
                     Full Name
                   </label>
                   <input
+                    id="input-full-name"
                     type="text"
-                    placeholder="Your full name"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className="h-12 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-5 text-sm font-semibold placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+                    placeholder="Enter your name"
+                    className="w-full h-9 rounded-lg px-4 text-xs font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                    style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                   />
                 </div>
               )}
 
-              {/* Student ID */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">
-                  Student ID
+              {/* ID */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                  {role === "student" ? "Student ID" : "Teacher ID"}
                 </label>
                 <input
+                  id="input-student-id"
                   type="text"
-                  placeholder="SOMA-XXXX-XXXX"
+                  placeholder={role === "student" ? "SOMA-SANMARCO-011" : "TCH-XXXX-XXXX"}
+                  className="w-full h-9 rounded-lg px-4 text-xs font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                  style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
                   value={studentId}
-                  onChange={e => setStudentId(e.target.value)}
-                  className="h-12 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-5 text-sm font-semibold placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+                  onChange={(e) => setStudentId(e.target.value)}
                 />
               </div>
 
-              {/* School — register only */}
-              {mode === "register" && (
-                <div className="flex flex-col gap-1.5 relative">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">
-                    Your School
-                  </label>
+              {/* Password */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                  Password
+                </label>
+                <div className="relative">
                   <input
-                    type="text"
-                    placeholder="Search your school..."
-                    value={school}
-                    onFocus={() => setShowSchools(true)}
-                    onChange={e => { setSchool(e.target.value); setShowSchools(true); }}
-                    className="h-12 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-5 text-sm font-semibold placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+                    id="input-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="w-full h-9 rounded-lg px-4 pr-10 text-xs font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
+                    style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
-                  {showSchools && filteredSchools.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl border border-gray-100 shadow-lg z-50 overflow-hidden">
-                      <div className="max-h-40 overflow-y-auto">
-                        {filteredSchools.map(s => (
-                          <button
-                            key={s}
-                            type="button"
-                            className="w-full px-5 py-2.5 text-left text-xs font-semibold text-[#475569] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors"
-                            onClick={() => { setSchool(s); setShowSchools(false); }}
-                          >
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4A6A8A] hover:text-[#4A90D9] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password — registration only */}
+              {isRegister && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-[#1A3A5C] uppercase tracking-wide ml-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="input-confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className={`w-full h-9 rounded-lg px-4 pr-10 text-xs font-bold outline-none transition-all border-2 ${
+                        confirmPassword && confirmPassword !== password
+                          ? "border-red-400"
+                          : confirmPassword && confirmPassword === password
+                          ? "border-green-400"
+                          : "border-transparent focus:border-[#4A90D9]"
+                      }`}
+                      style={{ background: "rgba(74,144,217,0.08)", color: "#1A3A5C" }}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4A6A8A] hover:text-[#4A90D9] transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[10px] font-bold text-red-500 ml-1">Passwords don't match</p>
                   )}
                 </div>
               )}
 
-              {/* Password */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="h-12 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-5 text-sm font-semibold placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
-                />
-              </div>
-
-              {/* Confirm password — register only */}
-              {mode === "register" && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirm}
-                    onChange={e => setConfirm(e.target.value)}
-                    className="h-12 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-5 text-sm font-semibold placeholder:text-[#CBD5E1] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
-                  />
-                </div>
-              )}
-
-              {/* Forgot password — login only */}
-              {mode === "login" && (
-                <div className="text-right -mt-1">
-                  <button type="button" className="text-xs font-bold text-[#94A3B8] hover:text-[#2563EB] transition-colors">
-                    Forgot password?
-                  </button>
-                </div>
-              )}
-
-              {/* Submit */}
-              <Button
-                className="w-full h-12 rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-black text-sm transition-all hover:scale-[1.02] active:scale-95 mt-1"
-                asChild
+              {/* Action Button */}
+              <Link
+                to={role === "student" ? "/student" : "/teacher"}
+                id="btn-login-submit"
+                className="btn-play btn-play-primary w-full py-2.5 text-xs font-black flex items-center justify-center gap-1.5 mt-2"
+                style={{ boxShadow: "none" }}
               >
-                <Link to={role === "student" ? "/student" : "/teacher"}>
-                  {mode === "login" ? "Login" : "Create Account"}
-                </Link>
-              </Button>
-
-              {/* Divider */}
-              <div className="relative flex items-center gap-3 py-1">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-[10px] font-bold text-[#CBD5E1] uppercase tracking-widest shrink-0">or</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-
-              {/* Quick demo buttons */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#2563EB] border-[#2563EB]/30 hover:bg-[#EFF6FF] bg-white" asChild>
-                  <Link to="/student">Demo Student</Link>
-                </Button>
-                <Button variant="outline" className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#475569] border-gray-200 hover:bg-gray-50 bg-white" asChild>
-                  <Link to="/teacher">Demo Teacher</Link>
-                </Button>
-              </div>
+                {isRegister ? "Start Adventure!" : "Let's Go!"} <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </form>
 
-            {/* Switch mode */}
-            <p className="text-center text-xs text-[#94A3B8] font-semibold">
-              {mode === "login" ? (
-                <>
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("register")}
-                    className="text-[#2563EB] font-black hover:underline"
-                  >
-                    Register here
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setMode("login")}
-                    className="text-[#2563EB] font-black hover:underline"
-                  >
-                    Sign in
-                  </button>
-                </>
-              )}
-            </p>
+            {/* Toggle Sign In / Register Mode */}
+            <div className="text-center mt-3.5">
+              <button
+                type="button"
+                onClick={() => setIsRegister(!isRegister)}
+                className="text-[10px] font-black text-[#4A90D9] hover:underline"
+              >
+                {isRegister ? "Already have an account? Sign In" : "Don't have an account? Register"}
+              </button>
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="py-6 text-center">
-        <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">
-          © 2026 Soma AI Education · Authentic African Impact
+      <footer className="relative z-10 py-2 text-center flex items-center justify-center gap-1">
+        <p className="text-[10px] font-bold text-[#1A3A5C] opacity-60">
+          © 2026 Soma AI · Authentic African Education
         </p>
+        <Globe className="w-3 h-3 text-[#1A3A5C] opacity-60" />
       </footer>
     </div>
   );
@@ -312,3 +261,4 @@ function CloudShape({ width = 120, opacity = 0.9 }: { width?: number; opacity?: 
     </svg>
   );
 }
+

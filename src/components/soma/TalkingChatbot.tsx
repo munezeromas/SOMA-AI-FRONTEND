@@ -15,6 +15,7 @@
 
 import { useEffect, useRef, useState, memo } from "react";
 import { useCurrentAISpeech } from "@/lib/useSpeakAI";
+import { Volume2 } from "lucide-react";
 
 interface TalkingChatbotProps {
   textToSpeak?: string;
@@ -76,27 +77,29 @@ export const TalkingChatbot = memo(function TalkingChatbot({
   const isMutedRef = useRef(isMuted);
   useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
 
+  const [audioUnlockedState, setAudioUnlockedState] = useState(_audioUnlocked);
+
   // ── Audio unlock — FIXED: ensure AudioContext resumes even if clicked early ─────────────
+  const unlock = () => {
+    if (headRef.current?.audioCtx?.state === "suspended") {
+      headRef.current.audioCtx.resume().catch(() => {});
+    }
+
+    if (_audioUnlocked) return;
+    _audioUnlocked = true;
+    setAudioUnlockedState(true);
+
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      const u = new SpeechSynthesisUtterance("");
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
+  };
+
   useEffect(() => {
-    const unlock = () => {
-      // Always try to resume TalkingHead AudioContext if it exists and is suspended
-      if (headRef.current?.audioCtx?.state === "suspended") {
-        headRef.current.audioCtx.resume().catch(() => {});
-      }
-
-      if (_audioUnlocked) return;
-      _audioUnlocked = true;
-
-      // Pre-load browser TTS voices
-      if (window.speechSynthesis) {
-        window.speechSynthesis.getVoices();
-      }
-    };
-
     window.addEventListener("click", unlock);
     window.addEventListener("keydown", unlock);
-    // NOTE: we no longer listen to soma-audio-unlocked here to prevent
-    // the recursion loop (unlock dispatched it, which re-called unlock)
 
     return () => {
       window.removeEventListener("click", unlock);
@@ -270,6 +273,15 @@ export const TalkingChatbot = memo(function TalkingChatbot({
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center font-bold text-sm text-foreground/40 text-center px-6 animate-pulse">
           Establishing Neural Link…
+        </div>
+      )}
+
+      {ready && !audioUnlockedState && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={unlock}>
+          <div className="px-6 py-3 bg-primary/90 text-primary-foreground font-bold rounded-full shadow-lg border border-white/20 animate-bounce cursor-pointer flex items-center gap-2">
+            <Volume2 className="w-5 h-5" />
+            Tap to Activate Audio
+          </div>
         </div>
       )}
     </div>

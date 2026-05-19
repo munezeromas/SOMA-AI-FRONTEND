@@ -67,7 +67,31 @@ function Index() {
   }, []);
 
   const chrTap  = () => { setSpeech(CHR_MSGS[msgIdx % CHR_MSGS.length]); setMsgIdx(i=>i+1); };
-  const stopTap = (desc: string) => setSpeech("🏝️ " + desc.slice(0, 58));
+  const stopTap = (s: typeof STOPS[0]) => {
+    setSpeech("🏝️ " + s.desc.slice(0, 58));
+    const routeMap: Record<string, string> = {
+      home: "/student",
+      progress: "/student/progress",
+      tutor: "/student/tutor",
+      aiquiz: "/student/ai-quizzes",
+      simplify: "/student/simplify",
+      quizzes: "/student/quizzes",
+      homework: "/student/homework",
+      community: "/student/community",
+      games: "/student/games",
+      planner: "/student/planner",
+      read: "/student/read",
+      videos: "/student/videos",
+      library: "/student/library",
+      career: "/student/career"
+    };
+    const targetRoute = routeMap[s.id];
+    if (targetRoute) {
+      setTimeout(() => {
+        navigate({ to: targetRoute });
+      }, 400);
+    }
+  };
 
   return (
     <div style={{width:"100vw",height:"100vh",overflow:"hidden",position:"relative"}}>
@@ -174,7 +198,7 @@ function Index() {
 
       {/* ── STOPS spread across all islands ── */}
       {STOPS.map(s=>(
-        <div key={s.id} className="stop-btn" style={{left:s.left,top:s.top}} onClick={()=>stopTap(s.desc)}>
+        <div key={s.id} className="stop-btn" style={{left:s.left,top:s.top}} onClick={()=>stopTap(s)}>
           <div className="tp">{s.icon} {s.label}: {s.desc}</div>
           <div className="tgt">🎯</div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>

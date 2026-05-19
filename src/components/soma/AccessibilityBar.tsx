@@ -80,41 +80,7 @@ export function AccessibilityBar() {
     localStorage.setItem("soma-theme", theme);
   }, [dyslexic, contrast, fontScale, theme]);
 
-  // Route-change page announcements via browser TTS
-  // (separate from avatar speech — this just names the current page)
-  useEffect(() => {
-    // Only announce if AI voice is enabled and the browser supports it
-    if (!aiVoiceEnabled || typeof window === "undefined" || !window.speechSynthesis) return;
-
-    // Cancel whatever TalkingHead or a previous announcement was saying
-    window.speechSynthesis.cancel();
-
-    let text = "You are currently on " + path;
-    if (path.includes("planner"))
-      text = "You are now on the study planner. You can algorithmically synthesize your schedule.";
-    else if (path.includes("library"))
-      text = "You are now on the library page. This is the Soma AI curated selection of books. Press any key to interact with the books.";
-    else if (path.includes("games"))
-      text = "You are now in the Interactive Hub. Engage in cognitive training with your Rive animations.";
-    else if (path.includes("videos"))
-      text = "You are now on the YouTube viewing page. Press any key different from the space bar to interact.";
-    else if (path.includes("tutor"))
-      text = "You are now with Soma AI. Feel free to ask me anything — I will speak my answers out loud.";
-    else if (path === "/student")
-      text = "You are now on the home page. Press any key to interact, or press space to navigate to another page.";
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
-
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === " " || e.key === "Enter") {
-        window.speechSynthesis.cancel();
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [path, aiVoiceEnabled]);
+  // Removed page announcements as requested
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
