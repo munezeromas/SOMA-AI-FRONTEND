@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Native platforms
+android/
+android-sdk/
+
+# Local JDKs
+jdk/
+jdk21/
+*.zip
+*.apk
+
+# Vinxi / TanStack build outputs
+.vinxi/
+.tanstack/
+.wrangler/
+.vercel/
+dist/
+dist-ssr/
+.output/
+.nitro/
+dev-dist/
+logs/
+*.log

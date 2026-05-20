@@ -300,6 +300,31 @@ function Tutor() {
       
       let replyTokenBuffer = "";
       let spokenCursor = 0;
+
+      const speakSentence = (sentenceText: string, isFirst: boolean) => {
+        // Clean formatting and emojis so TTS reads it naturally and naturally
+        const cleanText = sentenceText
+          .replace(/\*\*+/g, "") // remove bold markers
+          .replace(/\*+/g, "") // remove italic markers
+          .replace(/__+/g, "") // remove underline markers
+          .replace(/`+/g, "") // remove code markers
+          // strip emojis (unicode ranges for emojis)
+          .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/gu, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (!cleanText) return;
+
+        console.log("[Tutor Stream Speech] Dispatching:", cleanText, "isFirst:", isFirst);
+        window.dispatchEvent(
+          new CustomEvent("soma-speak", {
+            detail: {
+              text: cleanText,
+              queue: !isFirst,
+            },
+          })
+        );
+      };
       
       // Inject placeholder
       setMessages((m) => [...m, { role: "ai", text: "" }]);
@@ -320,8 +345,6 @@ function Tutor() {
                  replyTokenBuffer += data.text;
                  chunkCount++;
                  
-                 // Look for sentence boundaries to stream speech (REMOVED: we will wait till the end so it lipsyncs everything from the beginning)
-
                  // Update the chat state periodically to prevent freezing (throttle)
                  if (chunkCount % 4 === 0) {
                    setMessages((m) => {
@@ -330,6 +353,36 @@ function Tutor() {
                       return newM;
                    });
                  }
+
+                 // Check for complete sentence boundaries in real-time
+                 const pendingText = replyTokenBuffer.substring(spokenCursor);
+                 const boundaryRegex = /([^.?!]+[.?!]+)(\s+|$)/g;
+                 let match;
+                 let lastMatchEnd = 0;
+                 
+                 while ((match = boundaryRegex.exec(pendingText)) !== null) {
+                    const sentence = match[1].trim();
+                    if (sentence) {
+                       const isFirst = (spokenCursor === 0);
+                       speakSentence(sentence, isFirst);
+                    }
+                    lastMatchEnd = match.index + match[0].length;
+                 }
+                 
+                 if (lastMatchEnd > 0) {
+                    spokenCursor += lastMatchEnd;
+                 } else if (pendingText.length > 180) {
+                    // Split at last space if sentence is excessively long to prevent latency
+                    const lastSpace = pendingText.lastIndexOf(" ");
+                    if (lastSpace > 60) {
+                       const chunk = pendingText.substring(0, lastSpace).trim();
+                       if (chunk) {
+                          const isFirst = (spokenCursor === 0);
+                          speakSentence(chunk, isFirst);
+                          spokenCursor += lastSpace + 1;
+                       }
+                    }
+                 }
               } else if (data.message && data.event_type === undefined) {
                  replyTokenBuffer = data.message;
                  setMessages((m) => {
@@ -337,23 +390,49 @@ function Tutor() {
                     newM[newM.length - 1] = { role: "ai", text: replyTokenBuffer };
                     return newM;
                  });
+
+                 const pendingText = replyTokenBuffer.substring(spokenCursor);
+                 const boundaryRegex = /([^.?!]+[.?!]+)(\s+|$)/g;
+                 let match;
+                 let lastMatchEnd = 0;
+                 while ((match = boundaryRegex.exec(pendingText)) !== null) {
+                    const sentence = match[1].trim();
+                    if (sentence) {
+                       const isFirst = (spokenCursor === 0);
+                       speakSentence(sentence, isFirst);
+                    }
+                    lastMatchEnd = match.index + match[0].length;
+                 }
+                 if (lastMatchEnd > 0) {
+                    spokenCursor += lastMatchEnd;
+                 }
               }
            } catch(e) {}
         }
       }
 
-      // Final update
+      // Final update of text in message bubble
       setMessages((m) => {
          const newM = [...m];
          newM[newM.length - 1] = { role: "ai", text: replyTokenBuffer };
          return newM;
       });
 
+      // Speak any remaining text at the end of the stream
+      const finalPending = replyTokenBuffer.substring(spokenCursor).trim();
+      if (finalPending) {
+         const isFirst = (spokenCursor === 0);
+         speakSentence(finalPending, isFirst);
+      }
+
       console.log("Final Reply Buffer:", replyTokenBuffer);
       if (!replyTokenBuffer) {
         setLastSpeech("Diagnostic failed. Neural path not found.");
       } else {
-        setLastSpeech(replyTokenBuffer);
+        // We DO NOT set lastSpeech to replyTokenBuffer here, because we already
+        // streamed and spoke the text in real-time sentence-by-sentence.
+        // This avoids double-speaking the entire paragraph.
+        console.log("[Tutor] Real-time stream speech complete.");
       }
       setLoading(false);
     } catch (err: any) {

@@ -27,17 +27,25 @@ interface TalkingChatbotProps {
 // ── Singleton unlock guard — prevents re-entrant calls ────────────────────
 let _audioUnlocked = false;
 
+// ── Persistent reference set to prevent SpeechSynthesisUtterance Garbage Collection ──
+const _activeUtterances = new Set<SpeechSynthesisUtterance>();
+
 // ── Browser TTS helper ─────────────────────────────────────────────────────
 function browserSpeak(text: string, queue: boolean = false, onStart?: () => void, onEnd?: () => void) {
   if (!window.speechSynthesis) return;
   if (!queue) {
     window.speechSynthesis.cancel();
+    _activeUtterances.clear();
   }
 
   // If text is empty, we just wanted to cancel
   if (!text.trim()) return;
 
   const u = new SpeechSynthesisUtterance(text);
+  
+  // Save reference to prevent GC
+  _activeUtterances.add(u);
+
   u.rate = 0.92;
   u.pitch = 1.05;
   u.volume = 1;
@@ -52,9 +60,20 @@ function browserSpeak(text: string, queue: boolean = false, onStart?: () => void
     voices.find((v) => v.lang.startsWith("en"));
   if (pick) u.voice = pick;
 
-  u.onstart = () => onStart?.();
-  u.onend = () => onEnd?.();
-  u.onerror = (e) => console.error("[BrowserTTS] error:", e.error);
+  u.onstart = () => {
+    onStart?.();
+  };
+  
+  u.onend = () => {
+    _activeUtterances.delete(u);
+    onEnd?.();
+  };
+  
+  u.onerror = (e) => {
+    _activeUtterances.delete(u);
+    console.error("[BrowserTTS] error:", e.error);
+    onEnd?.();
+  };
 
   window.speechSynthesis.speak(u);
 }

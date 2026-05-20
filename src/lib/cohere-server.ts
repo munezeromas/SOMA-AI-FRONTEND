@@ -12,7 +12,19 @@ export const cohereSimplify: any = createServerFn({ method: "POST" })
 
     // Build the user message
     let userMessage = "";
-    if (data.promptType === "quiz-start") {
+    if (data.promptType === "simplify") {
+      userMessage = `You are a friendly teacher helping a dyslexic primary school student understand difficult text. Please rewrite the following text so it is very easy to understand. Use these rules:
+- Use SHORT, simple words only (max 2 syllables where possible)
+- Write SHORT sentences (max 10 words each)
+- Use bullet points for lists of ideas
+- Replace hard words with easy words
+- Add a short "What this means:" summary at the end in 1-2 sentences
+- Be warm and encouraging — this student is trying their best!
+- Do NOT use markdown bold or headers
+
+Here is the text to simplify:
+"${data.text}"`;
+    } else if (data.promptType === "quiz-start") {
       userMessage = `Create question 1 of a 3-question quiz about "${data.text}" for a Grade ${data.grade} student. Only ask the question, nothing else.`;
     } else if (data.promptType === "quiz-answer") {
       userMessage = data.text;

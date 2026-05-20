@@ -205,7 +205,7 @@ export function StudentLayout() {
               onClick={() => setSidebarOpen(prev => !prev)}
               id="btn-open-sidebar"
               aria-label="Open sidebar"
-              className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 duration-150"
               style={{ background: "rgba(74,144,217,0.15)" }}
             >
               <svg
@@ -293,7 +293,7 @@ export function StudentLayout() {
 
             {/* Avatar button */}
             <button
-              className="flex items-center gap-2 pl-3 pr-4 py-1.5 rounded-full font-black text-sm transition-all hover:opacity-90"
+              className="flex items-center gap-2 pl-3 pr-4 py-1.5 rounded-full font-black text-sm transition-all hover:scale-105 active:scale-95 duration-150"
               style={{
                 background: "linear-gradient(135deg, #4A90D9, #2D6DB5)",
                 color: "white",
@@ -387,10 +387,8 @@ export function StudentLayout() {
                     key={n.to}
                     to={n.to}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-black text-[15px] transition-all group ${
-                      active 
-                        ? "bg-[#4A90D9] text-white shadow-[0_4px_12px_rgba(74,144,217,0.3)]" 
-                        : "text-[#4A6A8A] hover:bg-[#4A90D9]/10 hover:text-[#1A3A5C]"
+                    className={`sidebar-nav-item group transition-all duration-300 ${
+                      active ? "active font-black" : "font-black"
                     }`}
                   >
                     <span className={`text-xl transition-transform group-hover:scale-110 ${active ? "drop-shadow-sm" : ""}`}>{n.emoji}</span>
@@ -424,7 +422,7 @@ export function StudentLayout() {
                 className="w-full h-full"
               />
             </div>
-            <div className="relative">
+            <div key={path} className="relative animate-slide-up">
               {/* Outlet renders the current page.
                   Pages that use TalkingChatbot (e.g. TutorPage) import
                   useAvatarMuted() to get isMuted from context. */}
