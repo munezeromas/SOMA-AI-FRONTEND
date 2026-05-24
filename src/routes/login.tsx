@@ -64,8 +64,7 @@ function Login() {
       {/* Main login card */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-14 pb-4">
         <div 
-          className="card-cloud w-full max-w-2xl p-6 animate-slide-up relative z-10 flex flex-col md:flex-row items-stretch gap-6 md:gap-8"
-          style={{ boxShadow: "none", border: "2px solid rgba(74, 144, 217, 0.2)" }}
+          className="w-full max-w-2xl p-8 animate-slide-up relative z-10 flex flex-col md:flex-row items-stretch gap-8 clay-card shadow-clay-puffy"
         >
           {/* Left Part: Mascot Rive Animation & Welcome Message */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-[180px] border-b md:border-b-0 md:border-r border-[#4A90D9]/15 pb-4 md:pb-0 md:pr-8">
@@ -94,24 +93,22 @@ function Login() {
               <button
                 id="role-student"
                 onClick={() => setRole("student")}
-                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-sm ${
                   role === "student"
                     ? "bg-white text-[#4A90D9]"
-                    : "text-[#4A6A8A]"
+                    : "text-[#4A6A8A] hover:text-[#4A90D9]"
                 }`}
-                style={{ boxShadow: "none" }}
               >
                 <GraduationCap className="w-3.5 h-3.5" /> Student
               </button>
               <button
                 id="role-teacher"
                 onClick={() => setRole("teacher")}
-                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 rounded text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-sm ${
                   role === "teacher"
                     ? "bg-white text-[#4A90D9]"
-                    : "text-[#4A6A8A]"
+                    : "text-[#4A6A8A] hover:text-[#4A90D9]"
                 }`}
-                style={{ boxShadow: "none" }}
               >
                 <Presentation className="w-3.5 h-3.5" /> Teacher
               </button>
@@ -219,8 +216,8 @@ function Login() {
               <Link
                 to={role === "student" ? "/student" : "/teacher"}
                 id="btn-login-submit"
-                className="btn-play btn-play-primary w-full py-2.5 text-xs font-black flex items-center justify-center gap-1.5 mt-2"
-                style={{ boxShadow: "none" }}
+                className="clay-btn w-full py-3.5 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 mt-4 text-white"
+                style={{ background: "linear-gradient(135deg, #4A90D9, #2D6DB5)" }}
               >
                 {isRegister ? "Start Adventure!" : "Let's Go!"} <ArrowRight className="w-3.5 h-3.5" />
               </Link>

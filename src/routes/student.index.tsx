@@ -75,10 +75,9 @@ function Dashboard() {
       
       {/* ── GREETING BANNER ── */}
       <div 
-        className="relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl animate-pop-in"
+        className="relative overflow-hidden rounded-[3rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-clay-puffy animate-pop-in"
         style={{ 
           background: isDark ? "linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)" : "linear-gradient(135deg, #6DD5FA 0%, #2980B9 100%)",
-          boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.5)" : "0 20px 40px rgba(41,128,185,0.3)"
         }}
       >
         <div className="absolute top-0 right-0 opacity-10 pointer-events-none w-full h-full overflow-hidden">
@@ -99,11 +98,11 @@ function Dashboard() {
         </div>
         
         <div className="relative z-10 flex flex-wrap justify-center gap-4 shrink-0">
-          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform rotate-2 hover:scale-110 hover:-rotate-2 transition-all cursor-pointer text-[#FF9500] border-4 border-[#FFE066] ${isDark ? 'bg-[#112240]' : 'bg-white shadow-[0_8px_0_#FFE066]'}`}>
+          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform rotate-2 hover:scale-110 hover:-rotate-2 transition-all cursor-pointer text-[#FF9500] shadow-clay-puffy-sm ${isDark ? 'bg-[#112240] border-2 border-[#FFE066]/30' : 'bg-white/90 backdrop-blur-md'}`}>
             <span className="text-3xl">🔥</span>
             <span>{STUDENT.streak} Days</span>
           </div>
-          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform -rotate-2 hover:scale-110 hover:rotate-2 transition-all cursor-pointer text-[#2ECC71] border-4 border-[#A8E6CF] ${isDark ? 'bg-[#112240]' : 'bg-white shadow-[0_8px_0_#A8E6CF]'}`}>
+          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform -rotate-2 hover:scale-110 hover:rotate-2 transition-all cursor-pointer text-[#2ECC71] shadow-clay-puffy-sm ${isDark ? 'bg-[#112240] border-2 border-[#A8E6CF]/30' : 'bg-white/90 backdrop-blur-md'}`}>
             <span className="text-3xl">⭐</span>
             <span>Level {STUDENT.level}</span>
           </div>
@@ -125,10 +124,9 @@ function Dashboard() {
             <Link
               key={island.id}
               to={island.to}
-              className={`group relative rounded-[2.5rem] text-center transition-all duration-300 hover:-translate-y-4 animate-pop-in border-4 border-transparent overflow-hidden flex flex-col ${isDark ? 'bg-[#112240]' : 'bg-white'}`}
+              className={`group relative rounded-[2.5rem] text-center transition-all duration-300 hover:-translate-y-4 animate-pop-in border-[3px] border-transparent overflow-hidden flex flex-col clay-card shadow-clay-puffy`}
               style={{ 
                 animationDelay: `${i * 0.15}s`, 
-                boxShadow: isDark ? `0 8px 30px rgba(0,0,0,0.5)` : `0 12px 0 ${island.color}30, 0 20px 25px -5px rgba(0,0,0,0.1)`,
               }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = island.color}
               onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
@@ -150,7 +148,7 @@ function Dashboard() {
                 />
               </div>
               
-              <div className={`p-6 flex-1 flex flex-col justify-center items-center relative z-20 ${isDark ? 'bg-[#112240]' : 'bg-white'}`}>
+              <div className={`p-6 flex-1 flex flex-col justify-center items-center relative z-20 ${isDark ? 'bg-transparent' : 'bg-transparent'}`}>
                 <h3 className={`text-2xl font-black tracking-wide mb-3 group-hover:text-opacity-80 transition-colors leading-tight ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>
                   {island.label}
                 </h3>
@@ -168,8 +166,8 @@ function Dashboard() {
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* ── MAGIC TOOLS (Quick Actions) ── */}
-        <div className={`lg:col-span-7 rounded-[2.5rem] p-8 shadow-xl border-4 relative overflow-hidden ${isDark ? 'bg-[#112240] border-[#4A90D9]/30' : 'bg-white border-[#4A90D9]/20'}`}>
-          <div className={`absolute -top-10 -right-10 ${isDark ? 'text-white/5' : 'text-[#4A90D9]/5'}`}>
+        <div className={`lg:col-span-7 clay-card shadow-clay-puffy p-8 relative overflow-hidden`}>
+          <div className={`absolute -top-10 -right-10 ${isDark ? 'text-white/5' : 'text-primary/5'}`}>
             <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
           </div>
           
@@ -181,10 +179,9 @@ function Dashboard() {
               <Link
                 key={a.to}
                 to={a.to}
-                className={`flex flex-col items-center justify-center gap-3 p-5 rounded-3xl transition-all hover:scale-105 group ${isDark ? 'bg-[#1A2F50]' : 'bg-white'}`}
+                className={`flex flex-col items-center justify-center gap-3 p-5 rounded-3xl group clay-btn ${isDark ? 'bg-[#1A2F50]' : 'bg-white/80 backdrop-blur-md'}`}
                 style={{ 
-                  border: `3px solid ${a.bg}`,
-                  boxShadow: isDark ? 'none' : `0 6px 0 ${a.bg}, 0 10px 15px -3px rgba(0,0,0,0.05)`
+                  border: `2px solid ${a.bg}`,
                 }}
               >
                 <div 
@@ -205,9 +202,9 @@ function Dashboard() {
           {/* AI Tutor Card */}
           <Link
             to="/student/tutor"
-            className="group block bg-[#FF9500] rounded-[2.5rem] p-1 shadow-[0_12px_0_#CC7700] hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden"
+            className="group block bg-gradient-to-br from-[#FF9500] to-[#E07800] rounded-[2.5rem] p-[3px] shadow-clay-puffy hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden"
           >
-            <div className={`rounded-[2.25rem] p-6 h-full border-4 border-[#FF9500] flex items-center gap-4 ${isDark ? 'bg-[#2A1C0A]' : 'bg-[#FFF4E5]'}`}>
+            <div className={`rounded-[2.4rem] p-6 h-full flex items-center gap-4 ${isDark ? 'bg-[#2A1C0A]' : 'bg-[#FFF4E5]'}`}>
               <div className={`w-24 h-24 shrink-0 rounded-full p-2 shadow-inner border-4 border-[#FFD699] group-hover:border-[#FF9500] transition-colors relative ${isDark ? 'bg-[#3A2810]' : 'bg-white'}`}>
                 <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full" />
               </div>
@@ -219,7 +216,7 @@ function Dashboard() {
           </Link>
 
           {/* Treasure Room (Badges) */}
-          <div className={`flex-1 rounded-[2.5rem] p-6 shadow-xl border-4 flex flex-col relative overflow-hidden ${isDark ? 'bg-[#112240] border-[#2ECC71]/30' : 'bg-white border-[#2ECC71]/20'}`}>
+          <div className={`flex-1 clay-card shadow-clay-puffy p-6 flex flex-col relative overflow-hidden`}>
              <div className={`absolute -bottom-10 -left-10 ${isDark ? 'text-[#2ECC71]/10' : 'text-[#2ECC71]/5'}`}>
               <svg width="150" height="150" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
             </div>
@@ -240,8 +237,8 @@ function Dashboard() {
                     return (
                       <div 
                         key={b} 
-                        className={`rounded-2xl p-3 text-center transform transition-transform hover:scale-105 ${isDark ? 'bg-[#1A2F50]' : 'bg-white'}`}
-                        style={{ border: `3px solid ${c}30`, boxShadow: isDark ? 'none' : `0 4px 0 ${c}15` }}
+                        className={`rounded-2xl p-3 text-center clay-btn cursor-default ${isDark ? 'bg-[#1A2F50]' : 'bg-white'}`}
+                        style={{ border: `2px solid ${c}30` }}
                       >
                         <div className="text-2xl mb-1 animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}>⭐</div>
                         <p className={`text-[11px] font-black leading-tight ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>{b}</p>

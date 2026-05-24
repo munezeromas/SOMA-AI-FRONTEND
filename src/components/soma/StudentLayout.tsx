@@ -26,6 +26,7 @@ import {
 import { STUDENT } from "@/lib/mock-data";
 import { useTheme } from "@/lib/theme-context";
 import { useEffect, useRef, useState } from "react";
+import { Drawer } from "vaul";
 
 const NAV_ITEMS = [
   { to: "/student",            label: "Home",     exact: true, emoji: "🏠" },
@@ -199,29 +200,8 @@ export function StudentLayout() {
             />
           </div>
 
-          {/* Left: Hamburger + Logo + weather */}
+          {/* Left: Logo + weather */}
           <div className="flex items-center gap-3 relative z-10">
-            <button
-              onClick={() => setSidebarOpen(prev => !prev)}
-              id="btn-open-sidebar"
-              aria-label="Open sidebar"
-              className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 duration-150"
-              style={{ background: "rgba(74,144,217,0.15)" }}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#4A90D9"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
             <Link to="/">
               <Logo size={34} lightBg={theme === "light"} />
             </Link>
@@ -310,32 +290,15 @@ export function StudentLayout() {
         </header>
 
         <div className="flex flex-1 relative">
-          {/* Mobile overlay */}
-          {mounted && sidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/30 z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
+          {/* Mobile overlay - Not needed since sidebar is hidden on mobile */}
 
-          {/* ── SIDEBAR ── */}
+          {/* ── SIDEBAR (DESKTOP ONLY) ── */}
           <aside
-            className={`fixed top-0 left-0 h-full z-50 w-72 flex flex-col transition-all duration-500 ease-in-out sidebar-kids lg:sticky lg:top-[62px] lg:h-[calc(100vh-62px)] lg:z-auto ${
-              sidebarOpen ? "translate-x-0 lg:ml-0" : "-translate-x-full lg:-ml-72"
-            }`}
+            className={`hidden lg:flex sticky top-[62px] h-[calc(100vh-62px)] z-auto w-72 flex-col transition-all duration-500 ease-in-out sidebar-kids`}
           >
-            <div className="hidden lg:block pt-4"></div>
+            <div className="pt-4"></div>
 
-            <div className="flex items-center justify-between p-4 lg:hidden border-b-2 border-[#4A90D9]/10">
-              <Logo size={32} lightBg={theme === "light"} />
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="w-9 h-9 rounded-xl flex items-center justify-center font-bold"
-                style={{ background: "rgba(74,144,217,0.1)" }}
-              >
-                ✕
-              </button>
-            </div>
+
 
             {/* Student profile + XP bar */}
             <div className="mx-4 mt-4 mb-6">
@@ -411,7 +374,7 @@ export function StudentLayout() {
           </aside>
 
           {/* ── MAIN CONTENT ── */}
-          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative">
+          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative pb-28 lg:pb-8">
             {/* Road ambient background */}
             <div
               className="absolute inset-0 pointer-events-none"
@@ -429,6 +392,74 @@ export function StudentLayout() {
               <Outlet />
             </div>
           </main>
+        </div>
+
+        {/* ── MOBILE BOTTOM NAVIGATION ── */}
+        <div className="lg:hidden glass-nav-mobile fixed bottom-0 left-0 right-0 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
+          <div className="flex items-center justify-around px-2 py-3">
+            {[
+              { to: "/student", label: "Home", exact: true, emoji: "🏠" },
+              { to: "/student/tutor", label: "AI", emoji: "🤖" },
+              { to: "/student/games", label: "Play", emoji: "🎮" },
+              { to: "/student/progress", label: "Stats", emoji: "📈" },
+            ].map((n) => {
+              const active = n.exact ? path === n.to : path.startsWith(n.to);
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300 ${active ? '-translate-y-2' : ''}`}
+                >
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all shadow-sm ${active ? 'bg-primary text-white shadow-clay-puffy' : 'bg-transparent filter grayscale opacity-60'}`}>
+                    {n.emoji}
+                  </div>
+                  <span className={`text-[10px] font-black ${active ? 'text-primary opacity-100' : 'text-muted-foreground opacity-60'}`}>{n.label}</span>
+                </Link>
+              );
+            })}
+
+            {/* "More" Drawer Trigger */}
+            <Drawer.Root>
+              <Drawer.Trigger asChild>
+                <button className="flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl bg-transparent filter grayscale opacity-60 hover:opacity-100 hover:grayscale-0">
+                    🍔
+                  </div>
+                  <span className="text-[10px] font-black text-muted-foreground opacity-60">More</span>
+                </button>
+              </Drawer.Trigger>
+              <Drawer.Portal>
+                <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] max-h-[85vh] flex flex-col rounded-t-[2.5rem] bg-card outline-none shadow-[0_-20px_60px_rgba(0,0,0,0.2)]">
+                  <div className="p-4 flex-1 overflow-y-auto rounded-t-[2.5rem]">
+                    <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-8" />
+                    <Drawer.Title className="font-black text-2xl mb-6 text-center">🎒 More Tools</Drawer.Title>
+                    <div className="grid grid-cols-4 gap-4 px-2 pb-8">
+                      {NAV_ITEMS.filter(n => !["/student", "/student/tutor", "/student/games", "/student/progress"].includes(n.to)).map((n) => (
+                        <Drawer.Close asChild key={n.to}>
+                          <Link to={n.to} className="flex flex-col items-center gap-2 group">
+                            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-3xl shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
+                              {n.emoji}
+                            </div>
+                            <span className="text-[10px] font-black text-center leading-tight">{n.label}</span>
+                          </Link>
+                        </Drawer.Close>
+                      ))}
+                      {/* Logout */}
+                      <Drawer.Close asChild>
+                        <Link to="/login" className="flex flex-col items-center gap-2 group">
+                          <div className="w-14 h-14 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
+                            <LogOut className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-black text-destructive text-center leading-tight">Switch</span>
+                        </Link>
+                      </Drawer.Close>
+                    </div>
+                  </div>
+                </Drawer.Content>
+              </Drawer.Portal>
+            </Drawer.Root>
+          </div>
         </div>
 
         <AccessibilityBar />
