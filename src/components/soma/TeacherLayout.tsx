@@ -1,160 +1,342 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { AccessibilityBar } from "./AccessibilityBar";
-import { Home, Users, AlertTriangle, ClipboardList, BarChart3, LogOut, Menu } from "lucide-react";
+import {
+  Home, Users, AlertTriangle, ClipboardList, BarChart3,
+  LogOut, Menu, Bell, ChevronDown, ChevronRight, Settings,
+} from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { Drawer } from "vaul";
 
 const NAV = [
-  { to: "/teacher", label: "Overview", icon: Home, exact: true, emoji: "🏠" },
-  { to: "/teacher/students", label: "Students", icon: Users, emoji: "👧" },
-  { to: "/teacher/alerts", label: "Alerts", icon: AlertTriangle, emoji: "🔔" },
-  { to: "/teacher/assignments", label: "Tasks", icon: ClipboardList, emoji: "📋" },
-  { to: "/teacher/reports", label: "Reports", icon: BarChart3, emoji: "📊" },
+  { to: "/teacher",             label: "Overview",     icon: Home,          exact: true },
+  { to: "/teacher/students",    label: "Students",     icon: Users },
+  { to: "/teacher/alerts",      label: "Alerts",       icon: AlertTriangle },
+  { to: "/teacher/assignments", label: "Assignments",  icon: ClipboardList },
+  { to: "/teacher/reports",     label: "Reports",      icon: BarChart3 },
 ];
+
+const TEACHER = {
+  name: "Mrs. Mukamana",
+  initials: "MM",
+  grade: "P6",
+  students: 28,
+};
 
 export function TeacherLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggleTheme } = useTheme();
-  
+  const isDark = theme === "dark";
+
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{
-        background: theme === "dark" 
-          ? "linear-gradient(180deg, #060D1A 0%, #0A1628 40%, #0D2044 100%)"
-          : "linear-gradient(180deg, #5BC8F5 0%, #87CEEB 40%, #B8E4F9 100%)",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Nunito', sans-serif",
+        background: isDark ? "#0A0B1E" : "#EEF0F8",
+        color: isDark ? "#F8FAFC" : "#0F172A",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
     >
-      {/* ── TOP NAV BAR (MOBILE & DESKTOP) ── */}
-      <header className="nav-top sticky top-0 z-50 px-4 py-3 flex items-center justify-between relative overflow-hidden">
-        <div className="flex items-center gap-3 relative z-10">
+      {/* ── TOP HEADER ── */}
+      <header
+        className="sticky top-0 z-50 flex items-center justify-between px-6 h-[72px] shrink-0"
+        style={{
+          background: isDark ? "rgba(10,11,30,0.92)" : "rgba(255,255,255,0.95)",
+          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+          backdropFilter: "blur(16px)",
+        }}
+      >
+        {/* Left */}
+        <div className="flex items-center gap-4">
           <Link to="/">
-            <Logo size={34} lightBg={theme === "light"} />
+            <Logo size={28} lightBg={!isDark} />
           </Link>
-          <span className="hidden md:block text-xs font-black text-[#1A3A5C] opacity-70 dark:text-[#7BB8F0]">
-            Teacher Portal
-          </span>
+          <div className="hidden md:flex items-center gap-3 ml-4 pl-4 border-l" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
+            <span className="text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-md" style={{ background: "rgba(16,185,129,0.15)", color: "#10B981" }}>
+              Teacher Portal
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-3 relative z-10">
+
+        {/* Right */}
+        <div className="flex items-center gap-3">
+          {/* Alert badge */}
+          <span className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors cursor-pointer hover:bg-red-500/20"
+                style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+            <AlertTriangle className="w-3.5 h-3.5" /> 3 Alerts
+          </span>
+
+          {/* Notifications */}
+          <button className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:opacity-80"
+                  style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" }}>
+            <Bell className="w-4 h-4" style={{ color: isDark ? "#94A3B8" : "#64748B" }} />
+            <span
+              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2"
+              style={{ background: "#EF4444", borderColor: isDark ? "#0A0B1E" : "#FFFFFF" }}
+            />
+          </button>
+
+          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-            className={`theme-toggle-btn ${theme}`}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:opacity-80 text-lg"
+            style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)" }}
           >
-            <div className="theme-toggle-knob" />
-            <span
-              className="absolute inset-0 flex items-center justify-center text-[10px] pointer-events-none select-none"
-              style={{ paddingLeft: theme === "light" ? "18px" : "4px" }}
-            >
-              {theme === "light" ? "🌙" : "☀️"}
-            </span>
+            {isDark ? "🌙" : "☀️"}
           </button>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-black bg-gradient-to-tr from-[#4A90D9] to-[#2D6DB5] shadow-sm">
-            M
-          </div>
+
+          <div className="w-px h-6 mx-1" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
+
+          {/* Avatar */}
+          <button className="flex items-center gap-2 hover:opacity-80 transition-opacity p-1 rounded-2xl" style={{ background: isDark ? "transparent" : "transparent" }}>
+            <div className="hidden sm:block text-right mr-1">
+              <p className="text-sm font-black leading-none" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>
+                {TEACHER.name}
+              </p>
+              <p className="text-[10px] mt-0.5 font-bold opacity-70" style={{ color: isDark ? "#94A3B8" : "#64748B" }}>
+                {TEACHER.grade} · {TEACHER.students} students
+              </p>
+            </div>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0 shadow-md"
+              style={{ background: "linear-gradient(135deg, #10B981, #059669)", border: "2px solid rgba(16,185,129,0.3)" }}
+            >
+              {TEACHER.initials}
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 hidden sm:block opacity-50" />
+          </button>
         </div>
       </header>
 
-      <div className="flex flex-1 relative">
-        {/* Sidebar (Desktop Only) */}
-        <aside className="hidden lg:flex flex-col w-64 p-4 sticky top-[62px] h-[calc(100vh-62px)] shrink-0 sidebar-kids">
-          <nav className="flex-1 space-y-1 mt-4">
+      <div className="flex flex-1 min-h-0 relative">
+        {/* ── SIDEBAR (DESKTOP) ── */}
+        <aside
+          className="hidden lg:flex flex-col w-[260px] shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto"
+          style={{
+            background: isDark ? "rgba(10,11,30,0.5)" : "transparent",
+            borderRight: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+          }}
+        >
+
+          {/* Teacher card */}
+          <div className="p-4 pt-5 pb-2">
+            <div
+              className="rounded-2xl p-4 flex items-center gap-3 border transition-all hover:shadow-lg"
+              style={{ background: isDark ? "rgba(255,255,255,0.03)" : "#FFFFFF", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }}
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white text-lg shrink-0 shadow-sm"
+                style={{ background: "linear-gradient(135deg, #10B981, #059669)" }}
+              >
+                {TEACHER.initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-black leading-tight truncate" style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}>
+                  {TEACHER.name}
+                </p>
+                <p className="text-[10px] mt-0.5 font-bold uppercase tracking-widest opacity-70" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#64748B" }}>
+                  Grade {TEACHER.grade}
+                </p>
+              </div>
+            </div>
+
+            {/* Alert count */}
+            <Link to="/teacher/alerts" style={{ textDecoration: "none" }}>
+              <div
+                className="mt-3 rounded-xl p-3 flex items-center gap-2 hover:-translate-y-0.5 transition-transform"
+                style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer" }}
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: "#EF4444" }} />
+                <span className="text-xs font-black" style={{ color: "#EF4444" }}>
+                  3 students need attention
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Nav */}
+          <nav className="flex-1 px-4 py-4 space-y-1">
+            <p className="px-3 mb-2 mt-2 text-[9px] font-black uppercase tracking-[0.18em] opacity-50" style={{ color: isDark ? "#fff" : "#000" }}>
+              Navigation
+            </p>
             {NAV.map((n) => {
               const active = n.exact ? path === n.to : path.startsWith(n.to);
+              const Icon = n.icon;
               return (
                 <Link
                   key={n.to}
                   to={n.to}
-                  className={`sidebar-nav-item ${active ? "active" : ""}`}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all relative group"
+                  style={{
+                    background: active ? (isDark ? "rgba(16,185,129,0.15)" : "#E0F2FE") : "transparent",
+                    color: active ? (isDark ? "#34D399" : "#059669") : (isDark ? "rgba(255,255,255,0.6)" : "#64748B"),
+                    border: active ? `1px solid ${isDark ? "rgba(16,185,129,0.3)" : "rgba(16,185,129,0.2)"}` : "1px solid transparent",
+                    textDecoration: "none"
+                  }}
+                  onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)"; (e.currentTarget as HTMLElement).style.color = isDark ? "#fff" : "#000"; } }}
+                  onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = isDark ? "rgba(255,255,255,0.6)" : "#64748B"; } }}
                 >
-                  <span className="text-xl">{n.emoji}</span>
-                  {n.label}
+                  {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full" style={{ background: "#10B981" }} />}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{n.label}</span>
+                  {n.label === "Alerts" && (
+                    <span
+                      className="ml-auto text-[9px] font-black px-2 py-0.5 rounded-md"
+                      style={{ background: "rgba(239,68,68,0.2)", color: "#EF4444" }}
+                    >
+                      3
+                    </span>
+                  )}
+                  {active && n.label !== "Alerts" && <ChevronRight className="w-3 h-3 ml-auto opacity-50" />}
                 </Link>
               );
             })}
           </nav>
-          {/* Teacher card */}
-          <div className="rounded-3xl p-4 mt-4 shadow-clay-puffy-sm" style={{ background: theme === 'dark' ? "rgba(74,144,217,0.05)" : "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.3)" }}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shadow-inner" style={{ background: "linear-gradient(135deg, #4A90D9, #2D6DB5)" }}>
-                M
-              </div>
-              <div>
-                <div className="font-black text-sm dark:text-white text-[#1A3A5C]">Mrs. Mukamana</div>
-                <div className="text-[10px] font-bold text-[#4A6A8A]">P6 · 28 students</div>
-              </div>
-            </div>
+
+          {/* Settings & Footer */}
+          <div className="p-4" style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
+            <Link
+              to="/teacher"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all mb-2"
+              style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#64748B", textDecoration: "none" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)"; (e.currentTarget as HTMLElement).style.color = isDark ? "#fff" : "#000"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = isDark ? "rgba(255,255,255,0.6)" : "#64748B"; }}
+            >
+              <Settings className="w-4 h-4 shrink-0" />
+              Settings
+            </Link>
             <Link
               to="/login"
-              className="flex items-center justify-center gap-2 mt-4 py-2 rounded-2xl text-xs font-bold text-[#E74C3C] hover:bg-[#E74C3C]/10 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.12)"; (e.currentTarget as HTMLElement).style.color = "#FCA5A5"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
             >
-              <LogOut className="h-4 w-4" /> Switch role
+              <LogOut className="w-4 h-4 shrink-0" />
+              Switch Role
             </Link>
           </div>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden pb-28 lg:pb-8">
+        {/* ── MAIN CONTENT ── */}
+        <main className="flex-1 min-w-0 overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 relative">
+          {/* Subtle background glow for main content area */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-[100px] pointer-events-none" />
           <Outlet />
         </main>
       </div>
 
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <div className="lg:hidden glass-nav-mobile fixed bottom-0 left-0 right-0 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
-        <div className="flex items-center justify-around px-2 py-3">
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          background: isDark ? "rgba(10,11,30,0.97)" : "rgba(255,255,255,0.97)",
+          backdropFilter: "blur(20px)",
+          borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
+        <div className="flex items-center justify-around px-2 py-1.5">
           {NAV.slice(0, 4).map((n) => {
             const active = n.exact ? path === n.to : path.startsWith(n.to);
+            const Icon = n.icon;
             return (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300 ${active ? '-translate-y-2' : ''}`}
+                className="flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all"
+                style={{ textDecoration: "none", minWidth: 56 }}
               >
-                <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all shadow-sm ${active ? 'bg-[#4A90D9] text-white shadow-clay-puffy' : 'bg-transparent filter grayscale opacity-60'}`}>
-                  {n.emoji}
+                <div
+                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+                  style={{ background: active ? "rgba(16,185,129,0.15)" : "transparent" }}
+                >
+                  <Icon
+                    className="w-5 h-5"
+                    style={{ color: active ? "#10B981" : (isDark ? "rgba(255,255,255,0.35)" : "#94A3B8") }}
+                  />
                 </div>
-                <span className={`text-[10px] font-black ${active ? 'text-[#4A90D9] opacity-100' : 'text-muted-foreground opacity-60'}`}>{n.label}</span>
+                <span
+                  className="text-[9px] font-black"
+                  style={{ color: active ? "#10B981" : (isDark ? "rgba(255,255,255,0.35)" : "#94A3B8") }}
+                >
+                  {n.label}
+                </span>
               </Link>
             );
           })}
 
-          {/* "More" Drawer Trigger */}
+          {/* More drawer */}
           <Drawer.Root>
             <Drawer.Trigger asChild>
-              <button className="flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300">
-                <div className="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl bg-transparent filter grayscale opacity-60 hover:opacity-100 hover:grayscale-0">
-                  🍔
+              <button className="flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl" style={{ minWidth: 56 }}>
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg">
+                  <Menu className="w-5 h-5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8" }} />
                 </div>
-                <span className="text-[10px] font-black text-muted-foreground opacity-60">More</span>
+                <span
+                  className="text-[9px] font-black"
+                  style={{ color: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8" }}
+                >
+                  More
+                </span>
               </button>
             </Drawer.Trigger>
             <Drawer.Portal>
-              <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
-              <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] max-h-[85vh] flex flex-col rounded-t-[2.5rem] bg-card outline-none shadow-[0_-20px_60px_rgba(0,0,0,0.2)]">
-                <div className="p-4 flex-1 overflow-y-auto rounded-t-[2.5rem]">
-                  <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-8" />
-                  <Drawer.Title className="font-black text-2xl mb-6 text-center">🎒 More Tools</Drawer.Title>
-                  <div className="grid grid-cols-4 gap-4 px-2 pb-8">
-                    {NAV.slice(4).map((n) => (
-                      <Drawer.Close asChild key={n.to}>
-                        <Link to={n.to} className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-3xl shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
-                            {n.emoji}
-                          </div>
-                          <span className="text-[10px] font-black text-center leading-tight">{n.label}</span>
-                        </Link>
-                      </Drawer.Close>
-                    ))}
-                    {/* Logout */}
+              <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+              <Drawer.Content
+                className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-3xl outline-none"
+                style={{ background: isDark ? "#0D0F2A" : "#FFFFFF", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none" }}
+              >
+                <div className="p-5">
+                  <div
+                    className="mx-auto w-10 h-1 rounded-full mb-5"
+                    style={{ background: isDark ? "rgba(255,255,255,0.15)" : "#E2E8F0" }}
+                  />
+                  <Drawer.Title
+                    className="font-black text-lg mb-4"
+                    style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}
+                  >
+                    More Options
+                  </Drawer.Title>
+                  <div className="grid grid-cols-4 gap-3 pb-6">
+                    {NAV.slice(4).map((n) => {
+                      const Icon = n.icon;
+                      return (
+                        <Drawer.Close asChild key={n.to}>
+                          <Link to={n.to} className="flex flex-col items-center gap-2 group" style={{ textDecoration: "none" }}>
+                            <div
+                              className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105"
+                              style={{
+                                background: isDark ? "rgba(16,185,129,0.1)" : "#F1F5F9",
+                                border: isDark ? "1px solid rgba(16,185,129,0.2)" : "1px solid #E2E8F0",
+                              }}
+                            >
+                              <Icon className="w-6 h-6" style={{ color: isDark ? "#34D399" : "#059669" }} />
+                            </div>
+                            <span
+                              className="text-[10px] font-black text-center leading-tight"
+                              style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#64748B" }}
+                            >
+                              {n.label}
+                            </span>
+                          </Link>
+                        </Drawer.Close>
+                      );
+                    })}
                     <Drawer.Close asChild>
-                      <Link to="/login" className="flex flex-col items-center gap-2 group">
-                        <div className="w-14 h-14 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
-                          <LogOut className="w-6 h-6" />
+                      <Link to="/login" className="flex flex-col items-center gap-2 group" style={{ textDecoration: "none" }}>
+                        <div
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                          style={{
+                            background: "rgba(239,68,68,0.08)",
+                            border: "1px solid rgba(239,68,68,0.15)",
+                          }}
+                        >
+                          <LogOut className="w-6 h-6" style={{ color: "#EF4444" }} />
                         </div>
-                        <span className="text-[10px] font-black text-destructive text-center leading-tight">Switch</span>
+                        <span className="text-[10px] font-black" style={{ color: "#EF4444" }}>
+                          Switch
+                        </span>
                       </Link>
                     </Drawer.Close>
                   </div>

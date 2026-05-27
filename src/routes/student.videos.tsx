@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { VIDEOS, SUBJECTS } from "@/lib/mock-data";
-import { Play, X, Star, Search } from "lucide-react";
+import { Play, X, Star, Search, Filter, ExternalLink, AlertTriangle } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { useTheme } from "@/lib/theme-context";
 
 export const Route = createFileRoute("/student/videos")({
   head: () => ({ meta: [{ title: "Videos — Soma AI" }] }),
@@ -11,124 +13,297 @@ export const Route = createFileRoute("/student/videos")({
 
 const LEVELS = ["All", "P1", "P2", "P3", "P4", "P5", "P6"];
 
+type VideoEntry = {
+  id: string;
+  title: string;
+  subject: string;
+  level?: string;
+  duration?: string;
+  teacherRecommended?: boolean;
+  /** unique index within the full VIDEOS array, used as React key */
+  _idx: number;
+};
+
 function Videos() {
   const [filter, setFilter] = useState<string>("All");
   const [level, setLevel] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<VideoEntry | null>(null);
+  const [embedError, setEmbedError] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
-  const list = VIDEOS.filter((v) => {
+  const textPrimary = isDark ? "#F8FAFC" : "#0F172A";
+  const textMuted   = isDark ? "#94A3B8" : "#64748B";
+
+  // Tag every video with its original index for a stable unique key
+  const indexedVideos: VideoEntry[] = VIDEOS.map((v, i) => ({ ...(v as any), _idx: i }));
+
+  const list = indexedVideos.filter((v) => {
     const subjectMatch = filter === "All" || v.subject === filter;
-    const levelMatch = level === "All" || (v as any).level === level;
-    const searchMatch = !search || v.title.toLowerCase().includes(search.toLowerCase()) || v.subject.toLowerCase().includes(search.toLowerCase());
+    const levelMatch   = level === "All" || v.level === level;
+    const searchMatch  = !search ||
+      v.title.toLowerCase().includes(search.toLowerCase()) ||
+      v.subject.toLowerCase().includes(search.toLowerCase());
     return subjectMatch && levelMatch && searchMatch;
   });
 
+  const openVideo = useCallback((v: VideoEntry) => {
+    setEmbedError(false);
+    setOpen(v);
+  }, []);
+
+  const closeVideo = useCallback(() => {
+    setOpen(null);
+    setEmbedError(false);
+  }, []);
+
   return (
-    <div className="space-y-6 max-w-7xl pb-20">
-      <div className="card-cloud p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-pop-in">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 shrink-0">
-            <RiveAnimation src="/riv-animations/24657-46067-medura-an-interactive-anatomy-experience.riv" className="w-full h-full" />
+    <div className="space-y-6 max-w-7xl pb-20 animate-fade-in main-content-padding">
+
+      {/* ── HERO HEADER ── */}
+      <div className="pro-card glass-panel hover-glow p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-blue-500/20 rounded-full filter blur-[80px] animate-pulse-glow" />
+
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.1))", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)" }}>
+            <RiveAnimation src="/riv-animations/24657-46067-medura-an-interactive-anatomy-experience.riv" className="w-12 h-12" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-[#1A3A5C]">Video Library</h1>
-            <p className="text-sm font-bold text-[#4A6A8A]">Curated educational video lessons</p>
+            <h1 className="text-3xl font-black mb-1" style={{ color: textPrimary }}>Video Library</h1>
+            <p className="text-sm font-bold opacity-70" style={{ color: textMuted }}>Curated educational video lessons just for you</p>
           </div>
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4A6A8A]" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search videos, subjects..."
-          className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-bold outline-none transition-all border-2 border-transparent focus:border-[#4A90D9]"
-          style={{ background: "rgba(255,255,255,0.9)", color: "#1A3A5C" }}
-        />
-      </div>
+      {/* ── SEARCH & FILTERS ── */}
+      <div className="pro-card glass-panel p-4 flex flex-col xl:flex-row gap-4 relative z-10">
 
-      {/* Subject filter */}
-      <div className="flex flex-wrap gap-2">
-        {["All", ...SUBJECTS].map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className="px-4 py-2 rounded-2xl text-xs font-black transition-all duration-200"
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50" style={{ color: textMuted }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search for lessons, topics..."
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm font-bold outline-none transition-all"
             style={{
-              background: filter === s ? "#4A90D9" : "rgba(255,255,255,0.85)",
-              color: filter === s ? "#fff" : "#4A6A8A",
-              boxShadow: filter === s ? "0 4px 12px rgba(74,144,217,0.4)" : "none",
-              border: "2px solid " + (filter === s ? "#4A90D9" : "rgba(255,255,255,0.8)"),
-            }}>
-            {s}
-          </button>
-        ))}
+              background: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)",
+              color: textPrimary,
+              border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
+            }}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 xl:pb-0 hide-scrollbar">
+          {/* Subject filters */}
+          <div className="flex items-center gap-2 p-1.5 rounded-2xl shrink-0" style={{ background: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.04)" }}>
+            {["All", ...SUBJECTS].map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
+                style={{
+                  background: filter === s ? "#3B82F6" : "transparent",
+                  color: filter === s ? "#FFF" : textMuted,
+                  boxShadow: filter === s ? "0 4px 12px rgba(59,130,246,0.4)" : "none",
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-px h-8 shrink-0 mx-1" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
+
+          {/* Level filter */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-black uppercase tracking-widest px-2" style={{ color: textMuted }}><Filter className="w-3 h-3 inline-block -mt-0.5 mr-1" /> Grade:</span>
+            <div className="flex gap-1.5">
+              {LEVELS.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLevel(l)}
+                  className="px-3 py-1.5 rounded-xl text-[10px] font-black transition-all duration-300"
+                  style={{
+                    background: level === l ? "rgba(59,130,246,0.15)" : (isDark ? "rgba(255,255,255,0.03)" : "#FFFFFF"),
+                    color: level === l ? "#60A5FA" : textMuted,
+                    border: level === l ? "1px solid rgba(59,130,246,0.3)" : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+                  }}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Level filter */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-black text-[#4A6A8A]">Grade:</span>
-        {LEVELS.map((l) => (
-          <button key={l} onClick={() => setLevel(l)}
-            className="px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200"
+      {/* ── VIDEO GRID ── */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+        {list.map((v) => (
+          <button
+            key={v._idx}
+            onClick={() => openVideo(v)}
+            className="text-left rounded-[24px] overflow-hidden group transition-all duration-500 hover:-translate-y-2 relative flex flex-col"
             style={{
-              background: level === l ? "rgba(74,144,217,0.15)" : "rgba(255,255,255,0.7)",
-              color: level === l ? "#4A90D9" : "#4A6A8A",
-              border: "2px solid " + (level === l ? "rgba(74,144,217,0.4)" : "rgba(255,255,255,0.6)"),
-            }}>
-            {l}
-          </button>
-        ))}
-      </div>
+              background: isDark ? "rgba(255,255,255,0.03)" : "#FFFFFF",
+              border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+              boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.2)" : "0 4px 20px rgba(0,0,0,0.03)",
+              animationDelay: `${v._idx * 0.02}s`
+            }}
+          >
+            <div className="relative aspect-video bg-slate-800 overflow-hidden w-full shrink-0">
+              <img
+                src={`https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`}
+                alt={v.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                onError={(e) => {
+                  // Fallback thumbnail if the YouTube ID is invalid
+                  (e.currentTarget as HTMLImageElement).src =
+                    `https://i.ytimg.com/vi/${v.id}/default.jpg`;
+                }}
+              />
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {list.map((v) => {
-          const meta = v as any;
-          return (
-            <button key={v.id} onClick={() => setOpen(v.id)} className="text-left rounded-3xl overflow-hidden bg-white hover:bg-gray-50 transition-all duration-500 hover:-translate-y-2 group border border-gray-100 shadow-sm">
-              <div className="relative aspect-video bg-gray-100 overflow-hidden">
-                <img src={`https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`} alt={v.title} className="w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-1000 grayscale-[0.3] group-hover:grayscale-0" />
-                <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-500">
-                    <Play className="h-8 w-8 text-white fill-white ml-1" />
+              {/* Play Button Overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                <div className="h-14 w-14 rounded-full flex items-center justify-center scale-90 group-hover:scale-110 transition-transform duration-500 backdrop-blur-sm border border-white/30" style={{ background: "rgba(255,255,255,0.2)" }}>
+                  <Play className="h-6 w-6 text-white fill-white ml-1 drop-shadow-md" />
+                </div>
+              </div>
+
+              {/* Subject tag */}
+              <div className="absolute top-3 left-3">
+                <div className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-[9px] font-black uppercase tracking-widest text-white border border-white/10 shadow-sm">
+                  {v.subject}
+                </div>
+              </div>
+
+              {/* Duration */}
+              {v.duration && (
+                <div className="absolute bottom-3 right-3">
+                  <div className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-[10px] font-bold text-white tracking-widest">
+                    {v.duration}
                   </div>
                 </div>
-                {/* Subject tag */}
-                <div className="absolute top-3 left-3"><div className="px-3 py-1 rounded-lg bg-black/30 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-white">{v.subject}</div></div>
-                {/* Duration */}
-                {meta.duration && <div className="absolute bottom-3 right-3"><div className="px-2 py-1 rounded bg-black/60 text-[10px] font-bold text-white">{meta.duration}</div></div>}
-                {/* Teacher Recommended Badge */}
-                {meta.teacherRecommended && (
-                  <div className="absolute top-3 right-3">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-400/90 backdrop-blur-md shadow-md">
-                      <Star className="h-3 w-3 text-white fill-white" />
-                      <span className="text-[9px] font-black text-white uppercase tracking-wide">Teacher Pick</span>
-                    </div>
+              )}
+
+              {/* Teacher Recommended Badge */}
+              {v.teacherRecommended && (
+                <div className="absolute top-3 right-3">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/90 backdrop-blur-md shadow-lg border border-amber-400/50">
+                    <Star className="h-3 w-3 text-white fill-white" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest">Pick</span>
                   </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-5 flex-1 flex flex-col">
+              <div className="flex items-center gap-2 mb-3">
+                {v.level && (
+                  <span
+                    className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest"
+                    style={{ background: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.1)", color: "#60A5FA" }}
+                  >
+                    {v.level}
+                  </span>
                 )}
               </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  {meta.level && <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wide">{meta.level}</span>}
-                </div>
-                <div className="font-black text-lg leading-tight text-[#0F172A] group-hover:text-primary transition-colors">{v.title}</div>
-                <p className="text-[10px] text-[#64748B] mt-2 font-bold uppercase tracking-wider opacity-60">{v.subject} · {meta.duration || "12m"}</p>
+              <div className="font-black text-base leading-tight mb-auto transition-colors group-hover:text-blue-400" style={{ color: textPrimary }}>
+                {v.title}
               </div>
-            </button>
-          );
-        })}
+              <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}>
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60" style={{ color: textMuted }}>
+                  {v.subject}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 duration-300">
+                  Watch Now →
+                </span>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
 
-      {open && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4" onClick={() => setOpen(null)}>
-          <button className="absolute top-6 right-6 z-[110] glass bg-white/10 hover:bg-red-500/80 p-3 rounded-full text-white shadow-2xl transition-all flex items-center gap-2 border border-white/20" aria-label="Close">
-            <span className="font-black px-2 uppercase tracking-wider text-xs hidden sm:block">Close Video</span> <X className="h-6 w-6" />
-          </button>
-          <div className="w-full max-w-5xl aspect-video relative z-[105]" onClick={(e) => e.stopPropagation()}>
-            <iframe src={`https://www.youtube.com/embed/${open}?autoplay=1`} className="w-full h-full rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" allow="autoplay; encrypted-media" allowFullScreen />
+      {/* ── VIDEO MODAL ── */}
+      {open && typeof document !== "undefined" && createPortal(
+        <>
+          {/* Solid dark backdrop */}
+          <div
+            className="fixed inset-0 z-[200] bg-black/95 animate-fade-in"
+            onClick={closeVideo}
+            style={{ isolation: "isolate" }}
+          />
+
+          {/* Glassmorphic Top Control Bar — ALWAYS visible, completely outside the flex layout */}
+          <div className="fixed top-0 left-0 right-0 h-20 z-[210] flex items-center justify-between px-6 bg-black/60 border-b border-white/10 backdrop-blur-md shadow-2xl animate-fade-in pointer-events-auto">
+            {/* Title / Context Info */}
+            <div className="flex-1 min-w-0 pr-6">
+              <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-0.5">
+                {open.subject}{open.level ? ` · Grade ${open.level}` : ""}
+              </p>
+              <h2 className="text-white font-black text-base truncate leading-tight">
+                {open.title}
+              </h2>
+            </div>
+            {/* Quick Actions */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Go Back / Close Button */}
+              <button
+                onClick={closeVideo}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-red-600 border border-white/10 text-white font-black text-[11px] uppercase tracking-widest transition-all hover:scale-105 cursor-pointer shadow-lg"
+                aria-label="Go back"
+              >
+                <X className="h-3.5 w-3.5" />
+                Go Back
+              </button>
+            </div>
           </div>
-        </div>
+
+          {/* Modal content layer — centered massive player */}
+          <div
+            className="fixed inset-0 z-[201] flex items-center justify-center p-4 pt-24 pointer-events-none animate-fade-in"
+          >
+            {/* Inner player container */}
+            <div className="w-full max-w-[94vw] h-[82vh] max-h-[82vh] rounded-[2rem] overflow-hidden bg-black shadow-[0_0_80px_rgba(59,130,246,0.3)] pointer-events-auto border border-white/10">
+              {embedError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-5 text-center p-8 bg-slate-950">
+                  <AlertTriangle className="h-12 w-12 text-amber-400 opacity-80" />
+                  <div>
+                    <p className="text-white font-black text-xl mb-2">Embedding Disabled</p>
+                    <p className="text-white/50 text-sm max-w-sm">
+                      This video can't be played here. Watch it directly on YouTube.
+                    </p>
+                  </div>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${open.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm text-white transition-all hover:scale-105"
+                    style={{ background: "linear-gradient(135deg,#FF0000,#CC0000)" }}
+                  >
+                    <Play className="h-4 w-4 fill-white" />
+                    Watch on YouTube
+                  </a>
+                </div>
+              ) : (
+                <iframe
+                  key={`video-${open._idx}`}
+                  src={`https://www.youtube.com/embed/${open.id}?autoplay=1&rel=0&modestbranding=1`}
+                  title={open.title}
+                  className="w-full h-full block"
+                  style={{ border: "none", display: "block" }}
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowFullScreen
+                  onError={() => setEmbedError(true)}
+                />
+              )}
+            </div>
+          </div>
+        </>
+        , document.body
       )}
     </div>
   );

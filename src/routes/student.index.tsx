@@ -1,261 +1,411 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { STUDENT, QUOTES, MASTERY } from "@/lib/mock-data";
-import { ArrowRight } from "lucide-react";
-import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { STUDENT } from "@/lib/mock-data";
+import {
+  ClipboardList, Users, Flame, Trophy,
+  ChevronLeft, ChevronRight, CheckCircle2,
+  Bot, BookOpen, Star, Sparkles
+} from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
+import { useState } from "react";
+import { RiveAnimation } from "@/components/soma/RiveAnimation";
 
 export const Route = createFileRoute("/student/")({
-  head: () => ({ meta: [{ title: "My World — Soma AI" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Soma AI" }] }),
   component: Dashboard,
 });
 
-const ISLANDS = [
+const STATS = [
   {
-    id: "math",
-    to: "/student/videos?filter=Math",
-    label: "Math",
-    img: "/island-math.png",
-    color: "#4A90D9",
-    shadow: "rgba(74,144,217,0.4)",
-    badge: "P1–P6",
-    badgeColor: "#4A90D9",
-    emoji: "🧮",
+    id: "assignments",
+    label: "Assignments",
+    value: "12",
+    icon: ClipboardList,
+    color: "#EF4444",
+    bg: "rgba(239,68,68,0.15)",
+    to: "/student/homework"
   },
   {
-    id: "reading",
-    to: "/student/library",
-    label: "Reading & Writing",
-    img: "/island-reading.png",
-    color: "#2ECC71",
-    shadow: "rgba(46,204,113,0.4)",
-    badge: "P1–P6",
-    badgeColor: "#2ECC71",
-    emoji: "📚",
+    id: "xp",
+    label: "Total XP",
+    value: "24,542",
+    icon: Users,
+    color: "#3B82F6",
+    bg: "rgba(59,130,246,0.15)",
+    to: "/student/progress"
   },
   {
-    id: "ai",
-    to: "/student/tutor",
-    label: "AI Tutor",
-    img: "/island-ai.png",
-    color: "#FF9500",
-    shadow: "rgba(255,149,0,0.4)",
-    badge: "All Grades",
-    badgeColor: "#FF9500",
-    emoji: "🤖",
+    id: "streak",
+    label: "Day Streak",
+    value: "5",
+    icon: Flame,
+    color: "#F59E0B",
+    bg: "rgba(245,158,11,0.15)",
+    to: "/student/games"
   },
   {
-    id: "speak",
-    to: "/student/speak",
-    label: "Speak & Listen",
-    img: "/island-speak.png",
-    color: "#9B59B6",
-    shadow: "rgba(155,89,182,0.4)",
-    badge: "Languages",
-    badgeColor: "#9B59B6",
-    emoji: "🗣️",
+    id: "badges",
+    label: "Badges",
+    value: "10",
+    icon: Trophy,
+    color: "#10B981",
+    bg: "rgba(16,185,129,0.15)",
+    to: "/student/progress"
   },
 ];
 
-const QUICK_ACTIONS = [
-  { to: "/student/ai-quizzes", label: "AI Quiz", emoji: "✨", color: "#9B59B6", bg: "rgba(155,89,182,0.12)" },
-  { to: "/student/games", label: "Games", emoji: "🎮", color: "#FF6B6B", bg: "rgba(255,107,107,0.12)" },
-  { to: "/student/simplify", label: "Simplify", emoji: "📝", color: "#4A90D9", bg: "rgba(74,144,217,0.12)" },
-  { to: "/student/planner", label: "Planner", emoji: "📅", color: "#2ECC71", bg: "rgba(46,204,113,0.12)" },
-  { to: "/student/videos", label: "Videos", emoji: "📺", color: "#E74C3C", bg: "rgba(231,76,60,0.12)" },
-  { to: "/student/progress", label: "Progress", emoji: "📈", color: "#FF9500", bg: "rgba(255,149,0,0.12)" },
+const PERFORMANCE = [
+  { label: "Math", value: 85, color: "#3B82F6" },
+  { label: "Reading", value: 65, color: "#F59E0B" },
+  { label: "Science", value: 75, color: "#10B981" },
 ];
+
+const NOTIFICATIONS = [
+  {
+    title: "Math Assignment Due",
+    date: "Complete by Today",
+    desc: "Complete the fractions worksheet and submit it before the end of the day.",
+    to: "/student/homework"
+  },
+  {
+    title: "Science Fair Project",
+    date: "Upcoming Event",
+    desc: "We are planning the school science fair. Make sure to choose your project topic.",
+    to: "/student/planner"
+  }
+];
+
+const TOP_SCORES = [
+  { name: "Mathematics", score: "99.90%", rank: "1st", color: "from-[#4ADE80] to-[#22C55E]" },
+  { name: "Science", score: "99.76%", rank: "2nd", color: "from-[#60A5FA] to-[#2563EB]" },
+  { name: "Reading", score: "99.50%", rank: "3rd", color: "from-[#FCD34D] to-[#F59E0B]" },
+];
+
+// Dynamically generate calendar based on provided date
+function generateCalendar(date: Date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const today = new Date();
+  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+  const todayDate = today.getDate();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDay = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+
+  const days = [];
+  
+  // Previous month trailing days
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  for (let i = 0; i < startingDay; i++) {
+    days.unshift({ day: prevMonthLastDay - i, currentMonth: false });
+  }
+
+  // Current month days
+  for (let i = 1; i <= daysInMonth; i++) {
+    let event = null;
+    
+    if (isCurrentMonth) {
+      if (i === todayDate) event = "today";
+      else if (i === todayDate + 2) event = "green-circle";
+      else if (i >= todayDate - 4 && i <= todayDate - 2) {
+        if (i === todayDate - 4) event = "range-start";
+        else if (i === todayDate - 2) event = "range-end";
+        else event = "range-mid";
+      }
+    } else {
+      // Add random events for other months
+      if (i === 10 || i === 22) event = "green-circle";
+    }
+
+    days.push({ day: i, currentMonth: true, event });
+  }
+
+  // Next month leading days
+  const remainingCells = 42 - days.length; // 6 rows * 7 days
+  for (let i = 1; i <= remainingCells; i++) {
+    days.push({ day: i, currentMonth: false });
+  }
+
+  const monthName = date.toLocaleString('default', { month: 'long' });
+  return { days, monthName, year };
+}
 
 function Dashboard() {
-  const quote = QUOTES[new Date().getDay() % QUOTES.length];
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const cardBorder = isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0";
+  const textPrimary = isDark ? "#F8FAFC" : "#0F172A";
+  const textMuted = isDark ? "#94A3B8" : "#64748B";
+
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  
+  function nextMonth() {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  }
+  function prevMonth() {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  }
+
+  const { days: calendarDays, monthName, year } = generateCalendar(currentDate);
 
   return (
-    <div className="space-y-10 max-w-screen-2xl mx-auto px-4 pb-16 font-['Nunito']">
+    <div className="max-w-[1400px] mx-auto space-y-6 animate-fade-in main-content-padding">
       
-      {/* ── GREETING BANNER ── */}
-      <div 
-        className="relative overflow-hidden rounded-[3rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-clay-puffy animate-pop-in"
-        style={{ 
-          background: isDark ? "linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)" : "linear-gradient(135deg, #6DD5FA 0%, #2980B9 100%)",
+      {/* ── HERO BANNER ── */}
+      <div className="relative rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 shadow-xl hover-glow"
+        style={{
+          background: "linear-gradient(135deg, #4F46E5, #3B82F6, #06b6d4)",
+          minHeight: "200px"
         }}
       >
-        <div className="absolute top-0 right-0 opacity-10 pointer-events-none w-full h-full overflow-hidden">
-          {/* Cloud decorations */}
-          <svg className="absolute -top-10 -right-10 w-64 h-64 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.759-1.549V8a3.618 3.618 0 116.72 2.012 4.5 4.5 0 11-2.022 8.526A3.5 3.5 0 015.5 16z"/></svg>
-        </div>
+        {/* Background elements */}
+        <div className="absolute top-0 right-0 w-full h-full bg-[url('/classroom.png.png')] bg-cover bg-right bg-no-repeat opacity-40 mix-blend-overlay" />
+        <div className="absolute top-[-50%] right-[-10%] w-96 h-96 bg-white/20 rounded-full filter blur-[80px] animate-pulse-glow" />
         
-        <div className="relative z-10 text-white text-center md:text-left flex-1">
-          <p className="text-xl md:text-2xl font-black mb-2 opacity-90 drop-shadow-md text-[#FFE066]">
-            Welcome to your adventure! 🌟
-          </p>
-          <h1 className="text-4xl md:text-6xl font-black drop-shadow-lg mb-4">
-            Hey, {STUDENT.name.split(" ")[0]}!
+        <div className="relative z-10 flex-1 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-white text-xs font-black backdrop-blur-md">
+            <Sparkles className="w-4 h-4" /> Welcome back, {STUDENT.name.split(' ')[0]}!
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-white leading-tight tracking-tight">
+            Ready for your next <br /> <span className="text-yellow-300">learning adventure?</span>
           </h1>
-          <p className="text-lg md:text-xl font-bold bg-white/20 inline-block px-5 py-2 rounded-full backdrop-blur-sm border border-white/30">
-            "{quote}"
+          <p className="text-white/80 font-medium text-sm max-w-md">
+            You have 2 pending assignments and your math streak is at 5 days. Keep up the great work!
           </p>
         </div>
         
-        <div className="relative z-10 flex flex-wrap justify-center gap-4 shrink-0">
-          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform rotate-2 hover:scale-110 hover:-rotate-2 transition-all cursor-pointer text-[#FF9500] shadow-clay-puffy-sm ${isDark ? 'bg-[#112240] border-2 border-[#FFE066]/30' : 'bg-white/90 backdrop-blur-md'}`}>
-            <span className="text-3xl">🔥</span>
-            <span>{STUDENT.streak} Days</span>
+        {/* Call to action button on hero */}
+        <div className="relative z-10 mt-6 md:mt-0 flex flex-col items-center md:items-end gap-2.5 shrink-0">
+          {/* Large floating SOMA AI bot mascot */}
+          <div className="w-36 h-36 -mb-6 pointer-events-none animate-bounce" style={{ animationDuration: "3.5s" }}>
+            <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full drop-shadow-2xl" />
           </div>
-          <div className={`px-6 py-4 rounded-[2rem] font-black text-xl flex flex-col items-center gap-1 transform -rotate-2 hover:scale-110 hover:rotate-2 transition-all cursor-pointer text-[#2ECC71] shadow-clay-puffy-sm ${isDark ? 'bg-[#112240] border-2 border-[#A8E6CF]/30' : 'bg-white/90 backdrop-blur-md'}`}>
-            <span className="text-3xl">⭐</span>
-            <span>Level {STUDENT.level}</span>
-          </div>
+          {/* Premium glassmorphic button */}
+          <Link to="/student/tutor" className="flex items-center justify-center gap-2.5 px-8 py-3.5 bg-white/20 border border-white/30 text-white rounded-2xl font-black shadow-lg backdrop-blur-md hover:bg-white/30 hover:scale-105 transition-all duration-300 group">
+            <Sparkles className="w-4 h-4 text-yellow-300 group-hover:animate-pulse" />
+            <span className="text-base">Start Learning</span>
+          </Link>
         </div>
       </div>
 
-      {/* ── EXPLORE ISLANDS ── */}
-      <div>
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-          <h2 className={`text-3xl font-black flex items-center gap-3 ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>
-            🗺️ Explore Your Worlds
-          </h2>
-          <span className="bg-[#E74C3C] text-white text-sm font-black px-4 py-2 rounded-full animate-bounce shadow-lg border-2 border-white">
-            Pick an Island to start!
-          </span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {ISLANDS.map((island, i) => (
-            <Link
-              key={island.id}
-              to={island.to}
-              className={`group relative rounded-[2.5rem] text-center transition-all duration-300 hover:-translate-y-4 animate-pop-in border-[3px] border-transparent overflow-hidden flex flex-col clay-card shadow-clay-puffy`}
-              style={{ 
-                animationDelay: `${i * 0.15}s`, 
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = island.color}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
-            >
-              <div 
-                className="w-full aspect-square flex items-center justify-center relative shadow-inner"
-                style={{ background: `linear-gradient(180deg, ${island.color}${isDark ? '20' : '15'}, ${island.color}${isDark ? '40' : '30'})` }}
+      {/* ── TOP STATS ROW ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {STATS.map((s) => {
+          const Icon = s.icon;
+          return (
+              <Link
+                key={s.id}
+                to={s.to}
+                className="pro-card pro-card-hover glass-panel relative overflow-hidden flex flex-col hover-glow group"
+                style={{ padding: "1.25rem", textDecoration: "none" }}
               >
-                <div className="absolute inset-0 bg-white/20 mix-blend-overlay rounded-full blur-3xl transform scale-150 group-hover:scale-100 transition-transform duration-700" />
-                <img 
-                  src={island.img} 
-                  alt={island.label}
-                  className="w-[95%] h-[95%] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 relative z-10"
-                  style={{ animationDelay: `${i * 0.8}s` }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    e.currentTarget.parentElement!.innerHTML = `<span style="font-size:100px;filter:drop-shadow(0 10px 20px rgba(0,0,0,0.2))">${island.emoji}</span>`;
-                  }}
-                />
-              </div>
-              
-              <div className={`p-6 flex-1 flex flex-col justify-center items-center relative z-20 ${isDark ? 'bg-transparent' : 'bg-transparent'}`}>
-                <h3 className={`text-2xl font-black tracking-wide mb-3 group-hover:text-opacity-80 transition-colors leading-tight ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>
-                  {island.label}
-                </h3>
                 <div 
-                  className="inline-block text-white text-sm font-black px-6 py-2 rounded-full shadow-md mt-auto"
-                  style={{ background: island.color }}
-                >
-                  {island.badge}
+                  className="absolute top-0 left-0 w-full h-1" 
+                  style={{ background: `linear-gradient(90deg, transparent, ${s.color}, transparent)` }} 
+                />
+                <div className="flex items-center gap-4 mt-2 relative z-10">
+                  <div 
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+                    style={{ background: s.bg, boxShadow: `0 0 15px ${s.bg}` }}
+                  >
+                    <Icon className="w-6 h-6" style={{ color: s.color }} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70" style={{ color: textMuted }}>
+                      {s.label}
+                    </p>
+                    <p className="text-3xl font-black" style={{ color: textPrimary, textShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                      {s.value}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                {/* Decorative background glow on hover */}
+                <div 
+                  className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full filter blur-[30px] opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+                  style={{ background: s.color }}
+                />
+              </Link>
+          );
+        })}
       </div>
 
-      <div className="grid lg:grid-cols-12 gap-8">
-        {/* ── MAGIC TOOLS (Quick Actions) ── */}
-        <div className={`lg:col-span-7 clay-card shadow-clay-puffy p-8 relative overflow-hidden`}>
-          <div className={`absolute -top-10 -right-10 ${isDark ? 'text-white/5' : 'text-primary/5'}`}>
-            <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
+      {/* ── MIDDLE ROW ── */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        
+        {/* Calendar & Tasks */}
+        <div className="pro-card glass-panel hover-glow p-6 flex flex-col relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full filter blur-[40px] animate-pulse-glow" />
+          <div className="section-header mb-6 relative z-10">
+            <h2 className="section-title">Calendar & Tasks</h2>
           </div>
           
-          <h2 className={`text-2xl font-black mb-6 flex items-center gap-3 relative z-10 ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>
-            🎒 My Magic Backpack
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 relative z-10">
-            {QUICK_ACTIONS.map((a, i) => (
-              <Link
-                key={a.to}
-                to={a.to}
-                className={`flex flex-col items-center justify-center gap-3 p-5 rounded-3xl group clay-btn ${isDark ? 'bg-[#1A2F50]' : 'bg-white/80 backdrop-blur-md'}`}
-                style={{ 
-                  border: `2px solid ${a.bg}`,
-                }}
+          <div className="flex items-center justify-between mb-4 px-2 relative z-10">
+             <button onClick={prevMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors cursor-pointer">
+               <ChevronLeft className="w-4 h-4" />
+             </button>
+             <span className="font-black text-sm" style={{ color: textPrimary }}>
+               {monthName}, {year}
+             </span>
+             <button onClick={nextMonth} className="w-8 h-8 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors cursor-pointer">
+               <ChevronRight className="w-4 h-4" />
+             </button>
+          </div>
+
+          <div className="flex-1 relative z-10">
+             <div className="grid grid-cols-7 gap-1 text-center mb-2">
+               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                 <div key={d} className="text-[10px] font-black uppercase tracking-wider opacity-60" style={{ color: textMuted }}>{d}</div>
+               ))}
+             </div>
+             <div className="grid grid-cols-7 gap-y-2 gap-x-0">
+               {calendarDays.map((d, i) => {
+                 let className = "calendar-day ";
+                 if (!d.currentMonth) className += "opacity-30 ";
+                 
+                 if (d.event === "green-circle") className += "event-green ";
+                 else if (d.event === "today") className += "today ";
+                 else if (d.event === "range-start") className += "range-green range-start ";
+                 else if (d.event === "range-mid") className += "range-green range-mid ";
+                 else if (d.event === "range-end") className += "range-green range-end ";
+
+                 if (d.currentMonth && d.day === selectedDay) className += "active ring-2 ring-blue-500 ";
+
+                 return (
+                   <div key={i} className="flex justify-center">
+                     <div 
+                       className={className} 
+                       style={{ width: "100%", height: "32px", maxWidth: "36px" }}
+                       onClick={() => d.currentMonth && setSelectedDay(d.day)}
+                     >
+                       {d.day}
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+          </div>
+          
+
+        </div>
+
+        {/* Performance Chart */}
+        <div className="pro-card glass-panel hover-glow p-6 relative overflow-hidden">
+          <div className="absolute bottom-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full filter blur-[50px] animate-pulse-glow" style={{ animationDelay: '1s' }} />
+          <div className="section-header mb-6 relative z-10">
+            <h2 className="section-title">Subject Performance</h2>
+            <span className="text-[10px] font-bold tracking-wider uppercase opacity-60" style={{ color: textMuted }}>% Score</span>
+          </div>
+
+          <div className="flex items-end justify-around h-48 mb-8 relative pb-2 mt-8 z-10 border-b border-[var(--border)]">
+             <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[10px] font-black opacity-40" style={{ color: textMuted }}>
+               <span>100</span>
+               <span>75</span>
+               <span>50</span>
+               <span>25</span>
+               <span>0</span>
+             </div>
+
+             {PERFORMANCE.map((p, i) => (
+               <div key={i} className="flex flex-col items-center gap-2 relative h-full justify-end ml-6 w-1/4 group cursor-pointer">
+                 <div 
+                   className="w-16 rounded-t-2xl relative flex items-end justify-center animate-fade-in transition-all duration-300 group-hover:scale-105" 
+                   style={{ 
+                     height: `${p.value}%`, 
+                     background: `linear-gradient(180deg, ${p.color}, transparent)`,
+                     animationDuration: "1s",
+                     animationDelay: `${i * 0.15}s`,
+                     boxShadow: `0 -4px 20px -5px ${p.color}80`
+                   }}
+                 >
+                   <div className="absolute -top-8 bg-black/80 backdrop-blur-md text-white text-[10px] font-black px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
+                     {p.value}%
+                   </div>
+                 </div>
+               </div>
+             ))}
+          </div>
+
+          <div className="flex flex-col gap-3 relative z-10">
+            {PERFORMANCE.map(p => (
+              <div key={p.label} className="flex items-center gap-2">
+                 <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: p.color }} />
+                 <span className="text-xs font-black" style={{ color: textPrimary }}>{p.label}</span>
+                 <div className="flex-1 h-[1px] border-b border-dashed border-[var(--border)] mx-2" />
+                 <span className="text-[10px] font-bold opacity-70" style={{ color: textMuted }}>{p.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM ROW ── */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        
+        {/* Activities Notification */}
+        <div className="pro-card glass-panel hover-glow p-6 relative overflow-hidden">
+          <div className="section-header mb-6 relative z-10">
+            <h2 className="section-title">Activities Notification</h2>
+            <button className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors" style={{ border: `1px solid #10B981`, color: "#10B981" }}>
+              View All
+            </button>
+          </div>
+
+          <div className="space-y-4 relative z-10">
+            {NOTIFICATIONS.map((n, i) => (
+              <Link 
+                to={n.to} 
+                key={i} 
+                className="group block p-4 rounded-2xl transition-all duration-300" 
+                style={{ background: "var(--muted)", textDecoration: "none" }}
               >
-                <div 
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-4xl shadow-sm transition-transform group-hover:-translate-y-2 group-hover:rotate-[15deg]"
-                  style={{ background: a.bg }}
-                >
-                  {a.emoji}
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-black text-sm group-hover:text-blue-500 transition-colors" style={{ color: textPrimary }}>{n.title}</h3>
+                  <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" style={{ color: textMuted }} />
                 </div>
-                <span className={`text-base font-black ${isDark ? 'text-white' : ''}`} style={isDark ? {} : { color: a.color }}>{a.label}</span>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: textMuted }}>{n.date}</p>
+                <p className="text-xs font-medium leading-relaxed opacity-80" style={{ color: textMuted }}>
+                  {n.desc}
+                </p>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* ── TREASURE ROOM & AI ── */}
-        <div className="lg:col-span-5 flex flex-col gap-8">
-          
-          {/* AI Tutor Card */}
-          <Link
-            to="/student/tutor"
-            className="group block bg-gradient-to-br from-[#FF9500] to-[#E07800] rounded-[2.5rem] p-[3px] shadow-clay-puffy hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden"
-          >
-            <div className={`rounded-[2.4rem] p-6 h-full flex items-center gap-4 ${isDark ? 'bg-[#2A1C0A]' : 'bg-[#FFF4E5]'}`}>
-              <div className={`w-24 h-24 shrink-0 rounded-full p-2 shadow-inner border-4 border-[#FFD699] group-hover:border-[#FF9500] transition-colors relative ${isDark ? 'bg-[#3A2810]' : 'bg-white'}`}>
-                <RiveAnimation src="/riv-animations/22673-42423-for-education-purpose.riv" className="w-full h-full" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-[#FF9500] mb-1">Ask Soma AI!</h3>
-                <p className={`text-sm font-bold ${isDark ? 'text-[#FFD699]' : 'text-[#A66100]'}`}>Got a question? Let's figure it out together! 🤖💬</p>
-              </div>
-            </div>
-          </Link>
-
-          {/* Treasure Room (Badges) */}
-          <div className={`flex-1 clay-card shadow-clay-puffy p-6 flex flex-col relative overflow-hidden`}>
-             <div className={`absolute -bottom-10 -left-10 ${isDark ? 'text-[#2ECC71]/10' : 'text-[#2ECC71]/5'}`}>
-              <svg width="150" height="150" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            </div>
-            
-            <h2 className={`text-xl font-black mb-4 flex items-center justify-between relative z-10 ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>
-              <span className="flex items-center gap-2">👑 Treasure Room</span>
-              <span className="text-xs font-black text-white bg-[#2ECC71] px-3 py-1.5 rounded-full shadow-md">
-                {STUDENT.badges.length} Treasures
-              </span>
-            </h2>
-            
-            <div className={`flex-1 flex items-center justify-center rounded-3xl p-4 border-2 border-dashed relative z-10 min-h-[140px] ${isDark ? 'bg-[#0B162C]/50 border-gray-700' : 'bg-gray-50/50 border-gray-200'}`}>
-              {STUDENT.badges.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3 w-full">
-                  {STUDENT.badges.map((b, i) => {
-                    const colors = ["#4A90D9", "#2ECC71", "#FF9500", "#FF6B6B", "#9B59B6"];
-                    const c = colors[i % colors.length];
-                    return (
-                      <div 
-                        key={b} 
-                        className={`rounded-2xl p-3 text-center clay-btn cursor-default ${isDark ? 'bg-[#1A2F50]' : 'bg-white'}`}
-                        style={{ border: `2px solid ${c}30` }}
-                      >
-                        <div className="text-2xl mb-1 animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}>⭐</div>
-                        <p className={`text-[11px] font-black leading-tight ${isDark ? 'text-white' : 'text-[#1A3A5C]'}`}>{b}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center w-full px-2">
-                  <div className="text-4xl mb-2 opacity-50 filter grayscale">🏆</div>
-                  <h3 className={`text-base font-black mb-1 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>No Treasures Yet!</h3>
-                  <p className={`text-xs font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Play games to earn your first shiny badge!</p>
-                </div>
-              )}
-            </div>
+        {/* Top Scores */}
+        <div className="pro-card glass-panel hover-glow p-6 relative overflow-hidden">
+          <div className="section-header mb-6 relative z-10">
+            <h2 className="section-title">Top Scores</h2>
+            <select className="text-[10px] font-black uppercase tracking-widest bg-transparent border-none outline-none cursor-pointer opacity-70" style={{ color: textPrimary }}>
+              <option>2026-2027</option>
+            </select>
           </div>
 
+          <div className="grid grid-cols-3 gap-4 relative z-10">
+            {TOP_SCORES.map((score, i) => (
+              <div 
+                key={i} 
+                className={`rounded-2xl p-4 flex flex-col items-center text-center text-white bg-gradient-to-br ${score.color} relative overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group`}
+              >
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-white/10 group-hover:scale-150 transition-transform duration-500" />
+                <div className="absolute -bottom-2 -left-2 w-10 h-10 rounded-full bg-white/10 group-hover:scale-150 transition-transform duration-500 delay-75" />
+
+                <div className="w-10 h-10 rounded-full bg-white/20 mb-3 flex items-center justify-center font-black text-lg backdrop-blur-md relative z-10 border border-white/20 shadow-sm">
+                  {i + 1}
+                </div>
+                
+                <p className="font-black text-xs leading-tight mb-1 relative z-10">{score.name}</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mb-3 relative z-10">Subject</p>
+                
+                <p className="font-black text-xl mb-3 relative z-10 drop-shadow-sm">{score.score}</p>
+                
+                <div className="bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md relative z-10 border border-white/10 mt-auto">
+                  {score.rank} Rank
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

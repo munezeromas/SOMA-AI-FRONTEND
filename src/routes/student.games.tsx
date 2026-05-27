@@ -67,17 +67,26 @@ function Games() {
                 const color = CARD_COLORS[idx % CARD_COLORS.length];
                 return (
                   <button key={g.id} onClick={() => setActive(g.id)}
-                    className="card-island text-left p-0 overflow-hidden animate-pop-in"
+                    className="group relative text-left p-0 overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border-4 border-transparent hover:border-white/50 transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] hover:-translate-y-2 animate-pop-in isolate"
                     style={{ animationDelay: `${idx * 0.04}s` }}>
-                    <div className="h-28 w-full flex items-center justify-center overflow-hidden relative"
-                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}38)` }}>
-                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/40 to-transparent z-10 pointer-events-none" />
+                    <div className="h-36 w-full flex items-center justify-center overflow-hidden relative transition-transform duration-700 group-hover:scale-105"
+                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}40)` }}>
+                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none drop-shadow-2xl" />
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-black text-sm text-[#1A3A5C] mb-1 leading-tight">{g.title}</h3>
-                      <p className="text-xs font-semibold text-[#4A6A8A] leading-relaxed">{g.desc}</p>
-                      <div className="mt-3 text-xs font-black flex items-center gap-1" style={{ color }}>
-                        Play game <Sparkles className="h-3 w-3" />
+                    <div className="p-5 relative z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3 shadow-sm transform -translate-y-10 absolute right-5 bg-white dark:bg-slate-800" style={{ color }}>
+                         <g.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 mb-1 leading-tight group-hover:text-primary transition-colors">{g.title}</h3>
+                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{g.desc}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="text-xs font-black flex items-center gap-1.5 uppercase tracking-wider px-3 py-1.5 rounded-full" style={{ color, backgroundColor: `${color}15` }}>
+                          Play <Sparkles className="h-3 w-3" />
+                        </div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -93,17 +102,26 @@ function Games() {
                 const color = CARD_COLORS[(idx + GAMES.length) % CARD_COLORS.length];
                 return (
                   <button key={g.id} onClick={() => setActive(g.id)}
-                    className="card-island text-left p-0 overflow-hidden animate-pop-in"
+                    className="group relative text-left p-0 overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border-4 border-transparent hover:border-white/50 transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] hover:-translate-y-2 animate-pop-in isolate"
                     style={{ animationDelay: `${idx * 0.04}s` }}>
-                    <div className="h-28 w-full flex items-center justify-center overflow-hidden relative"
-                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}38)` }}>
-                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/40 to-transparent z-10 pointer-events-none" />
+                    <div className="h-36 w-full flex items-center justify-center overflow-hidden relative transition-transform duration-700 group-hover:scale-105"
+                      style={{ background: `linear-gradient(135deg, ${color}20, ${color}40)` }}>
+                      <RiveAnimation src={g.riv} className="w-full h-full pointer-events-none drop-shadow-2xl" />
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-black text-sm text-[#1A3A5C] mb-1 leading-tight">{g.title}</h3>
-                      <p className="text-xs font-semibold text-[#4A6A8A] leading-relaxed">{g.desc}</p>
-                      <div className="mt-3 text-xs font-black flex items-center gap-1" style={{ color }}>
-                        Play with toy <Sparkles className="h-3 w-3" />
+                    <div className="p-5 relative z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3 shadow-sm transform -translate-y-10 absolute right-5 bg-white dark:bg-slate-800" style={{ color }}>
+                         <g.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 mb-1 leading-tight group-hover:text-primary transition-colors">{g.title}</h3>
+                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{g.desc}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="text-xs font-black flex items-center gap-1.5 uppercase tracking-wider px-3 py-1.5 rounded-full" style={{ color, backgroundColor: `${color}15` }}>
+                          Interact <Sparkles className="h-3 w-3" />
+                        </div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                          <Layers className="h-4 w-4" />
+                        </div>
                       </div>
                     </div>
                   </button>

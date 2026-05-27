@@ -38,15 +38,27 @@ export const STUDY_PLAN = [
 ];
 
 export const VIDEOS = [
-  { id: "3zsNom7t8bI", title: "Fractions for Beginners", subject: "Math", level: "P3", duration: "9m", teacherRecommended: true },
+  // ── MATH ──
+  { id: "3zsNom7t8bI", title: "Fractions for Beginners (Math Antics)", subject: "Math", level: "P3", duration: "9m", teacherRecommended: true },
   { id: "eW2dRLyVMUQ", title: "Multiplication Tables 1–10", subject: "Math", level: "P2", duration: "10m", teacherRecommended: true },
-  { id: "3zsNom7t8bI", title: "What Are Fractions? (Math Antics)", subject: "Math", level: "P4", duration: "10m", teacherRecommended: true },
   { id: "dpzMKV3UeCQ", title: "Basic Multiplication (Math Antics)", subject: "Math", level: "P3", duration: "11m", teacherRecommended: false },
   { id: "q3M31bX2Vsg", title: "Long Division (Math Antics)", subject: "Math", level: "P5", duration: "11m", teacherRecommended: true },
   { id: "NybHckSEQBI", title: "Intro to Algebra (Math Antics)", subject: "Math", level: "P6", duration: "12m", teacherRecommended: true },
   { id: "JeVSmq1Nrpw", title: "What Are Percentages? (Math Antics)", subject: "Math", level: "P5", duration: "10m", teacherRecommended: false },
   { id: "ViAmQivKif0", title: "Counting to 100 (Numberblocks)", subject: "Math", level: "P1", duration: "7m", teacherRecommended: true },
   { id: "yMc8217w9v4", title: "Addition & Subtraction for Kids", subject: "Math", level: "P2", duration: "8m", teacherRecommended: false },
+  { id: "IGGnnKbCAYk", title: "Telling Time (Math Antics)", subject: "Math", level: "P2", duration: "9m", teacherRecommended: true },
+  { id: "T5Qf0qSSJFI", title: "Area and Perimeter (Math Antics)", subject: "Math", level: "P4", duration: "10m", teacherRecommended: true },
+  { id: "1vs9rQjVDas", title: "Place Value for Kids (P1)", subject: "Math", level: "P1", duration: "6m", teacherRecommended: true },
+  { id: "oqMl7QbXxoE", title: "Shapes and Geometry for Kids", subject: "Math", level: "P2", duration: "8m", teacherRecommended: false },
+  { id: "OmJ-4B-mS-Y", title: "Understanding Decimals (Math Antics)", subject: "Math", level: "P4", duration: "9m", teacherRecommended: true },
+  { id: "bQ-KR3clFgs", title: "What are Fractions? (Math Antics)", subject: "Math", level: "P3", duration: "8m", teacherRecommended: true },
+  { id: "8pULMUqO87g", title: "Mean, Median & Mode (Statistics)", subject: "Math", level: "P6", duration: "9m", teacherRecommended: false },
+  { id: "aNOFAVtaB3s", title: "Rounding Numbers for Kids", subject: "Math", level: "P3", duration: "6m", teacherRecommended: false },
+  { id: "AS9J_J6EWJI", title: "Multiplication and Division Facts", subject: "Math", level: "P3", duration: "7m", teacherRecommended: true },
+  { id: "nTn9gVqRfKY", title: "Negative Numbers for Kids (P5)", subject: "Math", level: "P5", duration: "7m", teacherRecommended: false },
+
+  // ── SCIENCE ──
   { id: "D1Ymc311XS8", title: "Photosynthesis Explained (SciShow Kids)", subject: "Science", level: "P4", duration: "5m", teacherRecommended: true },
   { id: "ncORPosDrjI", title: "The Water Cycle (SciShow Kids)", subject: "Science", level: "P3", duration: "5m", teacherRecommended: true },
   { id: "F2prtmPEjOc", title: "The Solar System (Crash Course Kids)", subject: "Science", level: "P5", duration: "8m", teacherRecommended: true },
@@ -55,6 +67,21 @@ export const VIDEOS = [
   { id: "JQ4WduVp9k4", title: "States of Matter for Kids", subject: "Science", level: "P3", duration: "6m", teacherRecommended: false },
   { id: "gEUu-A2gBSE", title: "Human Body Systems (SciShow Kids)", subject: "Science", level: "P5", duration: "6m", teacherRecommended: true },
   { id: "WgHmqv_-UbQ", title: "Why Do We Have Seasons? (TED-Ed)", subject: "Science", level: "P4", duration: "5m", teacherRecommended: true },
+  { id: "t-xgeAmic-o", title: "What is Gravity? (Crash Course Kids)", subject: "Science", level: "P4", duration: "4m", teacherRecommended: true },
+  { id: "GZ5gIE3hE1U", title: "How Magnets Work (SciShow Kids)", subject: "Science", level: "P3", duration: "4m", teacherRecommended: true },
+  { id: "wxjmvCsWyL0", title: "Plants & Germination for Kids", subject: "Science", level: "P2", duration: "6m", teacherRecommended: false },
+  { id: "BEdfwxKCSPc", title: "The Human Skeleton (FreeSchool)", subject: "Science", level: "P4", duration: "7m", teacherRecommended: true },
+  { id: "1Q_4HXewiS0", title: "Air & Atmosphere for Kids", subject: "Science", level: "P3", duration: "5m", teacherRecommended: false },
+  { id: "hGwG--GZEfw", title: "How Volcanoes Work (TED-Ed)", subject: "Science", level: "P5", duration: "5m", teacherRecommended: true },
+  { id: "n1jC9BGzKfk", title: "Sound & Vibrations (SciShow Kids)", subject: "Science", level: "P3", duration: "4m", teacherRecommended: false },
+  { id: "V4fJb8bsVvA", title: "The Life Cycle of a Butterfly", subject: "Science", level: "P2", duration: "4m", teacherRecommended: true },
+  { id: "3kdArgpBFoE", title: "What Makes Rainbows? (SciShow Kids)", subject: "Science", level: "P2", duration: "3m", teacherRecommended: false },
+  { id: "ZdqqzHlkyD8", title: "Ecosystems & Habitats (Crash Course)", subject: "Science", level: "P5", duration: "8m", teacherRecommended: true },
+  { id: "e-snVHBqQME", title: "Light & Shadow Science for Kids", subject: "Science", level: "P3", duration: "5m", teacherRecommended: false },
+  { id: "lnm6UUbQ5_c", title: "Forces – Push and Pull (P1 Science)", subject: "Science", level: "P1", duration: "5m", teacherRecommended: true },
+  { id: "6JB0LCPJ0o8", title: "Animals & Their Habitats", subject: "Science", level: "P2", duration: "6m", teacherRecommended: true },
+
+  // ── ENGLISH ──
   { id: "hq3yfQnllfQ", title: "Alphablocks – Learn to Read (P1)", subject: "English", level: "P1", duration: "24m", teacherRecommended: true },
   { id: "75p-N9YKqNo", title: "Nouns, Verbs & Adjectives (Schoolhouse Rock)", subject: "English", level: "P3", duration: "10m", teacherRecommended: true },
   { id: "LdCOswQLOUU", title: "Punctuation Song for Kids", subject: "English", level: "P3", duration: "4m", teacherRecommended: false },

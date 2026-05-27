@@ -1,457 +1,359 @@
 /**
- * StudentLayout.tsx
- *
- * Changes from original:
- *  1. Wrapped the entire layout in <AvatarMuteProvider> so the AccessibilityBar
- *     "AI Voice" toggle propagates to TalkingChatbot without prop-drilling.
- *  2. TalkingChatbot is NOT rendered here — it lives inside each page that
- *     needs it (e.g. TutorPage). This keeps the avatar visible only when
- *     a conversation is active, rather than on every page.
- *
- * If you want the avatar to appear on EVERY student page (always visible),
- * uncomment the <TalkingChatbot> block in the sidebar section below and
- * remove it from individual pages.
- *
- * Place this file at:  src/components/StudentLayout.tsx
+ * StudentLayout.tsx — Premium Competition-Ready Sidebar Layout
  */
-
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 import { AccessibilityBar, AvatarMuteProvider } from "./AccessibilityBar";
-import { RiveAnimation } from "./RiveAnimation";
 import {
-  LogOut,
-  ChevronDown,
+  LogOut, Menu, Home, Bot, Sparkles, Pencil, ClipboardList,
+  Zap, Video, MessageCircle, Gamepad2, Library, Calendar, TrendingUp,
+  Bell, Search, ChevronRight,
 } from "lucide-react";
 import { STUDENT } from "@/lib/mock-data";
 import { useTheme } from "@/lib/theme-context";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
 
-const NAV_ITEMS = [
-  { to: "/student",            label: "Home",     exact: true, emoji: "🏠" },
-  { to: "/student/tutor",      label: "Soma AI",              emoji: "🤖" },
-  { to: "/student/ai-quizzes", label: "AI Quiz",              emoji: "✨" },
-  { to: "/student/simplify",   label: "Simplify",             emoji: "📝", riv: "/riv-animations/21441-40283-students-tools-notebook-pencil.riv" },
-  { to: "/student/homework",   label: "Homework",             emoji: "📋", riv: "/riv-animations/21441-40283-students-tools-notebook-pencil.riv" },
-  { to: "/student/quizzes",    label: "Quizzes",              emoji: "⚡" },
-  { to: "/student/videos",     label: "Videos",               emoji: "📺" },
-  { to: "/student/speak",      label: "Language",             emoji: "🗣️" },
-  { to: "/student/games",      label: "Games",                emoji: "🎮" },
-  { to: "/student/library",    label: "Library",              emoji: "📚" },
-  { to: "/student/planner",    label: "Planner",              emoji: "📅" },
-  { to: "/student/progress",   label: "Progress",             emoji: "📈" },
-  { to: "/student/career",     label: "Pathways",             emoji: "🧭", riv: "/riv-animations/21389-40164-mapley.riv" },
-  { to: "/student/community",  label: "Community",            emoji: "👥" },
+type NavItem = {
+  to: string;
+  label: string;
+  icon: any;
+  emoji: string;
+  exact?: boolean;
+};
+
+const NAV_MAIN: NavItem[] = [
+  { to: "/student",            label: "Dashboard",  exact: true, icon: Home,          emoji: "🏠" },
+  { to: "/student/tutor",      label: "Soma AI",    icon: Bot,                        emoji: "🤖" },
+  { to: "/student/ai-quizzes", label: "AI Quizzes", icon: Sparkles,                   emoji: "✨" },
+  { to: "/student/speak",      label: "Languages",  icon: MessageCircle,              emoji: "🗣️" },
+  { to: "/student/videos",     label: "Lectures",   icon: Video,                      emoji: "🎬" },
+  { to: "/student/games",      label: "Practice",   icon: Gamepad2,                   emoji: "🎮" },
 ];
 
-const ONBOARDING_SLIDES = [
-  {
-    title: "Welcome to Soma AI! 🏝️✨",
-    emoji: "🏝️",
-    bg: "linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,142,83,0.08))",
-    border: "rgba(255,107,107,0.3)",
-    accent: "#FF6B6B",
-    description: "Welcome to your magical study island! Soma AI is an interactive space built just for kids, making learning feel like an epic adventure!",
-    tips: [
-      "🏝️ Explore different subject worlds like Math or Reading.",
-      "🎮 Play learning games to earn points.",
-      "📈 Level up as you master topics!"
-    ]
-  },
-  {
-    title: "Meet Soma, Your AI Friend! 🤖💬",
-    emoji: "🤖",
-    bg: "linear-gradient(135deg, rgba(74,144,217,0.08), rgba(91,200,245,0.08))",
-    border: "rgba(74,144,217,0.3)",
-    accent: "#4A90D9",
-    description: "Soma is your smart study buddy. Tap the 'Soma AI' island to start a conversation. She can explain anything in simple terms!",
-    tips: [
-      "🎤 Tap the microphone to talk with your voice natively!",
-      "🔊 Tap the 'Tap to Activate Audio' overlay to hear her speak out loud.",
-      "📝 Ask her to simplify any hard paragraph from your textbooks!"
-    ]
-  },
-  {
-    title: "Dyslexia & Reading Help! 📝👓",
-    emoji: "👓",
-    bg: "linear-gradient(135deg, rgba(46,204,113,0.08), rgba(39,174,96,0.08))",
-    border: "rgba(46,204,113,0.3)",
-    accent: "#2ECC71",
-    description: "We believe every kid is a genius. If you find reading difficult, Soma has built-in helper tools to make things simple and stress-free!",
-    tips: [
-      "🔍 Turn on 'Dyslexia Mode' for easy-to-read kid-friendly fonts.",
-      "🗣️ Tap the read-aloud buttons to listen to pages out loud.",
-      "✏️ Switch between Day Mode ☀️ and Cozy Night Mode 🌙 anytime."
-    ]
-  },
-  {
-    title: "Unlock XP & Cool Badges! 🪙🏆",
-    emoji: "🏆",
-    bg: "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,165,0,0.08))",
-    border: "rgba(255,215,0,0.3)",
-    accent: "#FFA500",
-    description: "Turn studying into play! Complete homework, finish daily quizzes, and unlock unique high-level badges to show off your knowledge!",
-    tips: [
-      "🪙 Earn gold XP coins for every correct answer.",
-      "🔥 Keep your streak alive by visiting every day.",
-      "👑 Collect all Master Badges and show them to your friends!"
-    ]
-  }
+const NAV_TOOLS: NavItem[] = [
+  { to: "/student/simplify",   label: "Simplify",   icon: Pencil,                     emoji: "✏️" },
+  { to: "/student/homework",   label: "Homework",   icon: ClipboardList,              emoji: "📋" },
+  { to: "/student/quizzes",    label: "Tests",      icon: Zap,                        emoji: "⚡" },
+  { to: "/student/library",    label: "Library",    icon: Library,                    emoji: "📚" },
+  { to: "/student/planner",    label: "Schedule",   icon: Calendar,                   emoji: "📅" },
+  { to: "/student/progress",   label: "Analytics",  icon: TrendingUp,                 emoji: "📈" },
 ];
 
-const XP_NEXT_LEVEL = 2500;
+const ALL_NAV: NavItem[] = [...NAV_MAIN, ...NAV_TOOLS];
+
+/* XP progress for the mini level bar in sidebar */
+const XP_LEVEL = 1340;
+const XP_MAX   = 2000;
 
 export function StudentLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const prevPath = useRef(path);
-  const xpPercent = Math.round((STUDENT.xp / XP_NEXT_LEVEL) * 100);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [fellaWalking, setFellaWalking] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingSlide, setOnboardingSlide] = useState(0);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const completed = localStorage.getItem("soma_onboarding_completed");
-      if (!completed) {
-        setShowOnboarding(true);
-      }
-    }
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      setSidebarOpen(true);
-    }
-  }, []);
-
-  // Trigger little-fella walk on navigation
-  useEffect(() => {
-    if (path !== prevPath.current) {
-      prevPath.current = path;
-      setFellaWalking(true);
-      const t = setTimeout(() => setFellaWalking(false), 1500);
-      return () => clearTimeout(t);
-    }
-  }, [path]);
-
-  // Audio unlock — fires a custom event that TalkingChatbot listens to
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const unlock = () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        const silent = new SpeechSynthesisUtterance("");
-        silent.volume = 0;
-        window.speechSynthesis.speak(silent);
-        window.speechSynthesis.getVoices();
-      }
-      window.dispatchEvent(new CustomEvent("soma-audio-unlocked"));
-      window.removeEventListener("click", unlock);
-      window.removeEventListener("keydown", unlock);
-    };
-    window.addEventListener("click", unlock);
-    window.addEventListener("keydown", unlock);
-    if (window.speechSynthesis) {
-      window.speechSynthesis.getVoices();
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-      }
-    }
-    return () => {
-      window.removeEventListener("click", unlock);
-      window.removeEventListener("keydown", unlock);
-    };
-  }, []);
+  const isDark = mounted && theme === "dark";
 
   return (
-    // ── AvatarMuteProvider wraps everything so AccessibilityBar can talk
-    // to TalkingChatbot (wherever it is rendered inside <Outlet />) through
-    // context, with zero prop drilling.
     <AvatarMuteProvider>
       <div
-        className={`min-h-screen flex flex-col ${!mounted ? "opacity-0" : "opacity-100 transition-opacity duration-300"}`}
-        style={{
-          backgroundImage:
-            mounted && theme === "dark"
-              ? "linear-gradient(180deg, #060D1A 0%, #0A1628 40%, #0D2044 100%)"
-              : "linear-gradient(180deg, #5BC8F5 0%, #87CEEB 40%, #B8E4F9 100%)",
-          backgroundAttachment: "fixed",
-          transition: "background-image 0.6s ease, opacity 0.3s ease",
-        }}
+        className={`h-screen w-full flex overflow-hidden ${!mounted ? "opacity-0" : "opacity-100 transition-opacity duration-300"}`}
+        style={{ background: isDark ? "#060714" : "#EEF0F8" }}
       >
-        {/* Night stars layer */}
-        {mounted && theme === "dark" && <div className="dark-stars" />}
-
-        {/* ── TOP NAV BAR ── */}
-        <header className="nav-top sticky top-0 z-50 px-4 py-3 flex items-center justify-between relative overflow-hidden">
-          {/* Ambient background */}
+        {/* ══════════════════════════════════════════
+            SIDEBAR (DESKTOP)
+        ══════════════════════════════════════════ */}
+        <aside className="hidden lg:flex flex-col w-[240px] h-full shrink-0 relative z-20 overflow-hidden">
+          {/* Vivid gradient background */}
           <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ opacity: mounted && theme === "dark" ? 0.06 : 0.12 }}
-          >
-            <RiveAnimation
-              src="/riv-animations/413-3213-chill-study-time.riv"
-              className="w-full h-full"
-            />
+            className="absolute inset-0"
+            style={{
+              background: isDark
+                ? "linear-gradient(180deg, #0B1B3D 0%, #0E2965 50%, #0B1E4A 100%)"
+                : "linear-gradient(180deg, #0E3A85 0%, #1C5EC9 50%, #164BA8 100%)",
+            }}
+          />
+          {/* Background image overlay */}
+          <div 
+            className="absolute inset-0 bg-[url('/images/student-hero.png')] bg-cover bg-center opacity-20 mix-blend-overlay"
+          />
+          {/* Glow orbs */}
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full opacity-20 blur-[60px]" style={{ background: "#2563EB" }} />
+          <div className="absolute bottom-32 -left-10 w-36 h-36 rounded-full opacity-15 blur-[50px]" style={{ background: "#3B82F6" }} />
+
+          {/* Logo area */}
+          <div className="relative z-10 h-[72px] px-5 flex items-center shrink-0 border-b border-white/[0.06]">
+            <Logo size={28} lightBg={false} />
           </div>
 
-          {/* Left: Logo + weather */}
-          <div className="flex items-center gap-3 relative z-10">
-            <Link to="/">
-              <Logo size={34} lightBg={theme === "light"} />
-            </Link>
-            <div className="w-8 h-8 hidden md:block" title="Weather">
-              <RiveAnimation
-                src="/riv-animations/181-339-weather-icon.riv"
-                className="w-full h-full"
-              />
-            </div>
-            <span
-              className="hidden md:block text-xs font-black"
-              style={{
-                color: theme === "dark" ? "#7BB8F0" : "#1A3A5C",
-                opacity: 0.7,
-              }}
+          {/* Student card */}
+          <div className="relative z-10 mx-4 mt-4 mb-2 rounded-2xl p-3.5 flex items-center gap-3"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center font-black text-white text-base shrink-0 shadow-lg"
+              style={{ background: "linear-gradient(135deg, #60A5FA, #1D4ED8)" }}
             >
-              Good day, {STUDENT.name.split(" ")[0]}!
-            </span>
-          </div>
-
-          {/* Right: Stats + Theme toggle + Avatar */}
-          <div className="flex items-center gap-2 relative z-10">
-            {/* XP coin */}
-            <div className="coin-counter group relative" title="Your XP coins">
-              <div className="coin-icon">🪙</div>
-              <span className="font-black text-sm">{STUDENT.xp}</span>
-              <div className="absolute inset-0 rounded-full overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <RiveAnimation
-                  src="/riv-animations/10770-20625-animated-calculator-buttons.riv"
-                  className="w-full h-full"
+              {STUDENT.name[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-sm font-black leading-tight truncate">{STUDENT.name}</p>
+              <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{STUDENT.grade} • {XP_LEVEL.toLocaleString()} XP</p>
+              {/* Mini XP bar */}
+              <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(XP_LEVEL / XP_MAX) * 100}%`,
+                    background: "linear-gradient(90deg, #60A5FA, #93C5FD)",
+                  }}
                 />
               </div>
             </div>
-
-            {/* Trophy */}
-            <div
-              className="coin-counter hidden sm:flex"
-              style={{ borderColor: "rgba(255,165,0,0.4)" }}
-            >
-              <div className="trophy-icon">🏆</div>
-              <span className="font-black text-sm">{STUDENT.badges.length}</span>
-            </div>
-
-            {/* Streak */}
-            <div
-              className="coin-counter hidden sm:flex"
-              style={{ borderColor: "rgba(255,200,0,0.4)" }}
-            >
-              <span className="text-base">🔥</span>
-              <span className="font-black text-sm">{STUDENT.streak}</span>
-            </div>
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              id="btn-theme-toggle"
-              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-              title={theme === "light" ? "Switch to Night Mode 🌙" : "Switch to Day Mode ☀️"}
-              className={`theme-toggle-btn ${theme}`}
-            >
-              <div className="theme-toggle-knob" />
-              <span
-                className="absolute inset-0 flex items-center justify-center text-[10px] pointer-events-none select-none"
-                style={{ paddingLeft: theme === "light" ? "18px" : "4px" }}
-              >
-                {theme === "light" ? "🌙" : "☀️"}
-              </span>
-            </button>
-
-            {/* Avatar button */}
-            <button
-              className="flex items-center gap-2 pl-3 pr-4 py-1.5 rounded-full font-black text-sm transition-all hover:scale-105 active:scale-95 duration-150"
-              style={{
-                background: "linear-gradient(135deg, #4A90D9, #2D6DB5)",
-                color: "white",
-                boxShadow: "0 4px 12px rgba(74,144,217,0.4)",
-              }}
-            >
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm font-black">
-                {STUDENT.name[0]}
-              </div>
-              <span className="hidden sm:inline">{STUDENT.name.split(" ")[0]}</span>
-              <ChevronDown className="h-3 w-3 opacity-70" />
-            </button>
           </div>
-        </header>
 
-        <div className="flex flex-1 relative">
-          {/* Mobile overlay - Not needed since sidebar is hidden on mobile */}
-
-          {/* ── SIDEBAR (DESKTOP ONLY) ── */}
-          <aside
-            className={`hidden lg:flex sticky top-[62px] h-[calc(100vh-62px)] z-auto w-72 flex-col transition-all duration-500 ease-in-out sidebar-kids`}
-          >
-            <div className="pt-4"></div>
-
-
-
-            {/* Student profile + XP bar */}
-            <div className="mx-4 mt-4 mb-6">
-              <div 
-                className="p-4 rounded-3xl"
-                style={{
-                  background: "rgba(74,144,217,0.05)",
-                  border: "1px solid rgba(74,144,217,0.2)",
-                  boxShadow: "inset 0 2px 10px rgba(74,144,217,0.05)"
-                }}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#4A90D9] to-[#87CEFA] flex items-center justify-center text-white font-black shadow-md border-2 border-white">
-                    {STUDENT.name[0]}
-                  </div>
-                  <div>
-                    <p className="font-black text-[15px] leading-tight text-[#1A3A5C]">
-                      {STUDENT.name.split(" ")[0]}
-                    </p>
-                    <p className="text-xs font-bold text-[#4A90D9] flex items-center gap-1">
-                      ⭐ Level {STUDENT.level}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-black text-[#4A6A8A]">
-                    <span>XP</span>
-                    <span className="text-[#4A90D9]">{STUDENT.xp} / {XP_NEXT_LEVEL}</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-[#E2E8F0] overflow-hidden">
-                    <div 
-                      className="h-full rounded-full bg-gradient-to-r from-[#4A90D9] to-[#87CEFA]" 
-                      style={{ width: Math.max(5, xpPercent) + '%' }} 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Nav items */}
-            <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
-              {NAV_ITEMS.map((n) => {
-                const active = n.exact
-                  ? path === n.to
-                  : path.startsWith(n.to);
-                return (
-                  <Link
-                    key={n.to}
-                    to={n.to}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`sidebar-nav-item group transition-all duration-300 ${
-                      active ? "active font-black" : "font-black"
-                    }`}
-                  >
-                    <span className={`text-xl transition-transform group-hover:scale-110 ${active ? "drop-shadow-sm" : ""}`}>{n.emoji}</span>
-                    <span>{n.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Logout */}
-            <div className="p-4 mt-auto">
-              <Link 
-                to="/login" 
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl font-black text-[#E74C3C] bg-[#E74C3C]/10 hover:bg-[#E74C3C]/20 transition-all group"
-              >
-                <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                <span>Switch Account</span>
-              </Link>
-            </div>
-          </aside>
-
-          {/* ── MAIN CONTENT ── */}
-          <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative pb-28 lg:pb-8">
-            {/* Road ambient background */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ opacity: 0.05 }}
-            >
-              <RiveAnimation
-                src="/riv-animations/2266-4480-road.riv"
-                className="w-full h-full"
-              />
-            </div>
-            <div key={path} className="relative animate-slide-up">
-              {/* Outlet renders the current page.
-                  Pages that use TalkingChatbot (e.g. TutorPage) import
-                  useAvatarMuted() to get isMuted from context. */}
-              <Outlet />
-            </div>
-          </main>
-        </div>
-
-        {/* ── MOBILE BOTTOM NAVIGATION ── */}
-        <div className="lg:hidden glass-nav-mobile fixed bottom-0 left-0 right-0 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center justify-around px-2 py-3">
-            {[
-              { to: "/student", label: "Home", exact: true, emoji: "🏠" },
-              { to: "/student/tutor", label: "AI", emoji: "🤖" },
-              { to: "/student/games", label: "Play", emoji: "🎮" },
-              { to: "/student/progress", label: "Stats", emoji: "📈" },
-            ].map((n) => {
+          {/* Navigation */}
+          <nav className="relative z-10 flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+            <p className="px-3 mb-2 mt-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.3)" }}>
+              Main Menu
+            </p>
+            {NAV_MAIN.map((n) => {
               const active = n.exact ? path === n.to : path.startsWith(n.to);
+              const Icon = n.icon;
               return (
                 <Link
                   key={n.to}
                   to={n.to}
-                  className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300 ${active ? '-translate-y-2' : ''}`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 relative group"
+                  style={{
+                    background: active ? "rgba(96,165,250,0.18)" : "transparent",
+                    color: active ? "#BFDBFE" : "rgba(255,255,255,0.55)",
+                    border: active ? "1px solid rgba(96,165,250,0.3)" : "1px solid transparent",
+                    textDecoration: "none",
+                  }}
+                  onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"; } }}
+                  onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; } }}
                 >
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all shadow-sm ${active ? 'bg-primary text-white shadow-clay-puffy' : 'bg-transparent filter grayscale opacity-60'}`}>
-                    {n.emoji}
-                  </div>
-                  <span className={`text-[10px] font-black ${active ? 'text-primary opacity-100' : 'text-muted-foreground opacity-60'}`}>{n.label}</span>
+                  {active && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full" style={{ background: "#60A5FA" }} />
+                  )}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{n.label}</span>
+                  {active && <ChevronRight className="w-3 h-3 ml-auto opacity-60" />}
                 </Link>
               );
             })}
 
-            {/* "More" Drawer Trigger */}
+            <p className="px-3 mb-2 mt-5 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.3)" }}>
+              Study Tools
+            </p>
+            {NAV_TOOLS.map((n) => {
+              const active = path.startsWith(n.to);
+              const Icon = n.icon;
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 relative"
+                  style={{
+                    background: active ? "rgba(96,165,250,0.18)" : "transparent",
+                    color: active ? "#BFDBFE" : "rgba(255,255,255,0.55)",
+                    border: active ? "1px solid rgba(96,165,250,0.3)" : "1px solid transparent",
+                    textDecoration: "none",
+                  }}
+                  onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"; } }}
+                  onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; } }}
+                >
+                  {active && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full" style={{ background: "#60A5FA" }} />
+                  )}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{n.label}</span>
+                  {active && <ChevronRight className="w-3 h-3 ml-auto opacity-60" />}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Sidebar footer */}
+          <div className="relative z-10 p-3 border-t border-white/[0.06]">
+            <Link
+              to="/login"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.12)"; (e.currentTarget as HTMLElement).style.color = "#FCA5A5"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              Sign Out
+            </Link>
+          </div>
+        </aside>
+
+        {/* ══════════════════════════════════════════
+            MAIN CONTENT AREA
+        ══════════════════════════════════════════ */}
+        <div
+          className="flex-1 flex flex-col h-full min-w-0"
+          style={{ background: isDark ? "#0A0B1E" : "#F0F2FA" }}
+        >
+          {/* ── TOP HEADER ── */}
+          <header
+            className="h-[72px] shrink-0 flex items-center justify-between px-6 z-10"
+            style={{
+              background: isDark ? "rgba(10,11,30,0.9)" : "rgba(240,242,250,0.9)",
+              backdropFilter: "blur(16px)",
+              borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.06)",
+            }}
+          >
+            {/* Left */}
+            <div className="flex items-center gap-4 flex-1">
+              <div className="lg:hidden">
+                <Logo size={26} lightBg={!isDark} />
+              </div>
+              {/* Search */}
+              <div
+                className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl flex-1 max-w-md"
+                style={{
+                  background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.9)",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+              >
+                <Search className="w-4 h-4 shrink-0" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "#94A3B8" }} />
+                <input
+                  type="text"
+                  placeholder="Search lessons, topics, commands..."
+                  className="bg-transparent border-none outline-none text-sm flex-1"
+                  style={{ color: isDark ? "#F8FAFC" : "#0F172A", fontFamily: "inherit" }}
+                />
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#F1F5F9", color: "#94A3B8" }}>⌘K</span>
+              </div>
+            </div>
+
+            {/* Right */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.9)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)" }}
+              >
+                <Bell className="w-4 h-4" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "#64748B" }} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2"
+                  style={{ background: "#EF4444", borderColor: isDark ? "#0A0B1E" : "#F0F2FA" }} />
+              </button>
+
+              <button
+                onClick={toggleTheme}
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all text-lg"
+                style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.9)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)" }}
+                title="Toggle theme"
+              >
+                {isDark ? "🌙" : "☀️"}
+              </button>
+
+              <div className="w-px h-6 mx-1" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "#E2E8F0" }} />
+
+              <button className="flex items-center gap-2.5 hover:opacity-85 transition-opacity">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-black leading-none" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>{STUDENT.name}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#94A3B8" }}>{STUDENT.grade} Student</p>
+                </div>
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0 shadow-md"
+                  style={{ background: "linear-gradient(135deg, #60A5FA, #1D4ED8)" }}
+                >
+                  {STUDENT.name[0]}
+                </div>
+              </button>
+            </div>
+          </header>
+
+          {/* ── PAGE CONTENT ── */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 pb-28 lg:pb-10">
+            <Outlet />
+          </main>
+        </div>
+
+        {/* ══════════════════════════════════════════
+            MOBILE BOTTOM NAVIGATION
+        ══════════════════════════════════════════ */}
+        <div
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+          style={{
+            background: isDark ? "rgba(10,11,30,0.97)" : "rgba(255,255,255,0.97)",
+            backdropFilter: "blur(20px)",
+            borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+        >
+          <div className="flex items-center justify-around px-2 py-1.5">
+            {ALL_NAV.slice(0, 4).map((n) => {
+              const active = n.exact ? path === n.to : path.startsWith(n.to);
+              const Icon = n.icon;
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className="flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all"
+                  style={{ textDecoration: "none", minWidth: 56 }}
+                >
+                  <div
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+                    style={{ background: active ? "rgba(96,165,250,0.18)" : "transparent" }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: active ? "#60A5FA" : (isDark ? "rgba(255,255,255,0.35)" : "#94A3B8") }} />
+                  </div>
+                  <span className="text-[9px] font-black" style={{ color: active ? "#60A5FA" : (isDark ? "rgba(255,255,255,0.35)" : "#94A3B8") }}>
+                    {n.label}
+                  </span>
+                </Link>
+              );
+            })}
+
+            {/* More Drawer */}
             <Drawer.Root>
               <Drawer.Trigger asChild>
-                <button className="flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all duration-300">
-                  <div className="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl bg-transparent filter grayscale opacity-60 hover:opacity-100 hover:grayscale-0">
-                    🍔
+                <button className="flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl" style={{ minWidth: 56 }}>
+                  <div className="w-8 h-8 flex items-center justify-center rounded-lg">
+                    <Menu className="w-5 h-5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8" }} />
                   </div>
-                  <span className="text-[10px] font-black text-muted-foreground opacity-60">More</span>
+                  <span className="text-[9px] font-black" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8" }}>More</span>
                 </button>
               </Drawer.Trigger>
               <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] max-h-[85vh] flex flex-col rounded-t-[2.5rem] bg-card outline-none shadow-[0_-20px_60px_rgba(0,0,0,0.2)]">
-                  <div className="p-4 flex-1 overflow-y-auto rounded-t-[2.5rem]">
-                    <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-8" />
-                    <Drawer.Title className="font-black text-2xl mb-6 text-center">🎒 More Tools</Drawer.Title>
-                    <div className="grid grid-cols-4 gap-4 px-2 pb-8">
-                      {NAV_ITEMS.filter(n => !["/student", "/student/tutor", "/student/games", "/student/progress"].includes(n.to)).map((n) => (
-                        <Drawer.Close asChild key={n.to}>
-                          <Link to={n.to} className="flex flex-col items-center gap-2 group">
-                            <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-3xl shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
-                              {n.emoji}
-                            </div>
-                            <span className="text-[10px] font-black text-center leading-tight">{n.label}</span>
-                          </Link>
-                        </Drawer.Close>
-                      ))}
-                      {/* Logout */}
+                <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+                <Drawer.Content
+                  className="fixed bottom-0 left-0 right-0 z-[101] max-h-[80vh] flex flex-col rounded-t-3xl outline-none"
+                  style={{ background: isDark ? "#0D0F2A" : "#FFFFFF", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none" }}
+                >
+                  <div className="p-5 flex-1 overflow-y-auto">
+                    <div className="mx-auto w-10 h-1 rounded-full mb-5" style={{ background: isDark ? "rgba(255,255,255,0.15)" : "#E2E8F0" }} />
+                    <Drawer.Title className="font-black text-lg mb-4" style={{ color: isDark ? "#F8FAFC" : "#0F172A" }}>All Features</Drawer.Title>
+                    <div className="grid grid-cols-4 gap-3 pb-6">
+                      {ALL_NAV.slice(4).map((n) => {
+                        const Icon = n.icon;
+                        return (
+                          <Drawer.Close asChild key={n.to}>
+                            <Link to={n.to} className="flex flex-col items-center gap-2 group" style={{ textDecoration: "none" }}>
+                              <div
+                                className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105"
+                                style={{ background: isDark ? "rgba(96,165,250,0.1)" : "#F1F5F9", border: isDark ? "1px solid rgba(96,165,250,0.2)" : "1px solid #E2E8F0" }}
+                              >
+                                <Icon className="w-6 h-6" style={{ color: isDark ? "#60A5FA" : "#3B82F6" }} />
+                              </div>
+                              <span className="text-[10px] font-black text-center leading-tight" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "#64748B" }}>
+                                {n.label}
+                              </span>
+                            </Link>
+                          </Drawer.Close>
+                        );
+                      })}
                       <Drawer.Close asChild>
-                        <Link to="/login" className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shadow-clay-puffy-sm group-hover:scale-110 transition-transform">
-                            <LogOut className="w-6 h-6" />
+                        <Link to="/login" className="flex flex-col items-center gap-2 group" style={{ textDecoration: "none" }}>
+                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                            <LogOut className="w-6 h-6" style={{ color: "#EF4444" }} />
                           </div>
-                          <span className="text-[10px] font-black text-destructive text-center leading-tight">Switch</span>
+                          <span className="text-[10px] font-black" style={{ color: "#EF4444" }}>Sign Out</span>
                         </Link>
                       </Drawer.Close>
                     </div>
@@ -463,127 +365,6 @@ export function StudentLayout() {
         </div>
 
         <AccessibilityBar />
-
-        {/* ── ONBOARDING WELCOME MODAL FOR KIDS ── */}
-        {showOnboarding && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div 
-              className="w-full max-w-lg rounded-[36px] border shadow-2xl p-6 sm:p-8 relative overflow-hidden flex flex-col items-center text-center animate-in zoom-in-95 duration-500"
-              style={{
-                background: theme === "dark" 
-                  ? "linear-gradient(135deg, #0B132B 0%, #1C2541 100%)" 
-                  : "linear-gradient(135deg, #FFFFFF 0%, #F5F9FD 100%)",
-                borderColor: ONBOARDING_SLIDES[onboardingSlide].border,
-              }}
-            >
-              {/* Confetti & stars effects */}
-              <div className="absolute top-[-50px] right-[-50px] w-36 h-36 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-[-50px] left-[-50px] w-36 h-36 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
-
-              {/* Close Button */}
-              <button
-                onClick={() => {
-                  localStorage.setItem("soma_onboarding_completed", "true");
-                  setShowOnboarding(false);
-                }}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center font-bold transition-transform hover:scale-110"
-              >
-                ✕
-              </button>
-
-              {/* Kid-friendly Giant Pop-out Emoji */}
-              <div 
-                className="w-24 h-24 rounded-[32px] flex items-center justify-center text-5xl mb-6 shadow-inner relative animate-bounce"
-                style={{
-                  background: ONBOARDING_SLIDES[onboardingSlide].bg,
-                  border: `2px solid ${ONBOARDING_SLIDES[onboardingSlide].border}`,
-                }}
-              >
-                {ONBOARDING_SLIDES[onboardingSlide].emoji}
-              </div>
-
-              {/* Slide Title */}
-              <h2 className="text-xl sm:text-2xl font-black text-foreground mb-3 tracking-tight">
-                {ONBOARDING_SLIDES[onboardingSlide].title}
-              </h2>
-
-              {/* Slide Description */}
-              <p className="text-sm font-semibold text-muted-foreground mb-6 leading-relaxed max-w-sm">
-                {ONBOARDING_SLIDES[onboardingSlide].description}
-              </p>
-
-              {/* Kid friendly Quick Tips Checklist */}
-              <div className="w-full text-left space-y-2 mb-8 max-w-sm">
-                {ONBOARDING_SLIDES[onboardingSlide].tips.map((tip, idx) => (
-                  <div 
-                    key={idx}
-                    className="p-3 rounded-2xl border text-xs sm:text-sm font-black flex items-center gap-2"
-                    style={{
-                      background: "rgba(255,255,255,0.02)",
-                      borderColor: "rgba(128,128,128,0.08)"
-                    }}
-                  >
-                    <span>{tip}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Progress Dots */}
-              <div className="flex gap-2 mb-6">
-                {ONBOARDING_SLIDES.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setOnboardingSlide(idx)}
-                    className="h-3 rounded-full transition-all duration-300"
-                    style={{
-                      width: onboardingSlide === idx ? "24px" : "12px",
-                      background: onboardingSlide === idx ? ONBOARDING_SLIDES[onboardingSlide].accent : "rgba(128,128,128,0.2)",
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Navigation Action Buttons */}
-              <div className="flex gap-3 w-full max-w-sm">
-                {onboardingSlide > 0 && (
-                  <button
-                    onClick={() => setOnboardingSlide(prev => prev - 1)}
-                    className="flex-1 py-4 text-sm font-black rounded-2xl border bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-all"
-                  >
-                    Back
-                  </button>
-                )}
-                
-                {onboardingSlide < ONBOARDING_SLIDES.length - 1 ? (
-                  <button
-                    onClick={() => setOnboardingSlide(prev => prev + 1)}
-                    className="flex-1 py-4 text-sm font-black rounded-2xl text-white shadow-lg transition-transform hover:scale-[1.02]"
-                    style={{
-                      background: ONBOARDING_SLIDES[onboardingSlide].accent,
-                      boxShadow: `0 4px 14px ${ONBOARDING_SLIDES[onboardingSlide].accent}50`,
-                    }}
-                  >
-                    Next Slide ➜
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("soma_onboarding_completed", "true");
-                      setShowOnboarding(false);
-                    }}
-                    className="flex-1 py-4 text-sm font-black rounded-2xl text-white shadow-lg transition-transform hover:scale-[1.02]"
-                    style={{
-                      background: "linear-gradient(135deg, #2ECC71, #27AE60)",
-                      boxShadow: "0 4px 14px rgba(46,204,113,0.5)",
-                    }}
-                  >
-                    Let's Explore! 🚀
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </AvatarMuteProvider>
   );

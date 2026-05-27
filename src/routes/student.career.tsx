@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Sparkles, ArrowRight, Compass, GraduationCap, Microscope, Rocket, Globe, Palette, RotateCcw, Brain, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cohereSimplify } from "@/lib/cohere-server";
-import { RiveAnimation } from "@/components/soma/RiveAnimation";
+import { useTheme } from "@/lib/theme-context";
 
 export const Route = createFileRoute("/student/career")({
   head: () => ({ meta: [{ title: "Pathways — Soma AI" }] }),
@@ -11,11 +11,11 @@ export const Route = createFileRoute("/student/career")({
 });
 
 const STREAMS = [
-  { id: "MCB", name: "Math-Chem-Bio", icon: Microscope, color: "text-success bg-success/10", careers: ["Doctor", "Pharmacist", "Biotechnologist"], strength: "Science & Life" },
-  { id: "MPC", name: "Math-Phys-Comp", icon: Rocket, color: "text-primary bg-primary/10", careers: ["Engineer", "Software Developer", "Data Scientist"], strength: "Logic & Building" },
-  { id: "PCB", name: "Phys-Chem-Bio", icon: Brain, color: "text-amber-400 bg-amber-400/10", careers: ["Medical Specialist", "Chemical Engineer", "Researcher"], strength: "Universal Sciences" },
-  { id: "HEG", name: "Hist-Econ-Geog", icon: Globe, color: "text-blue-400 bg-blue-400/10", careers: ["Economist", "Urban Planner", "Diplomat"], strength: "Society & Finance" },
-  { id: "LEG", name: "Lit-Econ-Geog", icon: Palette, color: "text-purple-400 bg-purple-400/10", careers: ["Journalist", "Lawyer", "International Relations"], strength: "Language & Analysis" },
+  { id: "MCB", name: "Math-Chem-Bio", icon: Microscope, color: "text-[#10B981] bg-[#10B981]/10 border-[#10B981]/20", careers: ["Doctor", "Pharmacist", "Biotechnologist"], strength: "Science & Life" },
+  { id: "MPC", name: "Math-Phys-Comp", icon: Rocket, color: "text-[#3B82F6] bg-[#3B82F6]/10 border-[#3B82F6]/20", careers: ["Engineer", "Software Developer", "Data Scientist"], strength: "Logic & Building" },
+  { id: "PCB", name: "Phys-Chem-Bio", icon: Brain, color: "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20", careers: ["Medical Specialist", "Chemical Engineer", "Researcher"], strength: "Universal Sciences" },
+  { id: "HEG", name: "Hist-Econ-Geog", icon: Globe, color: "text-[#8B5CF6] bg-[#8B5CF6]/10 border-[#8B5CF6]/20", careers: ["Economist", "Urban Planner", "Diplomat"], strength: "Society & Finance" },
+  { id: "LEG", name: "Lit-Econ-Geog", icon: Palette, color: "text-[#EC4899] bg-[#EC4899]/10 border-[#EC4899]/20", careers: ["Journalist", "Lawyer", "International Relations"], strength: "Language & Analysis" },
 ];
 
 const ASSESSMENT = [
@@ -30,6 +30,11 @@ function CareerPathExplorer() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [aiAdvice, setAiAdvice] = useState("");
   const [recommendedStream, setRecommendedStream] = useState<typeof STREAMS[0] | null>(null);
+
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const textPrimary = isDark ? "#F8FAFC" : "#0F172A";
+  const textMuted   = isDark ? "#94A3B8" : "#64748B";
 
   const startAssessment = () => {
     setStage("assessment");
@@ -52,7 +57,6 @@ function CareerPathExplorer() {
     setStage("loading");
     
     try {
-      // Analyze answers to pick a stream
       const hasLife = finalAnswers.some(a => a.includes("living") || a.includes("experiments") || a.includes("healthy"));
       const hasTech = finalAnswers.some(a => a.includes("machines") || a.includes("puzzles") || a.includes("apps"));
       const hasArts = finalAnswers.some(a => a.includes("stories") || a.includes("writing") || a.includes("reporter"));
@@ -66,7 +70,6 @@ function CareerPathExplorer() {
       const stream = STREAMS.find(s => s.id === streamId) || STREAMS[0];
       setRecommendedStream(stream);
 
-      // Get AI Advice
       const prompt = `A primary school student picked these interests: ${finalAnswers.join(", ")}. I recommended the High School stream "${stream.name}". Give them a very encouraging 2-sentence explanation of why this path fits them and one cool career they could have.`;
       const res = await (cohereSimplify as any)({ data: { text: prompt, grade: "6", subject: "Career Guidance" } });
       setAiAdvice(res || "This path perfectly matches your brilliant mind! You will do amazing things in the future.");
@@ -80,31 +83,41 @@ function CareerPathExplorer() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="max-w-6xl mx-auto space-y-10 animate-fade-in main-content-padding pb-20">
       
       {stage === "intro" && (
-        <div className="flex flex-col items-center justify-center py-20 gap-10 text-center">
-           <div className="relative group">
-              <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
-              <div className="h-48 w-48 rounded-[40px] bg-card border border-white/10 flex items-center justify-center relative">
-                 <Compass className="h-24 w-24 text-primary animate-pulse" />
+        <div className="flex flex-col items-center justify-center py-20 gap-10 text-center relative">
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full filter blur-[100px] pointer-events-none" />
+           
+           <div className="relative group z-10">
+              <div className="absolute inset-0 bg-blue-500/20 blur-[80px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
+              <div className="h-48 w-48 rounded-[40px] flex items-center justify-center relative pro-card glass-panel shadow-2xl">
+                 <Compass className="h-24 w-24 text-blue-500 animate-pulse-glow" />
               </div>
            </div>
            
-           <div className="space-y-4 max-w-2xl">
-              <h1 className="text-6xl font-black tracking-tighter">Your <span className="text-primary italic">High School</span> <br /> Path Explorer</h1>
-              <p className="text-xl text-muted-foreground font-medium">Discover which Rwandan subject combinations match your brilliant future!</p>
+           <div className="space-y-4 max-w-2xl relative z-10">
+              <h1 className="text-5xl md:text-6xl font-black tracking-tighter" style={{ color: textPrimary }}>
+                Your <span className="text-blue-500 italic">High School</span> <br /> Path Explorer
+              </h1>
+              <p className="text-lg md:text-xl font-bold opacity-80" style={{ color: textMuted }}>
+                Discover which Rwandan subject combinations match your brilliant future!
+              </p>
            </div>
            
-           <Button onClick={startAssessment} size="lg" className="h-16 px-12 rounded-2xl text-lg font-black shadow-glow">
-              Start Exploring <ArrowRight className="h-5 w-5 ml-2" />
-           </Button>
+           <button 
+              onClick={startAssessment} 
+              className="relative z-10 px-10 py-5 rounded-full text-lg font-black text-white flex items-center gap-3 transition-transform hover:scale-105 shadow-[0_0_40px_rgba(59,130,246,0.4)] hover:shadow-[0_0_60px_rgba(59,130,246,0.6)]"
+              style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
+           >
+              Start Exploring <ArrowRight className="h-6 w-6" />
+           </button>
 
-           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full pt-10">
+           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full pt-16 relative z-10">
               {STREAMS.map(s => (
-                <div key={s.id} className="p-4 rounded-2xl glass bg-white/5 border border-white/5 text-center space-y-2 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-default group">
-                   <s.icon className={`h-6 w-6 mx-auto ${s.color.split(' ')[0]}`} />
-                   <p className="text-[10px] font-black uppercase tracking-widest">{s.id}</p>
+                <div key={s.id} className="p-5 rounded-[24px] pro-card glass-panel text-center space-y-3 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-default group hover:-translate-y-2">
+                   <s.icon className={`h-8 w-8 mx-auto ${s.color.split(' ')[0]}`} />
+                   <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: textPrimary }}>{s.id}</p>
                 </div>
               ))}
            </div>
@@ -113,13 +126,13 @@ function CareerPathExplorer() {
 
       {stage === "assessment" && (
         <div className="flex flex-col items-center py-10 space-y-12">
-            <div className="w-full max-w-2xl text-center space-y-4">
-               <div className="flex justify-center gap-2 mb-6">
+            <div className="w-full max-w-2xl text-center space-y-6">
+               <div className="flex justify-center gap-2 mb-8">
                   {ASSESSMENT.map((_, i) => (
-                    <div key={i} className={`h-2 w-16 rounded-full transition-all duration-500 ${i <= step ? 'bg-primary shadow-glow' : 'bg-white/5'}`} />
+                    <div key={i} className={`h-2 w-16 rounded-full transition-all duration-500`} style={{ background: i <= step ? "#3B82F6" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"), boxShadow: i <= step ? "0 0 10px rgba(59,130,246,0.5)" : "none" }} />
                   ))}
                </div>
-               <h2 className="text-4xl font-black tracking-tight leading-tight">{ASSESSMENT[step].q}</h2>
+               <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight" style={{ color: textPrimary }}>{ASSESSMENT[step].q}</h2>
             </div>
             
             <div className="grid sm:grid-cols-2 gap-6 w-full max-w-4xl">
@@ -127,10 +140,11 @@ function CareerPathExplorer() {
                  <button 
                   key={o} 
                   onClick={() => handlePick(o)}
-                  className="group relative rounded-[32px] glass bg-card/40 border border-white/5 p-10 text-left hover:bg-primary/10 hover:border-primary/30 transition-all duration-500 hover:scale-[1.02] active:scale-95 overflow-hidden"
+                  className="group relative rounded-[32px] pro-card glass-panel p-10 text-left transition-all duration-500 hover:scale-[1.02] active:scale-95 overflow-hidden"
                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-xl font-bold group-hover:text-primary transition-colors block">{o}</span>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500/10 rounded-full filter blur-[30px] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-xl font-black transition-colors block relative z-10" style={{ color: textPrimary }}>{o}</span>
                  </button>
                ))}
             </div>
@@ -138,27 +152,31 @@ function CareerPathExplorer() {
       )}
 
       {stage === "loading" && (
-        <div className="flex flex-col items-center justify-center py-40 space-y-8">
+        <div className="flex flex-col items-center justify-center py-40 space-y-10">
            <div className="h-32 w-32 relative">
-              <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
-              <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <Brain className="absolute inset-0 m-auto h-12 w-12 text-primary animate-pulse" />
+              <div className="absolute inset-0 border-[6px] rounded-full" style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }} />
+              <div className="absolute inset-0 border-[6px] border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <Brain className="absolute inset-0 m-auto h-12 w-12 text-blue-500 animate-pulse" />
            </div>
            <div className="text-center">
-              <p className="text-xl font-black uppercase tracking-widest animate-pulse">Computing Neural Pathways...</p>
-              <p className="text-muted-foreground font-medium mt-2">Soma AI is mapping your interests to Rwandan Streams</p>
+              <p className="text-2xl font-black uppercase tracking-widest mb-2" style={{ color: textPrimary }}>Computing Neural Pathways...</p>
+              <p className="text-sm font-bold opacity-60" style={{ color: textMuted }}>Soma AI is mapping your interests to Rwandan Streams</p>
            </div>
         </div>
       )}
 
       {stage === "result" && recommendedStream && (
-        <div className="space-y-12 md:pb-20 animate-in zoom-in-95 duration-1000">
-           <div className="flex flex-col md:flex-row items-center gap-12">
+        <div className="space-y-12 md:pb-20 animate-fade-in relative">
+           
+           <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full filter blur-[120px] pointer-events-none" style={{ background: recommendedStream.color.includes('10B981') ? 'rgba(16,185,129,0.1)' : recommendedStream.color.includes('3B82F6') ? 'rgba(59,130,246,0.1)' : recommendedStream.color.includes('F59E0B') ? 'rgba(245,158,11,0.1)' : recommendedStream.color.includes('8B5CF6') ? 'rgba(139,92,246,0.1)' : 'rgba(236,72,153,0.1)' }} />
+
+           <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
               <div className="relative group shrink-0">
-                 <div className={`absolute inset-0 ${recommendedStream.color.split(' ')[0].replace('text', 'bg')}/20 blur-[100px] rounded-full`} />
-                 <div className="h-64 w-64 rounded-[56px] glass bg-card/80 border border-white/10 flex items-center justify-center relative shadow-2xl">
-                    <recommendedStream.icon className={`h-32 w-32 ${recommendedStream.color.split(' ')[0]} drop-shadow-glow`} />
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-8 py-3 rounded-2xl bg-primary text-white font-black tracking-widest shadow-glow whitespace-nowrap">
+                 <div className={`absolute inset-0 ${recommendedStream.color.split(' ')[1]} blur-[80px] rounded-full opacity-50 group-hover:opacity-80 transition-opacity`} />
+                 <div className="h-64 w-64 rounded-[56px] pro-card glass-panel flex items-center justify-center relative shadow-2xl overflow-hidden border-[3px]" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "transparent" }}>
+                    <div className={`absolute inset-0 ${recommendedStream.color.split(' ')[1]} opacity-20`} />
+                    <recommendedStream.icon className={`h-32 w-32 ${recommendedStream.color.split(' ')[0]} drop-shadow-xl relative z-10 group-hover:scale-110 transition-transform duration-500`} />
+                    <div className={`absolute -bottom-0 left-0 right-0 py-4 ${recommendedStream.color.split(' ')[1]} backdrop-blur-md border-t ${recommendedStream.color.split(' ')[2]} text-center font-black tracking-widest text-[10px] uppercase`} style={{ color: textPrimary }}>
                        STRENGTH: {recommendedStream.strength}
                     </div>
                  </div>
@@ -166,23 +184,25 @@ function CareerPathExplorer() {
 
               <div className="flex-1 space-y-6 text-center md:text-left">
                  <div className="flex items-center justify-center md:justify-start gap-4">
-                    <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest ${recommendedStream.color}`}>Recommended Path</span>
-                    <div className="h-px w-20 bg-white/10" />
+                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${recommendedStream.color}`}>Recommended Path</span>
+                    <div className="h-px w-20" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
                  </div>
-                 <h1 className="text-6xl font-black tracking-tighter">Your future starts with <br /><span className="text-primary">{recommendedStream.name}</span></h1>
-                 <div className="p-6 rounded-3xl bg-white/5 border border-white/5 relative group overflow-hidden">
-                    <Sparkles className="absolute -right-4 -top-4 h-24 w-24 text-primary opacity-10 group-hover:scale-125 transition-transform" />
-                    <p className="text-lg font-medium leading-relaxed italic text-white/80 relative z-10 leading-relaxed">
+                 <h1 className="text-5xl md:text-7xl font-black tracking-tighter" style={{ color: textPrimary }}>
+                   Your future starts with <br /><span className={recommendedStream.color.split(' ')[0]}>{recommendedStream.name}</span>
+                 </h1>
+                 <div className="p-6 md:p-8 rounded-[32px] pro-card glass-panel relative group overflow-hidden">
+                    <Sparkles className={`absolute -right-4 -top-4 h-32 w-32 ${recommendedStream.color.split(' ')[0]} opacity-10 group-hover:scale-125 transition-transform duration-700`} />
+                    <p className="text-lg md:text-xl font-bold italic opacity-90 relative z-10 leading-relaxed" style={{ color: textPrimary }}>
                        "{aiAdvice}"
                     </p>
                  </div>
               </div>
            </div>
 
-           <div className="grid lg:grid-cols-2 gap-10">
-              <div className="rounded-[40px] border border-white/5 bg-background p-10 space-y-8">
-                 <h3 className="text-2xl font-bold flex items-center gap-3">
-                    <GraduationCap className="h-6 w-6 text-primary" />
+           <div className="grid lg:grid-cols-2 gap-8 relative z-10">
+              <div className="rounded-[40px] pro-card glass-panel p-8 md:p-12 space-y-8">
+                 <h3 className="text-2xl font-black flex items-center gap-3" style={{ color: textPrimary }}>
+                    <GraduationCap className={`h-8 w-8 ${recommendedStream.color.split(' ')[0]}`} />
                     Why this combination?
                  </h3>
                  <div className="space-y-4">
@@ -192,33 +212,37 @@ function CareerPathExplorer() {
                       "Matches your natural interest in exploring how things work",
                       "Allows you to use your favorite subjects in practical ways"
                     ].map((item, i) => (
-                      <div key={i} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-white/5 transition-colors">
-                         <div className="h-6 w-6 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
-                            <CheckCircle2 className="h-4 w-4 text-success" />
+                      <div key={i} className="flex items-start gap-4 p-5 rounded-[24px] transition-colors hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-black/5 dark:hover:border-white/5">
+                         <div className={`h-8 w-8 rounded-full ${recommendedStream.color.split(' ')[1]} border ${recommendedStream.color.split(' ')[2]} flex items-center justify-center shrink-0 mt-0.5`}>
+                            <CheckCircle2 className={`h-4 w-4 ${recommendedStream.color.split(' ')[0]}`} />
                          </div>
-                         <p className="text-muted-foreground font-medium">{item}</p>
+                         <p className="font-bold opacity-80" style={{ color: textPrimary }}>{item}</p>
                       </div>
                     ))}
                  </div>
               </div>
 
-              <div className="rounded-[40px] glass bg-primary/5 border border-primary/10 p-10 space-y-8 text-center md:text-left">
-                 <h3 className="text-2xl font-bold flex items-center justify-center md:justify-start gap-3">
-                    <Rocket className="h-6 w-6 text-primary" />
+              <div className={`rounded-[40px] pro-card glass-panel p-8 md:p-12 space-y-8 text-center md:text-left ${recommendedStream.color.split(' ')[1].replace('10', '5')} border-2 ${recommendedStream.color.split(' ')[2]}`}>
+                 <h3 className="text-2xl font-black flex items-center justify-center md:justify-start gap-3" style={{ color: textPrimary }}>
+                    <Rocket className={`h-8 w-8 ${recommendedStream.color.split(' ')[0]}`} />
                     Career Trajectories
                  </h3>
-                 <p className="text-muted-foreground font-medium">With a background in **{recommendedStream.id}**, you can excel in these rewarding fields:</p>
-                 <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                 <p className="text-lg font-bold opacity-80" style={{ color: textMuted }}>With a background in <strong className={recommendedStream.color.split(' ')[0]}>{recommendedStream.id}</strong>, you can excel in these rewarding fields:</p>
+                 <div className="flex flex-col gap-4">
                     {recommendedStream.careers.map((c) => (
-                       <div key={c} className="px-8 py-5 rounded-[28px] glass bg-card/60 border border-white/10 font-black tracking-tight text-lg hover:scale-105 transition-transform cursor-default">
+                       <div key={c} className="px-8 py-5 rounded-[24px] bg-white/50 dark:bg-black/20 backdrop-blur-md border border-black/5 dark:border-white/5 font-black text-xl hover:scale-105 transition-transform cursor-default" style={{ color: textPrimary }}>
                           {c}
                        </div>
                     ))}
                  </div>
                  <div className="pt-6">
-                    <Button onClick={() => setStage("intro")} variant="outline" className="rounded-2xl h-14 px-8 border-white/10 hover:bg-white/5 uppercase tracking-widest text-[10px] font-black">
-                       <RotateCcw className="h-4 w-4 mr-2" /> Start New Search
-                    </Button>
+                    <button 
+                      onClick={() => setStage("intro")} 
+                      className="px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:bg-black/5 dark:hover:bg-white/5 border border-black/10 dark:border-white/10 mx-auto md:mx-0"
+                      style={{ color: textPrimary }}
+                    >
+                       <RotateCcw className="h-4 w-4" /> Start New Search
+                    </button>
                  </div>
               </div>
            </div>
