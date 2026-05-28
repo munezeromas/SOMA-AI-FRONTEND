@@ -25,7 +25,7 @@ export const cohereSimplify: any = createServerFn({ method: "POST" })
 Here is the text to simplify:
 "${data.text}"`;
     } else if (data.promptType === "quiz-start") {
-      userMessage = `Create question 1 of a 3-question quiz about "${data.text}" for a Grade ${data.grade} student. Only ask the question, nothing else.`;
+      userMessage = data.text;
     } else if (data.promptType === "quiz-answer") {
       userMessage = data.text;
     } else if (data.promptType === "language-practice") {

@@ -1,4 +1,3 @@
-// TEST CHANGE
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
@@ -35,7 +34,7 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Index,
+  component: () => <Index routeLanguageCode="en" />,
 });
 
 /* ─────────────── DATA ─────────────── */
@@ -199,6 +198,29 @@ const LANGUAGES = [
 ];
 
 /* ─────────────── QUIZ DATA ─────────────── */
+export type LandingLanguageCode = "en" | "fr" | "rw" | "sw";
+
+const LANGUAGE_ROUTES: Record<string, `/${LandingLanguageCode}`> = {
+  us: "/en",
+  en: "/en",
+  fr: "/fr",
+  rw: "/rw",
+  ke: "/sw",
+  sw: "/sw",
+};
+
+const LANGUAGE_CODE_BY_ROUTE: Record<LandingLanguageCode, string> = {
+  en: "us",
+  fr: "fr",
+  rw: "rw",
+  sw: "ke",
+};
+
+const getLanguageByRoute = (code: LandingLanguageCode) =>
+  LANGUAGES.find((lang) => lang.code === LANGUAGE_CODE_BY_ROUTE[code]) ?? LANGUAGES[1];
+
+const getLanguageRoute = (code: string) => LANGUAGE_ROUTES[code] ?? "/en";
+
 const QUICK_QUIZ_QUESTIONS = [
   {
     q: "What is the main function of chlorophyll?",
@@ -491,11 +513,12 @@ ${noteText}`,
 
 /* ─────────────── MAIN INDEX ─────────────── */
 
-function Index() {
+export function Index({ routeLanguageCode }: { routeLanguageCode: LandingLanguageCode }) {
   const [dyslexia, setDyslexia] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(LANGUAGES[1]);
+  const selectedLang = getLanguageByRoute(routeLanguageCode);
+  const languageHome = getLanguageRoute(selectedLang.code);
 
   return (
     <div
@@ -510,7 +533,7 @@ function Index() {
       <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-6">
           {/* Logo */}
-          <Link to="/">
+          <Link to={languageHome}>
             <Logo size={42} lightBg={true} />
           </Link>
 
@@ -543,9 +566,10 @@ function Index() {
                 {langOpen && (
                   <div className="absolute top-full left-0 mt-1.5 w-44 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
                     {LANGUAGES.map((lang) => (
-                      <button
+                      <Link
                         key={lang.code}
-                        onClick={() => { setSelectedLang(lang); setLangOpen(false); }}
+                        to={getLanguageRoute(lang.code)}
+                        onClick={() => setLangOpen(false)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition-colors ${
                           selectedLang.code === lang.code
                             ? "bg-[#EFF6FF] text-[#2563EB] font-bold"
@@ -557,7 +581,7 @@ function Index() {
                         {selectedLang.code === lang.code && (
                           <span className="text-[#2563EB]">✓</span>
                         )}
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -640,9 +664,10 @@ function Index() {
               {/* Language selection in mobile */}
               <div className="flex gap-2">
                 {LANGUAGES.map((lang) => (
-                  <button
+                  <Link
                     key={lang.code}
-                    onClick={() => setSelectedLang(lang)}
+                    to={getLanguageRoute(lang.code)}
+                    onClick={() => setMobileOpen(false)}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
                       selectedLang.code === lang.code
                         ? "bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]"
@@ -650,7 +675,7 @@ function Index() {
                     }`}
                   >
                     <span>{lang.flag} {lang.code.toUpperCase()}</span>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>

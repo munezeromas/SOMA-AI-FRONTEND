@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Logo } from "@/components/soma/Logo";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   GraduationCap, Presentation, Eye, EyeOff, Github,
   ArrowLeft, Mail, CheckCircle,
@@ -104,26 +104,87 @@ function Field({ id, label, type = "text", placeholder, value, onChange, right }
   );
 }
 
+/* ─── Soma ID Field ─── */
+function SomaIdField({ schoolNum, studentNum, onSchoolChange, onStudentChange, studentRef }: {
+  schoolNum: string;
+  studentNum: string;
+  onSchoolChange: (v: string) => void;
+  onStudentChange: (v: string) => void;
+  studentRef: React.RefObject<HTMLInputElement | null>;
+}) {
+
+  const isValid = schoolNum.length >= 1 && studentNum.length >= 1;
+  const hasAny = schoolNum || studentNum;
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-white/90 mb-2">School ID</label>
+      <div className="flex items-center bg-white rounded-xl overflow-hidden focus-within:ring-4 focus-within:ring-blue-300/40 transition-all">
+        {/* Locked prefix */}
+        <span className="bg-blue-700 text-white text-[11px] font-black tracking-widest px-3 py-3.5 select-none whitespace-nowrap">
+          SOMA
+        </span>
+        <span className="text-slate-300 px-1 font-black text-base select-none">—</span>
+        {/* School number */}
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="0042"
+          maxLength={6}
+          value={schoolNum}
+          onChange={e => onSchoolChange(e.target.value.replace(/\D/g, ""))}
+          onKeyDown={e => (e.key === "-" || e.key === "Enter") && studentRef.current?.focus()}
+          className="w-16 py-3.5 text-center text-gray-900 font-bold text-sm outline-none border-r border-slate-200"
+        />
+        <span className="text-slate-300 px-1 font-black text-base select-none">—</span>
+        {/* Student number */}
+        <input
+          ref={studentRef}
+          type="text"
+          inputMode="numeric"
+          placeholder="00291"
+          maxLength={8}
+          value={studentNum}
+          onChange={e => onStudentChange(e.target.value.replace(/\D/g, ""))}
+          className="flex-1 py-3.5 px-2 text-gray-900 font-bold text-sm outline-none"
+        />
+      </div>
+      {hasAny && (
+        <p className={`text-[11px] mt-1.5 font-mono font-semibold flex items-center gap-1 ${isValid ? "text-green-400" : "text-white/40"}`}>
+          {isValid && <CheckCircle className="w-3 h-3" />}
+          SOMA-{schoolNum || "____"}-{studentNum || "____"}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Login() {
   const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>("login");
   const [role, setRole] = useState<"student" | "teacher">("student");
 
-  // Login
-  const [email, setEmail] = useState("");
+  // Login — ID segments
+  const [schoolNum, setSchoolNum] = useState("");
+  const [studentNum, setStudentNum] = useState("");
+  const studentRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
 
   // Register
   const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
+  const [regSchoolNum, setRegSchoolNum] = useState("");
+  const [regStudentNum, setRegStudentNum] = useState("");
+  const regStudentRef = useRef<HTMLInputElement>(null);
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
   const [showRegPw, setShowRegPw] = useState(false);
   const [showRegConf, setShowRegConf] = useState(false);
 
   // Forgot
-  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSchoolNum, setForgotSchoolNum] = useState("");
+  const [forgotStudentNum, setForgotStudentNum] = useState("");
+  const forgotStudentRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,7 +232,7 @@ function Login() {
       <div className="w-full max-w-[430px] relative z-10 px-4 py-10 flex flex-col items-center">
         {/* Card */}
         <div className="w-full rounded-[2rem] shadow-[0_30px_70px_rgba(0,0,0,0.55)] border border-white/15 backdrop-blur-2xl bg-white/10 overflow-hidden">
-          
+
           {/* ════════════════ LOGIN ════════════════ */}
           {screen === "login" && (
             <div className="p-10">
@@ -187,7 +248,15 @@ function Login() {
               <RoleSwitcher />
 
               <form className="flex flex-col gap-5" onSubmit={handleLogin}>
-                <Field id="login-email" label="Email" placeholder="username@gmail.com" value={email} onChange={setEmail} />
+                {/* ── Segmented Soma ID ── */}
+                <SomaIdField
+                  schoolNum={schoolNum}
+                  studentNum={studentNum}
+                  onSchoolChange={setSchoolNum}
+                  onStudentChange={setStudentNum}
+                  studentRef={studentRef}
+                />
+
                 <Field
                   id="login-pw" label="Password" type={showPw ? "text" : "password"}
                   placeholder="••••••••" value={password} onChange={setPassword}
@@ -241,7 +310,13 @@ function Login() {
 
               <form className="flex flex-col gap-4" onSubmit={handleRegister}>
                 <Field id="reg-name" label="Full Name" placeholder="e.g. Amara Diallo" value={regName} onChange={setRegName} />
-                <Field id="reg-email" label="Email" type="email" placeholder="username@gmail.com" value={regEmail} onChange={setRegEmail} />
+                <SomaIdField
+                  schoolNum={regSchoolNum}
+                  studentNum={regStudentNum}
+                  onSchoolChange={setRegSchoolNum}
+                  onStudentChange={setRegStudentNum}
+                  studentRef={regStudentRef}
+                />
                 <Field
                   id="reg-pw" label="Password" type={showRegPw ? "text" : "password"}
                   placeholder="Create a strong password" value={regPassword} onChange={setRegPassword}
@@ -301,11 +376,17 @@ function Login() {
 
               <h2 className="text-[1.6rem] font-bold text-white mb-2 tracking-tight">Forgot Password?</h2>
               <p className="text-white/55 text-sm mb-8 leading-relaxed">
-                No worries! Enter your email and we'll send you a link to reset your password.
+                No worries! Enter your SOMA ID and we'll send you a link to reset your password.
               </p>
 
               <form className="flex flex-col gap-5" onSubmit={handleForgot}>
-                <Field id="forgot-email" label="Email Address" type="email" placeholder="username@gmail.com" value={forgotEmail} onChange={setForgotEmail} />
+                <SomaIdField
+                  schoolNum={forgotSchoolNum}
+                  studentNum={forgotStudentNum}
+                  onSchoolChange={setForgotSchoolNum}
+                  onStudentChange={setForgotStudentNum}
+                  studentRef={forgotStudentRef}
+                />
 
                 <button type="submit" className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-bold text-sm transition-all shadow-xl tracking-wide">
                   Send Reset Link
@@ -323,12 +404,12 @@ function Login() {
 
               <h2 className="text-[1.6rem] font-bold text-white mb-3 tracking-tight">Check Your Email</h2>
               <p className="text-white/60 text-sm leading-relaxed mb-8">
-                We sent a password reset link to <span className="text-white font-semibold">{forgotEmail || "your email"}</span>.
+                We sent a password reset link to <span className="text-white font-semibold">{(forgotSchoolNum || forgotStudentNum) ? `SOMA-${forgotSchoolNum || "____"}-${forgotStudentNum || "____"}` : "your SOMA ID"}</span>.
                 Check your inbox and follow the instructions.
               </p>
 
               <button
-                onClick={() => { setScreen("login"); setForgotEmail(""); }}
+                onClick={() => { setScreen("login"); setForgotSchoolNum(""); setForgotStudentNum(""); }}
                 className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-bold text-sm transition-all shadow-xl tracking-wide"
               >
                 Back to Login

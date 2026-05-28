@@ -51,6 +51,47 @@ function parseQuestion(raw: string, type: string): QuizQuestion {
   return { type: type as any, question: questionText };
 }
 
+function getAnswerLetter(answer: string): string | undefined {
+  const normalized = answer.toUpperCase().trim();
+  const directMatch = normalized.match(/^([A-D])[)\.:]?\s*/);
+  if (directMatch) return directMatch[1];
+
+  if (/\bOPTION\s*A\b|\bCHOICE\s*A\b|\bA\b/.test(normalized)) return "A";
+  if (/\bOPTION\s*B\b|\bCHOICE\s*B\b|\bB\b/.test(normalized)) return "B";
+  if (/\bOPTION\s*C\b|\bCHOICE\s*C\b|\bC\b/.test(normalized)) return "C";
+  if (/\bOPTION\s*D\b|\bCHOICE\s*D\b|\bD\b/.test(normalized)) return "D";
+
+  return undefined;
+}
+
+function parseQuizResult(response: string): { correct: boolean; feedback: string } | null {
+  const trimmed = response.trim();
+  const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (typeof parsed.correct === "boolean" && typeof parsed.feedback === "string") {
+        return parsed;
+      }
+    } catch {
+      // ignore invalid json and fallback to text detection
+    }
+  }
+
+  const lower = trimmed.toLowerCase();
+  const negative = /\b(not quite|incorrect|wrong|no|false|not correct|did not)\b/;
+  const positive = /\b(correct|right|true|yes|excellent|well done|nice work|great job)\b/;
+
+  if (negative.test(lower) && !positive.test(lower)) {
+    return { correct: false, feedback: trimmed };
+  }
+  if (positive.test(lower) && !negative.test(lower)) {
+    return { correct: true, feedback: trimmed };
+  }
+
+  return null;
+}
+
 const getFriendlyMicError = (errorCode: string): { message: string, suggestion: string } => {
   switch (errorCode) {
     case 'not-allowed':
@@ -158,11 +199,12 @@ function AIQuizzes() {
     const generated: QuizQuestion[] = [];
     for (let i = 0; i < numQuestions; i++) {
       const type = QUESTION_TYPES[i % QUESTION_TYPES.length];
+      const previousQuestions = generated.map((q) => q.question).filter(Boolean).join("\n");
       try {
         const prompt =
           type === "multiple_choice"
-            ? `Generate a UNIQUE multiple choice question (Question ${i + 1} of ${numQuestions}) for a ${grade} student about ${subject} based on the Rwandan curriculum. Format EXACTLY:\nQUESTION: [question]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nCORRECT: [letter]`
-            : `Generate a UNIQUE ${type === "speaking" ? "open verbal" : "open-ended short answer"} question (Question ${i + 1} of ${numQuestions}) for a ${grade} student about ${subject} based on the Rwandan curriculum. Format: QUESTION: [question]`;
+            ? `Generate a UNIQUE multiple choice question (Question ${i + 1} of ${numQuestions}) for a ${grade} student about ${subject} based on the Rwandan curriculum. Do not repeat any previous questions.\n\nFormat EXACTLY as:\nQUESTION: [question]\nA) [option]\nB) [option]\nC) [option]\nD) [option]\nCORRECT: [letter]\n\nOnly output the question, options, and correct letter. No extra text.\n${previousQuestions ? `Previous questions:\n${previousQuestions}\n` : ""}`
+            : `Generate a UNIQUE ${type === "speaking" ? "open verbal" : "open-ended short answer"} question (Question ${i + 1} of ${numQuestions}) for a ${grade} student about ${subject} based on the Rwandan curriculum. Do not repeat any previous questions.\n\nFormat EXACTLY as:\nQUESTION: [question]\n\nOnly output the question. No extra text.\n${previousQuestions ? `Previous questions:\n${previousQuestions}\n` : ""}`;
 
         const raw = await cohereSimplify({ data: { text: prompt, grade, subject, promptType: "quiz-start" } });
         generated.push(parseQuestion(raw ?? "", type));
@@ -188,17 +230,32 @@ function AIQuizzes() {
     setLoading(true);
     const q = questions[currentQ];
 
-    const evalPrompt = `A ${grade} student answered the question: "${q.question}"\nTheir answer: "${ans}"${q.correct ? `\nThe correct answer was: ${q.correct}` : ""}\nCarefully check if their answer is correct. Give very short, encouraging feedback (1-2 sentences). You MUST explicitly tell them the real correct answer and explain why if they got it wrong. Start with whether they were right or wrong.`;
+    const evalPrompt = `A ${grade} student answered the question: "${q.question}"
+Their answer: "${ans}"
+${q.type === "multiple_choice" && q.options ? `Choices:\n${q.options.join("\n")}\n` : ""}${q.correct ? `The correct answer is: ${q.correct}.\n` : ""}Decide whether the student's answer is correct or incorrect.
+Output only valid JSON in this exact format: {"correct": true|false, "feedback": "A short friendly response."}
+Your feedback must start with "Correct." when correct or "Not quite." when incorrect.
+If wrong, clearly say the real correct answer and why.
+${q.correct ? `The correct answer was: ${q.correct}\n` : ""}Carefully check if their answer is correct. Give very short, encouraging feedback (1-2 sentences). You MUST explicitly tell them the real correct answer and explain why if they got it wrong. Start with whether they were right or wrong.`;
 
     try {
       const fb = await cohereSimplify({ data: { text: evalPrompt, grade, subject, promptType: "quiz-answer" } });
-      setFeedback(fb ?? "Great effort!");
-      // Check if correct for MC
+      const result = parseQuizResult(fb ?? "");
+      const feedbackText = result?.feedback ?? fb ?? "Great effort!";
+      setFeedback(feedbackText);
+
       if (q.type === "multiple_choice" && q.correct) {
-        const isRight = ans.toUpperCase().startsWith(q.correct);
-        if (isRight) setScore(s => s + 1);
+        const letter = getAnswerLetter(ans);
+        const isRight = letter ? letter === q.correct : result?.correct === true;
+        if (isRight) {
+          setScore(s => s + 1);
+        }
+      } else if (result?.correct === true) {
+        setScore(s => s + 1);
+      } else if (result?.correct === false) {
+        setScore(s => s + 0);
       } else {
-        // Open/speaking — always give partial credit
+        // Fallback when the AI response is ambiguous
         setScore(s => s + 0.5);
       }
     } catch {
@@ -570,7 +627,7 @@ function AIQuizzes() {
                         <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
                           {micError.message}
                         </p>
-                        <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                        <p className="text-xs font-semibold text-foreground/95 leading-relaxed">
                           {micError.suggestion}
                         </p>
                       </div>
@@ -612,7 +669,7 @@ function AIQuizzes() {
                       <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
                         {micError.message}
                       </p>
-                      <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                      <p className="text-xs font-semibold text-foreground/95 leading-relaxed">
                         {micError.suggestion}
                       </p>
                     </div>
@@ -661,7 +718,7 @@ function AIQuizzes() {
             <div className="space-y-6 flex flex-col items-center">
               <div className="w-full space-y-3 text-left">
                 {/* Question text - large & bold */}
-                <h2 className="text-3xl font-black leading-snug text-white">{q.question}</h2>
+                <h2 className="text-3xl font-black leading-snug text-foreground">{q.question}</h2>
                 
                 {/* Instruction */}
                 <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
@@ -677,7 +734,7 @@ function AIQuizzes() {
                       <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">
                         {micError.message}
                       </p>
-                      <p className="text-xs font-semibold text-white/95 leading-relaxed">
+                      <p className="text-xs font-semibold text-foreground/95 leading-relaxed">
                         {micError.suggestion}
                       </p>
                     </div>
@@ -704,7 +761,7 @@ function AIQuizzes() {
                 {transcript && (
                   <div className="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-left">
                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">YOU SAID:</p>
-                    <p className="text-base font-semibold text-white">{transcript}</p>
+                    <p className="text-base font-semibold text-foreground">{transcript}</p>
                   </div>
                 )}
                 {transcript && (

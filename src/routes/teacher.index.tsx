@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CLASS_STUDENTS } from "@/lib/mock-data";
+import { CLASS_STUDENTS, ASSIGNMENTS, CLASSES, STAFF_MEMBERS } from "@/lib/mock-data";
 import { LIBRARY_BOOKS } from "@/lib/library-data";
 import { useTheme } from "@/lib/theme-context";
 import {
   Users, AlertTriangle, TrendingUp, Activity,
-  BookOpen, Download, Sparkles, Star, Target, ShieldAlert
+  BookOpen, Download, Sparkles, Star, Target, ShieldAlert,
+  FileText, Briefcase, GraduationCap, Clock
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -113,6 +114,50 @@ function TeacherDash() {
             </Link>
           );
         })}
+      </div>
+
+      {/* ── QUICK ACTIONS ── */}
+      <div className="rounded-[2rem] bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-8 text-white relative overflow-hidden shadow-xl">
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full filter blur-[60px]" />
+        <div className="relative z-10">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-2 drop-shadow-md">
+            <Sparkles className="w-6 h-6" /> Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link
+              to="/teacher/assignments-management"
+              className="rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 transition-all hover:shadow-lg text-center cursor-pointer border border-white/20 group hover:-translate-y-1 no-underline"
+            >
+              <FileText className="w-6 h-6 mb-2 mx-auto group-hover:scale-110 transition-transform" />
+              <p className="font-bold text-sm">Create Assignment</p>
+              <p className="text-xs opacity-75 mt-1">{ASSIGNMENTS.length} active</p>
+            </Link>
+            <Link
+              to="/teacher/classes-management"
+              className="rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 transition-all hover:shadow-lg text-center cursor-pointer border border-white/20 group hover:-translate-y-1 no-underline"
+            >
+              <GraduationCap className="w-6 h-6 mb-2 mx-auto group-hover:scale-110 transition-transform" />
+              <p className="font-bold text-sm">Manage Classes</p>
+              <p className="text-xs opacity-75 mt-1">{CLASSES.length} sections</p>
+            </Link>
+            <Link
+              to="/teacher/staff"
+              className="rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 transition-all hover:shadow-lg text-center cursor-pointer border border-white/20 group hover:-translate-y-1 no-underline"
+            >
+              <Briefcase className="w-6 h-6 mb-2 mx-auto group-hover:scale-110 transition-transform" />
+              <p className="font-bold text-sm">Staff Management</p>
+              <p className="text-xs opacity-75 mt-1">{STAFF_MEMBERS.length} members</p>
+            </Link>
+            <Link
+              to="/teacher/students"
+              className="rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm p-4 transition-all hover:shadow-lg text-center cursor-pointer border border-white/20 group hover:-translate-y-1 no-underline"
+            >
+              <Users className="w-6 h-6 mb-2 mx-auto group-hover:scale-110 transition-transform" />
+              <p className="font-bold text-sm">View Students</p>
+              <p className="text-xs opacity-75 mt-1">{CLASS_STUDENTS.length} enrolled</p>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* ── MIDDLE ROW ── */}

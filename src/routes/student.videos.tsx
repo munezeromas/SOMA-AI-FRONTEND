@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { VIDEOS, SUBJECTS } from "@/lib/mock-data";
+import { SUBJECTS } from "@/lib/mock-data";
+import { VIDEOS } from "@/lib/updated-videos";
 import { Play, X, Star, Search, Filter, ExternalLink, AlertTriangle } from "lucide-react";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
 import { useTheme } from "@/lib/theme-context";
@@ -24,6 +25,8 @@ type VideoEntry = {
   _idx: number;
 };
 
+const isValidYouTubeId = (id: string) => /^[A-Za-z0-9_-]{11}$/.test(id);
+
 function Videos() {
   const [filter, setFilter] = useState<string>("All");
   const [level, setLevel] = useState<string>("All");
@@ -37,7 +40,9 @@ function Videos() {
   const textMuted   = isDark ? "#94A3B8" : "#64748B";
 
   // Tag every video with its original index for a stable unique key
-  const indexedVideos: VideoEntry[] = VIDEOS.map((v, i) => ({ ...(v as any), _idx: i }));
+  const indexedVideos: VideoEntry[] = VIDEOS
+    .filter((v) => isValidYouTubeId((v as any).id))
+    .map((v, i) => ({ ...(v as any), _idx: i }));
 
   const list = indexedVideos.filter((v) => {
     const subjectMatch = filter === "All" || v.subject === filter;
@@ -291,11 +296,11 @@ function Videos() {
               ) : (
                 <iframe
                   key={`video-${open._idx}`}
-                  src={`https://www.youtube.com/embed/${open.id}?autoplay=1&rel=0&modestbranding=1`}
+                  src={`https://www.youtube-nocookie.com/embed/${open.id}?autoplay=1&rel=0&modestbranding=1`}
                   title={open.title}
                   className="w-full h-full block"
                   style={{ border: "none", display: "block" }}
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
                   onError={() => setEmbedError(true)}
                 />

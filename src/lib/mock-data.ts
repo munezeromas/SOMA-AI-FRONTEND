@@ -762,14 +762,15 @@ export const COMMUNITY_POSTS = [
 ];
 
 export const CLASS_STUDENTS = [
-  { id: 1, name: "Amani K.", grade: "P6", mastery: 74, dyslexia: true, lastActive: "2h ago", risk: "low" },
-  { id: 2, name: "Bosco M.", grade: "P6", mastery: 42, dyslexia: false, lastActive: "1d ago", risk: "high" },
-  { id: 3, name: "Claudine U.", grade: "P6", mastery: 88, dyslexia: false, lastActive: "30m ago", risk: "low" },
-  { id: 4, name: "Diane I.", grade: "P6", mastery: 55, dyslexia: true, lastActive: "5h ago", risk: "medium" },
-  { id: 5, name: "Eric N.", grade: "P6", mastery: 38, dyslexia: false, lastActive: "3d ago", risk: "high" },
-  { id: 6, name: "Faith M.", grade: "P6", mastery: 71, dyslexia: false, lastActive: "1h ago", risk: "low" },
-  { id: 7, name: "Gilbert R.", grade: "P6", mastery: 60, dyslexia: true, lastActive: "4h ago", risk: "medium" },
-  { id: 8, name: "Hope T.", grade: "P6", mastery: 92, dyslexia: false, lastActive: "10m ago", risk: "low" },
+  { id: 1, name: "Munezero Aline", grade: "P6", mastery: 89, dyslexia: false, lastActive: "5m ago", risk: "low" },
+  { id: 2, name: "Amani K.", grade: "P6", mastery: 74, dyslexia: true, lastActive: "2h ago", risk: "low" },
+  { id: 3, name: "Bosco M.", grade: "P6", mastery: 42, dyslexia: false, lastActive: "1d ago", risk: "high" },
+  { id: 4, name: "Claudine U.", grade: "P6", mastery: 88, dyslexia: false, lastActive: "30m ago", risk: "low" },
+  { id: 5, name: "Diane I.", grade: "P6", mastery: 55, dyslexia: true, lastActive: "5h ago", risk: "medium" },
+  { id: 6, name: "Eric N.", grade: "P6", mastery: 38, dyslexia: false, lastActive: "3d ago", risk: "high" },
+  { id: 7, name: "Faith M.", grade: "P6", mastery: 71, dyslexia: false, lastActive: "1h ago", risk: "low" },
+  { id: 8, name: "Gilbert R.", grade: "P6", mastery: 60, dyslexia: true, lastActive: "4h ago", risk: "medium" },
+  { id: 9, name: "Hope T.", grade: "P6", mastery: 92, dyslexia: false, lastActive: "10m ago", risk: "low" },
 ];
 
 export const TUTOR_REPLIES = [
@@ -779,6 +780,26 @@ export const TUTOR_REPLIES = [
   "Try visual modeling to simulate the underlying logic of the equation.",
   "Mastery is a progressive sequence. Continue your current momentum.",
   "Let's isolate a smaller variable first to establish a baseline.",
+];
+
+export const STAFF_MEMBERS = [
+  { id: 1, name: "Mrs. Mukamana", role: "Class Teacher", email: "mukamana@school.com", phone: "+250 788 123 456", subjects: ["Math", "English"], active: true, joinDate: "2023-01-15" },
+  { id: 2, name: "Mr. Habimana", role: "Head Teacher", email: "habimana@school.com", phone: "+250 788 234 567", subjects: ["All"], active: true, joinDate: "2022-06-01" },
+  { id: 3, name: "Miss. Claudette", role: "Teaching Assistant", email: "claudette@school.com", phone: "+250 788 345 678", subjects: ["Science", "Social"], active: true, joinDate: "2024-01-10" },
+  { id: 4, name: "Mr. Kamanzi", role: "Specialist Teacher", email: "kamanzi@school.com", phone: "+250 788 456 789", subjects: ["ICT", "Mathematics"], active: false, joinDate: "2023-08-20" },
+];
+
+export const ASSIGNMENTS = [
+  { id: 1, title: "Fractions Practice", subject: "Math", grade: "P6", dueDate: "2024-06-15", students: 8, submitted: 6, status: "active" },
+  { id: 2, title: "Reading Comprehension", subject: "English", grade: "P6", dueDate: "2024-06-20", students: 8, submitted: 8, status: "active" },
+  { id: 3, title: "Photosynthesis Lab", subject: "Science", grade: "P6", dueDate: "2024-06-10", students: 8, submitted: 7, status: "pending_review" },
+  { id: 4, title: "Math Quiz - Geometry", subject: "Math", grade: "P6", dueDate: "2024-06-05", students: 8, submitted: 8, status: "completed" },
+];
+
+export const CLASSES = [
+  { id: 1, name: "P6 - Class A", grade: "P6", students: 9, teacher: "Mrs. Mukamana", room: "Room 201", schedule: "08:00 - 15:30", activeToday: 8 },
+  { id: 2, name: "P5 - Class B", grade: "P5", students: 12, teacher: "Miss. Claudette", room: "Room 202", schedule: "08:00 - 15:30", activeToday: 11 },
+  { id: 3, name: "P6 - Class C", grade: "P6", students: 10, teacher: "Mr. Habimana", room: "Room 203", schedule: "08:00 - 15:30", activeToday: 9 },
 ];
 
 export function simplifyText(text: string): string {

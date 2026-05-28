@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Star, RefreshCw, Sparkles, Brain, Calculator, Type, Layers, X } from "lucide-react";
-import { VIDEOS, GAMES as MOCK_GAMES } from "@/lib/mock-data";
 import { useRive } from "@rive-app/react-canvas";
 import { RiveAnimation } from "@/components/soma/RiveAnimation";
 
